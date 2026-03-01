@@ -9,6 +9,8 @@ import {
   renderPropAiHelp,
   type PropAiCommandRoute,
 } from "./propai/mapper.js";
+import { initializeRealtorWorkspaceProfile } from "./propai/realtor-workspace.js";
+import { maybeSeedRealtorWorkspaceBeforeSetup } from "./propai/setup-bootstrap.js";
 
 function resolveOpenClawWrapperPath(): string {
   const here = path.dirname(fileURLToPath(import.meta.url));
@@ -65,12 +67,54 @@ async function runRoute(route: PropAiCommandRoute): Promise<number> {
     return 2;
   }
   if (route.kind === "single") {
+    await maybeSeedRealtorWorkspaceBeforeSetup({
+      commandLabel: route.commandLabel,
+      args: route.args,
+      debug: route.debug,
+    });
     return await runOpenClawCommand({
       openClawWrapperPath,
       args: route.args,
       debug: route.debug,
       commandLabel: route.commandLabel,
     });
+  }
+  if (route.kind === "local") {
+    if (route.commandLabel === "profile-init") {
+      try {
+        const result = await initializeRealtorWorkspaceProfile(route.params);
+        process.stdout.write(`PropAI workspace profile ready: ${result.workspaceDir}\n`);
+        if (result.writtenFiles.length > 0) {
+          process.stdout.write("Updated files:\n");
+          for (const filePath of result.writtenFiles) {
+            process.stdout.write(`  - ${filePath}\n`);
+          }
+        }
+        if (result.skippedFiles.length > 0) {
+          process.stdout.write("Unchanged files (already present):\n");
+          for (const filePath of result.skippedFiles) {
+            process.stdout.write(`  - ${filePath}\n`);
+          }
+          process.stdout.write("Use --overwrite to replace existing files.\n");
+        }
+        process.stdout.write(
+          [
+            "Next steps:",
+            "  1) propai sync",
+            "  2) propai start",
+            "  3) propai connect whatsapp",
+          ].join("\n") + "\n",
+        );
+        return 0;
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        process.stderr.write(`[propai] Failed to initialize workspace profile: ${message}\n`);
+        if (!route.debug) {
+          process.stderr.write(`${renderFriendlyFailure(route.commandLabel)}\n`);
+        }
+        return 1;
+      }
+    }
   }
 
   for (const command of route.commands) {

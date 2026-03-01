@@ -23,7 +23,7 @@ describe("mapPropAiArgs", () => {
       kind: "single",
       debug: false,
       commandLabel: "setup",
-      args: ["onboard"],
+      args: ["onboard", "--flow", "quickstart", "--skip-ui"],
     });
   });
 
@@ -33,7 +33,17 @@ describe("mapPropAiArgs", () => {
       kind: "single",
       debug: false,
       commandLabel: "sync",
-      args: ["onboard"],
+      args: ["onboard", "--flow", "quickstart", "--skip-ui"],
+    });
+  });
+
+  it("respects explicit setup flow flags", () => {
+    const route = mapPropAiArgs(["setup", "--flow", "advanced", "--skip-ui"]);
+    expect(route).toEqual({
+      kind: "single",
+      debug: false,
+      commandLabel: "setup",
+      args: ["onboard", "--flow", "advanced", "--skip-ui"],
     });
   });
 
@@ -173,13 +183,55 @@ describe("mapPropAiArgs", () => {
   });
 
   it("maps raw passthrough command", () => {
-    const route = mapPropAiArgs(["raw", "skills", "list", "--eligible"]);
+    const route = mapPropAiArgs(["--admin", "raw", "skills", "list", "--eligible"]);
     expect(route).toEqual({
       kind: "single",
       debug: false,
       commandLabel: "raw",
       args: ["skills", "list", "--eligible"],
     });
+  });
+
+  it("blocks raw passthrough without --admin", () => {
+    const route = mapPropAiArgs(["raw", "skills", "list"]);
+    expect(route).toEqual({
+      kind: "error",
+      debug: false,
+      message: "Advanced passthrough is disabled. Use: propai --admin raw <openclaw args...>",
+    });
+  });
+
+  it("maps profile init to local workspace profile command", () => {
+    const route = mapPropAiArgs([
+      "profile",
+      "init",
+      "Acme Realty",
+      "--owner",
+      "Vishal",
+      "--city",
+      "Miami",
+      "--overwrite",
+    ]);
+    expect(route).toEqual({
+      kind: "local",
+      debug: false,
+      commandLabel: "profile-init",
+      params: {
+        brokerageName: "Acme Realty",
+        ownerName: "Vishal",
+        city: "Miami",
+        agentName: undefined,
+        timezone: undefined,
+        focus: undefined,
+        workspaceDir: undefined,
+        overwrite: true,
+      },
+    });
+  });
+
+  it("errors on unsupported profile subcommand", () => {
+    const route = mapPropAiArgs(["profile", "list"]);
+    expect(route.kind).toBe("error");
   });
 
   it("tracks debug flag globally", () => {
@@ -196,10 +248,12 @@ describe("mapPropAiArgs", () => {
 describe("propai help and failures", () => {
   it("renders help text with core commands", () => {
     const help = renderPropAiHelp();
+    expect(help).toContain("propai profile init");
     expect(help).toContain("propai start");
     expect(help).toContain("propai sync");
     expect(help).toContain("propai lead follow-up");
     expect(help).toContain("propai schedule daily");
+    expect(help).toContain("--admin");
   });
 
   it("renders friendly failure text", () => {
