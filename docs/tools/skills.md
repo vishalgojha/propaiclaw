@@ -25,6 +25,19 @@ If a skill name conflicts, precedence is:
 Additionally, you can configure extra skill folders (lowest precedence) via
 `skills.load.extraDirs` in `~/.openclaw/openclaw.json`.
 
+## Bundled PropAi Sync lead pipeline skills
+
+OpenClaw now bundles the following real-estate lead pipeline skills in
+`<workspace>/skills`, so they work from a fresh clone without extra
+`skills.load.extraDirs` setup for PropAi Sync (Indian realtor workflows):
+
+- `message-parser`
+- `lead-extractor`
+- `india-location-normalizer`
+- `summary-generator`
+- `action-suggester`
+- `lead-storage`
+
 ## Per-agent vs shared skills
 
 In **multi-agent** setups, each agent has its own workspace. That means:
