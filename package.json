@@ -14,7 +14,8 @@
     "url": "git+https://github.com/openclaw/openclaw.git"
   },
   "bin": {
-    "openclaw": "openclaw.mjs"
+    "openclaw": "openclaw.mjs",
+    "propai": "propai.mjs"
   },
   "directories": {
     "doc": "docs",
@@ -24,6 +25,7 @@
     "CHANGELOG.md",
     "LICENSE",
     "openclaw.mjs",
+    "propai.mjs",
     "README-header.png",
     "README.md",
     "assets/",

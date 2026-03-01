@@ -80,6 +80,21 @@ openclaw agent --message "Ship checklist" --thinking high
 
 Upgrading? [Updating guide](https://docs.openclaw.ai/install/updating) (and run `openclaw doctor`).
 
+## PropAi Sync wrapper (Indian realtors)
+
+For realtor-first workflows, the package now ships a `propai` CLI wrapper that maps business verbs to OpenClaw commands.
+
+```bash
+propai start
+propai connect whatsapp
+propai lead follow-up +15555550123 "Just checking in on 123 Main St!"
+propai schedule daily "Good morning check-in" --to +15555550123
+propai history +15555550123
+propai status
+```
+
+Use `propai --help` for the full wrapper command list and `propai --debug ...` to see raw OpenClaw diagnostics.
+
 ## Development channels
 
 - **stable**: tagged releases (`vYYYY.M.D` or `vYYYY.M.D-<patch>`), npm dist-tag `latest`.

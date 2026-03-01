@@ -254,3 +254,659 @@
   - `node --import tsx scripts/release-check.ts`
   - `pnpm release:check`
   - `pnpm test:install:smoke` or `OPENCLAW_INSTALL_SMOKE_SKIP_NONROOT=1 pnpm test:install:smoke` for non-root smoke path.
+
+---
+
+# Agent Operating Rules
+
+This file defines quality rules that ANY AI agent (Codex, Claude, Cursor, etc.) must follow when modifying this codebase.
+
+**Version:** 1.0
+**Last Updated:** 2026-03-02
+**Project Type:** agent-system
+
+---
+
+## Core Principle
+
+**Guardrails first. No code change is "done" until it meets ALL applicable rules below.**
+
+---
+
+## UNIVERSAL RULES (Apply to ALL Projects)
+
+### 1. TEST COVERAGE RULE
+
+**Rule:** Every behavior change MUST include tests in the same commit.
+
+**What this means:**
+- New feature -> Add test
+- Bug fix -> Add test that would have caught it
+- Changed behavior -> Update tests
+- Refactor -> Ensure tests still pass
+
+**How to verify:**
+```bash
+npm test
+# or: pytest / go test / cargo test / etc.
+```
+
+**Agent responsibility:**
+- Generate test alongside code
+- Run tests before suggesting "done"
+- If tests fail, fix them
+- Don't mark task complete without tests
+
+**Test quality checklist:**
+- [ ] Tests cover happy path
+- [ ] Tests cover error cases
+- [ ] Tests cover edge cases (empty input, null, boundaries)
+- [ ] Tests are deterministic (no flaky tests)
+
+---
+
+### 2. ERROR HANDLING RULE
+
+**Rule:** All code must handle errors gracefully and informatively.
+
+**Requirements:**
+- Catch errors at appropriate boundaries
+- Log errors with context (what failed, why, how to fix)
+- Show user-friendly messages (not stack traces)
+- Clean up resources in error cases
+- Don't swallow errors silently
+
+**Agent responsibility:**
+- Add try/catch to all async operations
+- Include helpful error messages
+- Log errors with full context
+- Implement fallback behavior where appropriate
+
+**Error handling template:**
+```typescript
+try {
+  const result = await riskyOperation();
+  return { success: true, data: result };
+} catch (error) {
+  logError(error, { operation: 'riskyOperation', context });
+
+  // User-friendly message
+  throw new Error(`Failed to complete operation: ${getUserMessage(error)}`);
+}
+```
+
+---
+
+### 3. DOCUMENTATION SYNC RULE
+
+**Rule:** Code changes MUST include corresponding documentation updates.
+
+**When to update docs:**
+- New feature -> README + inline docs
+- Changed API -> Update API docs
+- Breaking change -> Migration guide
+- Bug fix -> Update known issues (if documented)
+- Configuration -> Update config docs
+
+**Agent responsibility:**
+- Update docs in same commit as code
+- Keep examples working
+- Update version in package.json/setup.py/Cargo.toml for releases
+
+**Documentation checklist:**
+- [ ] README reflects current functionality
+- [ ] Code comments explain WHY, not WHAT
+- [ ] Public APIs have JSDoc/docstrings
+- [ ] Examples are tested and working
+
+---
+
+### 4. NO TODO ACCUMULATION RULE
+
+**Rule:** Don't leave TODOs, FIXMEs, HACK comments in code.
+
+**What to do instead:**
+- Fix it immediately (if small, <30 min)
+- Create GitHub issue with context (if large)
+- Remove the TODO (if not actually needed)
+
+**Agent responsibility:**
+- Don't generate code with TODO comments
+- If marking incomplete work, create issue and link it
+- Before finishing: scan for `TODO|FIXME|HACK|XXX`
+
+**Exception:** Architecture decisions in docs/ are fine, but not in source code.
+
+---
+
+### 5. DEPENDENCY HYGIENE RULE
+
+**Rule:** Add dependencies only when necessary. Question every new dependency.
+
+**Before adding a dependency:**
+- Can built-in standard library do this?
+- Can existing dependencies do this?
+- Is this dependency actively maintained?
+- What's the security/size impact?
+- How many transitive dependencies does it add?
+
+**Agent responsibility:**
+- Justify new dependencies in commit message
+- Check maintenance status (last update, weekly downloads, open issues)
+- Flag abandoned packages (no updates in 1+ year)
+- Run security audit: `npm audit` / `pip check` / etc.
+
+**Dependency review checklist:**
+```bash
+# Check health:
+npm ls --depth=0    # or: pip list, cargo tree
+npm audit           # or: safety check, cargo audit
+npm outdated        # or: pip list --outdated
+```
+
+---
+
+### 6. FILE ORGANIZATION RULE
+
+**Rule:** Keep repository organized and predictable.
+
+**Allowed at root:**
+- Configuration files (package.json, tsconfig.json, etc.)
+- Essential docs (README.md, LICENSE, CHANGELOG.md)
+- HANDOFF.md (single handoff file, never versioned)
+- agents.md (this file)
+- CI config (.github/, .gitlab-ci.yml, etc.)
+
+**Not allowed at root:**
+- Versioned handoffs (HANDOFF_v2.md, HANDOFF_FINAL.md)
+- Test outputs, logs, temp files
+- Random scripts (organize into scripts/ or tools/)
+
+**Agent responsibility:**
+- Follow established directory structure
+- Archive old handoffs to docs/archive/
+- Use .gitignore for generated files
+- Keep root clean and scannable
+
+---
+
+### 7. TYPE SAFETY RULE
+
+**Rule:** Use type systems properly. No `any`/`unknown` without justification.
+
+**Requirements:**
+- Function parameters: explicit types
+- Return values: explicit types
+- Data structures: defined interfaces/types
+- External data: validate before trusting
+
+**Agent responsibility:**
+- Use strict type checking
+- Don't use `any` unless unavoidable (external APIs)
+- Add type guards for external data
+- Run type checker before finishing
+
+**Language-specific:**
+- TypeScript: `npm run type-check`
+- Python: `mypy .`
+- Go: Built-in
+- Rust: Built-in
+
+---
+
+### 8. COMMIT DISCIPLINE RULE
+
+**Rule:** Commits must describe WHAT changed and WHY.
+
+**Good commit messages:**
+- "Add retry logic to API client for transient failures"
+- "Fix race condition in concurrent state updates"
+- "Remove unused dependency: moment (use native Date)"
+
+**Bad commit messages:**
+- "fix stuff"
+- "updates"
+- "wip"
+- "asdf"
+
+**Agent responsibility:**
+- Generate descriptive commit messages
+- Split unrelated changes into separate commits
+- Follow conventional commits if project uses it
+
+**Commit structure:**
+```
+<type>: <short summary>
+
+<optional longer description explaining WHY>
+
+<optional breaking change notice>
+```
+
+---
+
+### 9. SECURITY BASELINE RULE
+
+**Rule:** Handle sensitive data and inputs securely.
+
+**Requirements:**
+- Never log secrets, tokens, passwords
+- Use environment variables for credentials
+- Validate all external inputs
+- Sanitize user input before use
+- Run security scanners
+
+**Agent responsibility:**
+- Redact sensitive data from logs
+- Use secure credential storage
+- Add input validation
+- Check for injection vulnerabilities
+- Run: `npm audit` / `safety check` / `cargo audit`
+
+**Security checklist:**
+- [ ] No secrets in code or logs
+- [ ] Input validation on external data
+- [ ] No known high/critical vulnerabilities
+- [ ] Proper authentication/authorization
+
+---
+
+### 10. HANDOFF DISCIPLINE RULE
+
+**Rule:** ONE handoff file. Update it in place.
+
+**Current handoff:** `HANDOFF.md`
+
+**When updating:**
+- Overwrite HANDOFF.md (never create versions)
+- Git preserves history if you need it
+- Archive ancient handoffs to docs/archive/
+
+**Agent responsibility:**
+- Never create HANDOFF_v2.md, HANDOFF_FINAL.md, etc.
+- Keep handoff focused on current state
+- Update when architecture changes
+
+---
+
+## PROJECT-TYPE SPECIFIC RULES
+
+**Instructions for agent:** Only apply sections that match the project type declared at the top of this file.
+
+### FOR CLI TOOLS (if project_type === 'cli')
+
+#### CLI.1: USER EXPERIENCE RULE
+
+**Rule:** CLI must be intuitive and helpful.
+
+**Requirements:**
+- Every command has `--help`
+- Error messages show how to fix
+- Use spinners/progress for long operations
+- Use colors semantically (red=error, green=success, yellow=warning)
+- Support both interactive and scriptable modes
+
+**Agent responsibility:**
+- Add `--help` to all commands
+- Show examples in help text
+- Use consistent flag naming
+- Support `--json` output for scripting
+
+#### CLI.2: INPUT VALIDATION RULE
+
+**Rule:** Validate inputs, provide helpful prompts.
+
+**Requirements:**
+- Validate flags and arguments
+- Prompt for missing required inputs (if interactive)
+- Support `--yes` to skip prompts (for scripting)
+- Show clear validation errors
+
+---
+
+### FOR WORKFLOWS/FLOWS (if project_type === 'workflow')
+
+#### FLOW.1: STATE MANAGEMENT RULE
+
+**Rule:** All state changes must be atomic, logged, and recoverable.
+
+**Requirements:**
+- Use atomic file operations
+- Support state recovery after crashes
+- Handle concurrent access safely
+- Log all state transitions
+
+**Agent responsibility:**
+- Use locking for state writes
+- Implement state versioning
+- Add rollback logic
+
+**State transition checklist:**
+```typescript
+// 1. Acquire lock
+// 2. Read current state
+// 3. Validate transition is legal
+// 4. Write atomically
+// 5. Release lock
+```
+
+#### FLOW.2: ERROR RECOVERY RULE
+
+**Rule:** Flows must handle failures gracefully and support recovery.
+
+**Requirements:**
+- Retry with exponential backoff
+- Graceful degradation
+- Support manual recovery/restart
+- Circuit breaker for repeated failures
+
+#### FLOW.3: OBSERVABILITY RULE
+
+**Rule:** Flows must be debuggable with logs and metrics.
+
+**Requirements:**
+- Structured logging at each step
+- Trace IDs for correlation
+- Metrics (duration, success rate)
+- State snapshots
+
+---
+
+### FOR APIs (if project_type === 'api')
+
+#### API.1: ENDPOINT CONSISTENCY RULE
+
+**Rule:** API endpoints must be consistent and well-documented.
+
+**Requirements:**
+- RESTful conventions (or GraphQL best practices)
+- Consistent error responses
+- Versioning strategy
+- OpenAPI/GraphQL schema
+
+**Agent responsibility:**
+- Follow REST conventions (GET/POST/PUT/DELETE)
+- Return consistent error format
+- Document all endpoints
+- Update API schema
+
+#### API.2: RATE LIMITING RULE
+
+**Rule:** APIs must implement rate limiting.
+
+**Requirements:**
+- Per-user/per-IP limits
+- Return 429 with Retry-After header
+- Document limits
+- Implement tiered limits if needed
+
+#### API.3: INPUT VALIDATION RULE
+
+**Rule:** Validate all API inputs strictly.
+
+**Requirements:**
+- Schema validation on request body
+- Sanitize all inputs
+- Return 400 with clear error messages
+- Don't trust client data
+
+---
+
+### FOR WEB APPS (if project_type === 'web')
+
+#### WEB.1: ACCESSIBILITY RULE
+
+**Rule:** Web interfaces must be accessible.
+
+**Requirements:**
+- Semantic HTML
+- ARIA labels where needed
+- Keyboard navigation
+- Screen reader friendly
+
+**Agent responsibility:**
+- Use semantic tags (<nav>, <main>, <button>)
+- Add alt text to images
+- Ensure keyboard navigation works
+- Test with screen reader
+
+#### WEB.2: PERFORMANCE RULE
+
+**Rule:** Web apps must be performant.
+
+**Requirements:**
+- Code splitting
+- Lazy loading
+- Image optimization
+- Minimize bundle size
+
+---
+
+### FOR AGENT SYSTEMS (if project_type === 'agent-system')
+
+#### AGENT.1: COORDINATION RULE
+
+**Rule:** Multi-agent systems must coordinate safely.
+
+**Requirements:**
+- Agents don't interfere with each other
+- Use message passing, not shared state
+- Handle agent failures
+- Support partial completion
+
+**Agent responsibility:**
+- Document inter-agent dependencies
+- Use explicit synchronization
+- Handle timeouts
+- Test concurrent agent execution
+
+#### AGENT.2: AGENT OBSERVABILITY RULE
+
+**Rule:** Agent behavior must be traceable.
+
+**Requirements:**
+- Log agent decisions
+- Record agent interactions
+- Track agent performance
+- Support debugging agent chains
+
+---
+
+### FOR LIBRARIES (if project_type === 'library')
+
+#### LIB.1: API STABILITY RULE
+
+**Rule:** Library APIs must be stable and well-versioned.
+
+**Requirements:**
+- Semantic versioning
+- Deprecation warnings before removal
+- Migration guides for breaking changes
+- Backward compatibility
+
+**Agent responsibility:**
+- Follow semver strictly
+- Deprecate before removing
+- Document breaking changes
+- Maintain CHANGELOG.md
+
+#### LIB.2: ZERO DEPENDENCIES GOAL
+
+**Rule:** Libraries should minimize dependencies.
+
+**Requirements:**
+- Peer dependencies for common packages
+- No dependencies for simple utilities
+- Bundle size monitoring
+- Tree-shakeable exports
+
+---
+
+## ENFORCEMENT PRIORITY
+
+### Critical (Block Shipping):
+- Rule 1: Test coverage
+- Rule 2: Error handling
+- Rule 9: Security baseline
+- Project-specific critical rules (state management, input validation, etc.)
+
+### Important (Fix Before Release):
+- Rule 3: Documentation sync
+- Rule 5: Dependency hygiene
+- Rule 7: Type safety
+- Project-specific important rules
+
+### Nice to Have:
+- Rule 4: No TODOs
+- Rule 6: File organization
+- Rule 8: Commit discipline
+- Rule 10: Handoff discipline
+
+---
+
+## HOW TO USE THIS FILE
+
+### For AI Agents (Codex, Claude, etc.):
+
+1. **At session start:**
+   - Read this entire file
+   - Note the project type at the top
+   - Apply universal rules + project-type rules
+
+2. **Before generating code:**
+   - Review applicable rules
+   - Plan implementation to satisfy rules
+   - Include tests, docs, error handling from the start
+
+3. **Before suggesting "done":**
+   - Verify all applicable rules satisfied
+   - Run tests
+   - Run type checker
+   - Check for TODOs
+   - Suggest "done" only if all pass
+
+4. **When in doubt:**
+   - Ask human which rules apply
+   - Err on side of more quality, not less
+
+### For Humans (Vishal):
+
+1. **On new project:**
+   - Copy this file to project root as `agents.md`
+   - Update project type at top
+   - Remove inapplicable project-type sections
+   - Customize rules for domain-specific needs
+
+2. **When reviewing agent output:**
+   - Check against applicable rules
+   - Treat violations as bugs
+   - Update agents.md if you discover new patterns
+
+3. **When architecture changes:**
+   - Update project type if needed
+   - Add new rules if new patterns emerge
+   - Remove obsolete rules
+
+---
+
+## CUSTOMIZING FOR NEW PROJECT TYPES
+
+### When starting a new project category:
+
+1. **Identify core challenges:**
+   - What makes this project type unique?
+   - What are common failure modes?
+   - What patterns matter most?
+
+2. **Add new section:**
+```markdown
+### FOR [YOUR_PROJECT_TYPE] (if project_type === 'your-type')
+
+#### TYPE.1: DESCRIPTIVE_RULE_NAME
+
+**Rule:** Clear statement of requirement
+
+**Requirements:**
+- Specific requirement 1
+- Specific requirement 2
+
+**Agent responsibility:**
+- What agent must do
+- What agent must check
+```
+
+3. **Examples to learn from:**
+   - Study similar projects
+   - What do they enforce?
+   - What prevents their common bugs?
+
+4. **Keep it specific:**
+   - "Use atomic operations" [OK]
+   - "Write good code" [NOT OK]
+
+---
+
+## META-RULES (About This File)
+
+### agents.md EVOLUTION RULE
+
+**Rule:** This file is living documentation. Update it as you learn.
+
+**When to update:**
+- You discover a new failure pattern
+- You want to enforce a new standard
+- Existing rules don't work
+- Project type changes
+- Architecture evolves
+
+**How to update:**
+1. Identify the pattern/problem
+2. Write specific, verifiable rule
+3. Add to appropriate section
+4. Commit with clear message
+5. Tell agent to re-read agents.md
+
+### agents.md SIMPLICITY RULE
+
+**Rule:** Don't add rules for theoretical problems. Add rules for actual pain.
+
+**Good reasons to add rule:**
+- Same bug happened 3 times
+- Production incident could have been prevented
+- Review keeps catching same issue
+
+**Bad reasons to add rule:**
+- "Best practice" from blog post
+- Theoretical edge case
+- Personal preference without data
+
+**Keep rules:**
+- Specific (not vague)
+- Verifiable (can be checked)
+- Justified (solves real problem)
+
+---
+
+## VERSION HISTORY
+
+### 1.0 (2026-03-02)
+- Initial universal template
+- Core rules apply to all projects
+- Project-type specific sections
+- Meta-rules for evolution
+
+---
+
+## QUICK START CHECKLIST
+
+**When agent starts work on this project:**
+
+- [ ] Read entire agents.md file
+- [ ] Note project type at top
+- [ ] Identify which rules apply
+- [ ] Before generating code: plan to satisfy rules
+- [ ] After generating code: verify rules satisfied
+- [ ] Run tests, type checker, linters
+- [ ] Suggest "done" only if all applicable rules pass
+
+**This is your quality contract. Follow it every time.**
