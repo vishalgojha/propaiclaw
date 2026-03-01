@@ -27,6 +27,16 @@ describe("mapPropAiArgs", () => {
     });
   });
 
+  it("maps sync to onboard", () => {
+    const route = mapPropAiArgs(["sync"]);
+    expect(route).toEqual({
+      kind: "single",
+      debug: false,
+      commandLabel: "sync",
+      args: ["onboard"],
+    });
+  });
+
   it("maps connect command", () => {
     const route = mapPropAiArgs(["connect", "whatsapp", "--account", "primary"]);
     expect(route).toEqual({
@@ -187,6 +197,7 @@ describe("propai help and failures", () => {
   it("renders help text with core commands", () => {
     const help = renderPropAiHelp();
     expect(help).toContain("propai start");
+    expect(help).toContain("propai sync");
     expect(help).toContain("propai lead follow-up");
     expect(help).toContain("propai schedule daily");
   });

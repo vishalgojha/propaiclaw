@@ -86,6 +86,7 @@ For realtor-first workflows, the package now ships a `propai` CLI wrapper that m
 
 ```bash
 propai start
+propai sync
 propai connect whatsapp
 propai lead follow-up +15555550123 "Just checking in on 123 Main St!"
 propai schedule daily "Good morning check-in" --to +15555550123

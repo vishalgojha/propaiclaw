@@ -27,6 +27,7 @@ export function renderPropAiHelp(): string {
     "Usage:",
     "  propai start",
     "  propai setup",
+    "  propai sync",
     "  propai connect <app>",
     '  propai lead follow-up <target> "<message>"',
     '  propai schedule daily "<message>" --to <target>',
@@ -36,6 +37,7 @@ export function renderPropAiHelp(): string {
     "",
     "Examples:",
     "  propai start",
+    "  propai sync",
     "  propai connect whatsapp",
     '  propai lead follow-up +15555550123 "Just checking in on 123 Main St!"',
     '  propai schedule daily "Good morning check-in" --to +15555550123',
@@ -105,8 +107,8 @@ export function mapPropAiArgs(argv: string[], now: Date = new Date()): PropAiCom
     return { kind: "single", debug, commandLabel: "start", args: ["gateway", "run", ...rest] };
   }
 
-  if (primary === "setup") {
-    return { kind: "single", debug, commandLabel: "setup", args: ["onboard", ...rest] };
+  if (primary === "setup" || primary === "sync") {
+    return { kind: "single", debug, commandLabel: primary, args: ["onboard", ...rest] };
   }
 
   if (primary === "status") {
@@ -250,6 +252,9 @@ export function renderFriendlyFailure(commandLabel: string): string {
   switch (commandLabel) {
     case "start":
       return "PropAi Sync could not start your AI engine. Try `propai start --debug` for full diagnostics.";
+    case "setup":
+    case "sync":
+      return "PropAi Sync setup could not complete. Re-run with `propai sync --debug` for raw diagnostics.";
     case "connect":
       return "PropAi Sync could not connect that app. Confirm your AI engine is running with `propai status`, then retry.";
     case "lead-follow-up":
