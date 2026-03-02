@@ -110,6 +110,11 @@ const coreEntries: CoreCliEntry[] = [
         hasSubcommands: false,
       },
       {
+        name: "migrate-state",
+        description: "Run explicit legacy state migration (dry-run by default)",
+        hasSubcommands: false,
+      },
+      {
         name: "uninstall",
         description: "Uninstall the gateway service + local data (CLI remains)",
         hasSubcommands: false,

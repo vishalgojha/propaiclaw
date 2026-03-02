@@ -262,6 +262,7 @@ describe("argv helpers", () => {
       ["node", "openclaw", "models", "status"],
       ["node", "openclaw", "memory", "status"],
       ["node", "openclaw", "agent", "--message", "hi"],
+      ["node", "openclaw", "migrate-state", "--dry-run"],
     ] as const;
     const mutatingArgv = [
       ["node", "openclaw", "agents", "list"],

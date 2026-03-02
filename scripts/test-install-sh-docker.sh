@@ -10,6 +10,18 @@ SKIP_NONROOT="${OPENCLAW_INSTALL_SMOKE_SKIP_NONROOT:-${CLAWDBOT_INSTALL_SMOKE_SK
 LATEST_DIR="$(mktemp -d)"
 LATEST_FILE="${LATEST_DIR}/latest"
 
+if ! command -v docker >/dev/null 2>&1; then
+  echo "ERROR: docker is required for install smoke tests." >&2
+  echo "Install Docker Desktop and ensure WSL integration is enabled, then retry." >&2
+  exit 1
+fi
+
+if ! docker info >/dev/null 2>&1; then
+  echo "ERROR: docker daemon is not reachable." >&2
+  echo "Start Docker Desktop (or docker engine) and retry." >&2
+  exit 1
+fi
+
 echo "==> Build smoke image (upgrade, root): $SMOKE_IMAGE"
 docker build \
   -t "$SMOKE_IMAGE" \

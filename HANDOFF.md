@@ -250,6 +250,32 @@ Stage 2 progress update (2026-03-02, pass 2)
   - Command: `pnpm exec oxfmt --check README.md src/propaiclaw-entry.ts src/propai/mapper.ts src/propai/mapper.test.ts src/config/paths.ts src/config/paths.test.ts src/config/io.ts src/config/io.compat.test.ts src/infra/home-dir.ts src/infra/home-dir.test.ts src/cli/profile.ts src/cli/profile.test.ts src/propai/realtor-workspace.ts src/propai/realtor-workspace.test.ts src/channels/registry.ts src/channels/registry.helpers.test.ts HANDOFF.md`
     - Result: passed (all matched files correctly formatted).
 
+Stage 2 progress update (2026-03-02, pass 3)
+
+- done
+  - Added explicit state migration command flow:
+    - `openclaw migrate-state --dry-run` (default behavior if no flags are passed)
+    - `openclaw migrate-state --apply`
+  - Added per-tenant migration reporting in command output (target agent/main key, state/oauth paths, and planned/applied changes).
+  - Wired command into CLI registry and maintenance registration.
+  - Updated command-path migration guard so `migrate-state` does not trigger implicit pre-migration via config guard.
+  - Added regression tests for:
+    - migrate-state command behavior (`src/commands/migrate-state.test.ts`)
+    - maintenance command wiring (`src/cli/program/register.maintenance.test.ts`)
+    - argv migration-path guard (`src/cli/argv.test.ts`)
+
+- pending
+  - Optional enhancement: machine-readable (`--json`) migration report output.
+  - Stage 3+ work remains pending by plan.
+
+- verification
+  - Command: `pnpm exec vitest run src/commands/migrate-state.test.ts src/cli/program/register.maintenance.test.ts src/cli/argv.test.ts src/config/paths.test.ts src/config/io.compat.test.ts src/config/io.write-config.test.ts`
+    - Result: passed (`6` test files, `83` tests).
+  - Command: `pnpm exec vitest run src/propai/mapper.test.ts src/propai/packaging.test.ts src/propaiclaw-entry.messages.test.ts src/config/paths.test.ts src/config/io.compat.test.ts src/config/io.write-config.test.ts src/infra/home-dir.test.ts src/cli/profile.test.ts src/propai/realtor-workspace.test.ts src/channels/registry.helpers.test.ts src/commands/migrate-state.test.ts src/cli/program/register.maintenance.test.ts src/cli/argv.test.ts`
+    - Result: passed (`13` test files, `175` tests).
+  - Command: `pnpm exec oxfmt --check src/commands/migrate-state.ts src/commands/migrate-state.test.ts src/cli/program/register.maintenance.ts src/cli/program/register.maintenance.test.ts src/cli/program/command-registry.ts src/cli/argv.ts src/cli/argv.test.ts src/config/paths.ts src/config/paths.test.ts src/config/io.ts src/config/io.compat.test.ts scripts/test-install-sh-docker.sh HANDOFF.md`
+    - Result: passed (all matched files correctly formatted).
+
 ### Stage 3 - Service identity bridge (daemon/runtime)
 
 1. Add Propaiclaw service names and labels
@@ -272,6 +298,22 @@ Stage 3 progress update (2026-03-02, pass 1)
 
 - pending
   - Stage 3 service identity bridge implementation and cross-platform service tests.
+
+Stage 3 progress update (2026-03-02, pass 2)
+
+- done
+  - Added local install-smoke Docker preflight in `scripts/test-install-sh-docker.sh`:
+    - Fails fast with clear actionable messages when Docker CLI/daemon are unavailable.
+    - Prevents opaque smoke failures from long-running build steps when Docker is down.
+
+- pending
+  - Stage 3 service identity bridge implementation and cross-platform service tests.
+
+- verification
+  - Command: `bash scripts/test-install-sh-docker.sh`
+    - Result: fails fast in current environment with preflight message:
+      - `ERROR: docker daemon is not reachable.`
+      - `Start Docker Desktop (or docker engine) and retry.`
 
 ### Stage 4 - External protocol compatibility layer
 

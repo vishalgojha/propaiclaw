@@ -3,6 +3,7 @@ import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 const doctorCommand = vi.fn();
 const dashboardCommand = vi.fn();
+const migrateStateCommand = vi.fn();
 const resetCommand = vi.fn();
 const uninstallCommand = vi.fn();
 
@@ -18,6 +19,10 @@ vi.mock("../../commands/doctor.js", () => ({
 
 vi.mock("../../commands/dashboard.js", () => ({
   dashboardCommand,
+}));
+
+vi.mock("../../commands/migrate-state.js", () => ({
+  migrateStateCommand,
 }));
 
 vi.mock("../../commands/reset.js", () => ({
@@ -100,6 +105,31 @@ describe("registerMaintenanceCommands doctor action", () => {
     );
   });
 
+  it("passes dry-run/apply options to migrate-state command", async () => {
+    migrateStateCommand.mockResolvedValue(undefined);
+
+    await runMaintenanceCli(["migrate-state", "--dry-run"]);
+    await runMaintenanceCli(["migrate-state", "--apply"]);
+
+    expect(migrateStateCommand).toHaveBeenNthCalledWith(
+      1,
+      runtime,
+      expect.objectContaining({
+        dryRun: true,
+        apply: false,
+      }),
+    );
+    expect(migrateStateCommand).toHaveBeenNthCalledWith(
+      2,
+      runtime,
+      expect.objectContaining({
+        dryRun: false,
+        apply: true,
+      }),
+    );
+    expect(runtime.exit).toHaveBeenCalledWith(0);
+  });
+
   it("passes reset options to reset command", async () => {
     resetCommand.mockResolvedValue(undefined);
 
@@ -159,6 +189,15 @@ describe("registerMaintenanceCommands doctor action", () => {
     await runMaintenanceCli(["dashboard"]);
 
     expect(runtime.error).toHaveBeenCalledWith("Error: dashboard failed");
+    expect(runtime.exit).toHaveBeenCalledWith(1);
+  });
+
+  it("exits with code 1 when migrate-state fails", async () => {
+    migrateStateCommand.mockRejectedValue(new Error("migrate-state failed"));
+
+    await runMaintenanceCli(["migrate-state", "--apply"]);
+
+    expect(runtime.error).toHaveBeenCalledWith("Error: migrate-state failed");
     expect(runtime.exit).toHaveBeenCalledWith(1);
   });
 });

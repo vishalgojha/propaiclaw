@@ -1,6 +1,7 @@
 import type { Command } from "commander";
 import { dashboardCommand } from "../../commands/dashboard.js";
 import { doctorCommand } from "../../commands/doctor.js";
+import { migrateStateCommand } from "../../commands/migrate-state.js";
 import { resetCommand } from "../../commands/reset.js";
 import { uninstallCommand } from "../../commands/uninstall.js";
 import { defaultRuntime } from "../../runtime.js";
@@ -35,6 +36,21 @@ export function registerMaintenanceCommands(program: Command) {
           nonInteractive: Boolean(opts.nonInteractive),
           generateGatewayToken: Boolean(opts.generateGatewayToken),
           deep: Boolean(opts.deep),
+        });
+        defaultRuntime.exit(0);
+      });
+    });
+
+  program
+    .command("migrate-state")
+    .description("Run explicit legacy state migration (dry-run by default)")
+    .option("--dry-run", "Preview migration actions without writing changes", false)
+    .option("--apply", "Apply migration changes", false)
+    .action(async (opts) => {
+      await runCommandWithRuntime(defaultRuntime, async () => {
+        await migrateStateCommand(defaultRuntime, {
+          dryRun: Boolean(opts.dryRun),
+          apply: Boolean(opts.apply),
         });
         defaultRuntime.exit(0);
       });
