@@ -447,7 +447,16 @@ describe("mapPropAiArgs", () => {
     expect(route).toEqual({
       kind: "error",
       debug: false,
-      message: "Advanced passthrough is disabled. Use: propaiclaw --admin raw <openclaw args...>",
+      message: "Advanced passthrough is disabled. Use: propaiclaw --admin raw <runtime args...>",
+    });
+  });
+
+  it("requires runtime args for raw passthrough", () => {
+    const route = mapPropAiArgs(["--admin", "raw"]);
+    expect(route).toEqual({
+      kind: "error",
+      debug: false,
+      message: "Missing runtime arguments. Usage: propaiclaw raw <runtime args...>",
     });
   });
 
@@ -509,12 +518,15 @@ describe("propaiclaw help and failures", () => {
     expect(help).toContain("propaiclaw channels list");
     expect(help).toContain("propaiclaw groups allow");
     expect(help).toContain("--admin");
+    expect(help.toLowerCase()).not.toContain("openclaw");
   });
 
   it("renders friendly failure text", () => {
     expect(renderFriendlyFailure("connect")).toContain("could not connect");
     expect(renderFriendlyFailure("dashboard")).toContain("could not open the dashboard");
     expect(renderFriendlyFailure("tui")).toContain("could not start TUI mode");
-    expect(renderFriendlyFailure("unknown")).toContain("command failed");
+    const unknownFailure = renderFriendlyFailure("unknown");
+    expect(unknownFailure).toContain("command failed");
+    expect(unknownFailure.toLowerCase()).not.toContain("openclaw");
   });
 });

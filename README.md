@@ -1,8 +1,8 @@
 # Propaiclaw
 
-Propaiclaw is a WhatsApp-first realtor CLI built as a clean wrapper over OpenClaw.
+Propaiclaw is a WhatsApp-first realtor CLI built as a clean wrapper with realtor-focused defaults.
 
-It translates business-focused commands into OpenClaw commands, keeps defaults tuned for realtor workflows, and ships with bundled lead-management skills.
+It translates business-focused commands into runtime commands, keeps defaults tuned for realtor workflows, and ships with bundled lead-management skills.
 
 ## Install
 
@@ -45,17 +45,17 @@ propai groups allow-all --account tenant-a --agent main
 
 Run `propai --help` for the complete command list.
 
-Use `propai --debug ...` to print the underlying OpenClaw command and full diagnostics.
+Use `propai --debug ...` to print the underlying runtime command and full diagnostics.
 `propaiclaw` is also available as a compatibility alias.
 
 ## What Propaiclaw Wraps
 
-Propaiclaw runs the OpenClaw runtime under the hood and maps commands like:
+Propaiclaw keeps the wrapper-based runtime path under the hood and maps commands like:
 
-- `propai start` -> `openclaw gateway run`
-- `propai sync` -> `openclaw onboard --flow quickstart --skip-ui`
-- `propai connect whatsapp` -> `openclaw channels login --channel whatsapp`
-- `propai lead follow-up ...` -> `openclaw message send ... --channel whatsapp`
+- `propai start` -> `gateway run`
+- `propai sync` -> `onboard --flow quickstart --skip-ui`
+- `propai connect whatsapp` -> `channels login --channel whatsapp`
+- `propai lead follow-up ...` -> `message send ... --channel whatsapp`
 
 ## Bundled Skills (Realtor Context)
 
@@ -70,12 +70,12 @@ When Propaiclaw mode is enabled, bundled skill loading defaults to:
 
 ## Configuration and Docs
 
-Propaiclaw uses OpenClaw's configuration/runtime model.
+Propaiclaw uses the current configuration/runtime model.
 
-- Getting started: https://docs.openclaw.ai/start/getting-started
-- Gateway configuration: https://docs.openclaw.ai/gateway/configuration
-- WhatsApp channel docs: https://docs.openclaw.ai/channels/whatsapp
-- Skills docs: https://docs.openclaw.ai/tools/skills
+- Getting started: docs/start/getting-started.md
+- Gateway configuration: docs/gateway/configuration.md
+- WhatsApp channel docs: docs/channels/whatsapp.md
+- Skills docs: docs/tools/skills.md
 
 ## Development
 

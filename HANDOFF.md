@@ -81,6 +81,28 @@ Goal: staged path from wrapper model to a Propaiclaw-first runtime for realtor w
 
 - Tests for command output/help/error paths to ensure no user-facing brand leaks.
 
+Stage 1 progress update (2026-03-02)
+
+- done
+  - Stage 1.1 first slice completed for user-facing wording in:
+    - `README.md`
+    - `src/propaiclaw-entry.ts`
+    - `src/propai/mapper.ts`
+    - `src/propai/mapper.test.ts`
+  - Updated help/examples/error/debug-facing wording to use Propaiclaw/runtime terms (no user-facing `openclaw` text in this slice).
+  - Kept wrapper execution path unchanged (`propaiclaw-entry` still launches `openclaw.mjs` internally).
+  - Added mapper regression coverage to prevent help/failure brand leaks.
+
+- pending
+  - Stage 1 follow-up slices outside this first file set (if any additional user-facing surfaces are identified).
+  - Later stages (Stage 2+) remain pending by plan.
+
+- verification
+  - Command: `pnpm exec vitest run src/propai/mapper.test.ts src/propai/packaging.test.ts`
+    - Result: passed (`2` test files, `47` tests).
+  - Command: `pnpm exec oxfmt --check README.md src/propaiclaw-entry.ts src/propai/mapper.ts src/propai/mapper.test.ts`
+    - Result: passed (all matched files correctly formatted).
+
 ### Stage 2 - Config and state namespace bridge
 
 1. Introduce Propaiclaw canonical paths/envs

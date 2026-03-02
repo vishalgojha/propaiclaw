@@ -58,7 +58,7 @@ export type PropAiCommandRoute =
 
 export function renderPropAiHelp(commandName = "propaiclaw"): string {
   return [
-    "Propaiclaw Realtor CLI (WhatsApp-first wrapper for OpenClaw)",
+    "Propaiclaw Realtor CLI (WhatsApp-first wrapper runtime)",
     "",
     "Usage:",
     `  ${commandName} profile init [brokerage-name] [options]`,
@@ -100,11 +100,11 @@ export function renderPropAiHelp(commandName = "propaiclaw"): string {
     `  ${commandName} status`,
     "",
     "Flags:",
-    "  --debug   Show underlying OpenClaw command and keep raw diagnostics",
+    "  --debug   Show underlying runtime command and keep raw diagnostics",
     "  --admin   Enable advanced/developer passthrough commands",
     "",
     "Advanced (admin only):",
-    `  ${commandName} --admin raw <openclaw args...>`,
+    `  ${commandName} --admin raw <runtime args...>`,
   ].join("\n");
 }
 
@@ -679,14 +679,14 @@ export function mapPropAiArgs(
       return {
         kind: "error",
         debug,
-        message: `Advanced passthrough is disabled. Use: ${commandName} --admin raw <openclaw args...>`,
+        message: `Advanced passthrough is disabled. Use: ${commandName} --admin raw <runtime args...>`,
       };
     }
     if (!secondary) {
       return {
         kind: "error",
         debug,
-        message: `Missing OpenClaw arguments. Usage: ${commandName} raw <openclaw args...>`,
+        message: `Missing runtime arguments. Usage: ${commandName} raw <runtime args...>`,
       };
     }
     return {
@@ -740,6 +740,6 @@ export function renderFriendlyFailure(commandLabel: string, commandName = "propa
     case "health":
       return `Propaiclaw could not fetch status. Start the service first with \`${commandName} start\`.`;
     default:
-      return "Propaiclaw command failed. Re-run with `--debug` for raw OpenClaw output.";
+      return "Propaiclaw command failed. Re-run with `--debug` for raw runtime output.";
   }
 }

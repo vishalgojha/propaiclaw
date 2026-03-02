@@ -106,7 +106,7 @@ function runOpenClawCommand(params: {
 }): Promise<number> {
   const { openClawWrapperPath, args, debug, commandLabel } = params;
   if (debug) {
-    process.stderr.write(`[${CLI_COMMAND_NAME} debug] openclaw ${args.join(" ")}\n`);
+    process.stderr.write(`[${CLI_COMMAND_NAME} debug] runtime ${args.join(" ")}\n`);
   }
   return new Promise((resolve) => {
     const child = spawn(process.execPath, [openClawWrapperPath, ...args], {
@@ -116,14 +116,16 @@ function runOpenClawCommand(params: {
 
     child.once("error", (error) => {
       process.stderr.write(
-        `[${CLI_COMMAND_NAME}] Failed to launch OpenClaw: ${error instanceof Error ? error.message : String(error)}\n`,
+        `[${CLI_COMMAND_NAME}] Failed to launch Propaiclaw runtime: ${error instanceof Error ? error.message : String(error)}\n`,
       );
       resolve(1);
     });
 
     child.once("exit", (code, signal) => {
       if (signal) {
-        process.stderr.write(`[${CLI_COMMAND_NAME}] OpenClaw exited due to signal ${signal}\n`);
+        process.stderr.write(
+          `[${CLI_COMMAND_NAME}] Propaiclaw runtime exited due to signal ${signal}\n`,
+        );
         resolve(1);
         return;
       }
@@ -205,7 +207,7 @@ async function runRoute(route: PropAiCommandRoute): Promise<number> {
         const snapshot = await readConfigFileSnapshot();
         if (!snapshot.valid) {
           process.stderr.write(
-            `[${CLI_COMMAND_NAME}] Config is invalid. Run "openclaw doctor" and retry.\n`,
+            `[${CLI_COMMAND_NAME}] Config is invalid. Run "${CLI_COMMAND_NAME} sync --debug" and retry.\n`,
           );
           for (const issue of snapshot.issues) {
             process.stderr.write(`  - ${issue.path || "<root>"}: ${issue.message}\n`);
@@ -291,7 +293,7 @@ async function runRoute(route: PropAiCommandRoute): Promise<number> {
         const { snapshot, writeOptions } = await readConfigFileSnapshotForWrite();
         if (!snapshot.valid) {
           process.stderr.write(
-            `[${CLI_COMMAND_NAME}] Config is invalid. Run "openclaw doctor" and retry.\n`,
+            `[${CLI_COMMAND_NAME}] Config is invalid. Run "${CLI_COMMAND_NAME} sync --debug" and retry.\n`,
           );
           for (const issue of snapshot.issues) {
             process.stderr.write(`  - ${issue.path || "<root>"}: ${issue.message}\n`);
