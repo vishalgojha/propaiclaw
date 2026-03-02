@@ -137,4 +137,36 @@ describe("config io paths", () => {
       expect(cfg.agents?.list?.[0]?.tools?.exec?.safeBinTrustedDirs).toEqual(["/ops/bin"]);
     });
   });
+
+  it("reads legacy config but writes canonical config in propaiclaw mode", async () => {
+    await withTempHome(async (home) => {
+      const legacyPath = await writeConfig(home, ".openclaw", 20111);
+      const io = createIoForHome(home, { PROPAICLAW_MODE: "1" } as NodeJS.ProcessEnv);
+
+      // Dual-read: existing legacy config is still discovered for loading.
+      expect(io.configPath).toBe(legacyPath);
+      const loaded = io.loadConfig();
+      expect(loaded.gateway?.port).toBe(20111);
+
+      // Single-write: writes move to canonical propaiclaw namespace.
+      await io.writeConfigFile({
+        ...loaded,
+        gateway: {
+          ...loaded.gateway,
+          port: 20112,
+        },
+      });
+
+      const canonicalPath = path.join(home, ".propaiclaw", "propaiclaw.json");
+      const canonical = JSON.parse(await fs.readFile(canonicalPath, "utf-8")) as {
+        gateway?: { port?: number };
+      };
+      expect(canonical.gateway?.port).toBe(20112);
+
+      const legacy = JSON.parse(await fs.readFile(legacyPath, "utf-8")) as {
+        gateway?: { port?: number };
+      };
+      expect(legacy.gateway?.port).toBe(20111);
+    });
+  });
 });

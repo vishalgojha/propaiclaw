@@ -9,6 +9,7 @@ import {
   resolveOAuthDir,
   resolveOAuthPath,
   resolveStateDir,
+  resolveStateDirForWrite,
 } from "./paths.js";
 
 describe("oauth paths", () => {
@@ -171,6 +172,18 @@ describe("state + config path candidates", () => {
       await fs.mkdir(legacyDir, { recursive: true });
       const resolved = resolveStateDir({ PROPAICLAW_MODE: "1" } as NodeJS.ProcessEnv, () => root);
       expect(resolved).toBe(legacyDir);
+    });
+  });
+
+  it("in propaiclaw mode, write state dir remains canonical even when legacy state exists", async () => {
+    await withTempRoot("propaiclaw-state-write-", async (root) => {
+      const legacyDir = path.join(root, ".openclaw");
+      await fs.mkdir(legacyDir, { recursive: true });
+      const resolved = resolveStateDirForWrite(
+        { PROPAICLAW_MODE: "1" } as NodeJS.ProcessEnv,
+        () => root,
+      );
+      expect(resolved).toBe(path.join(root, ".propaiclaw"));
     });
   });
 

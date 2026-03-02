@@ -227,6 +227,29 @@ Stage 2 progress update (2026-03-02, pass 1)
   - Command: `pnpm exec oxfmt --check src/config/paths.ts src/infra/home-dir.ts src/utils.ts src/cli/profile.ts src/propai/realtor-workspace.ts src/propaiclaw-entry.ts src/channels/registry.ts src/config/paths.test.ts src/infra/home-dir.test.ts src/cli/profile.test.ts src/propai/realtor-workspace.test.ts src/channels/registry.helpers.test.ts`
     - Result: passed (all matched files correctly formatted).
 
+Stage 2 progress update (2026-03-02, pass 2)
+
+- done
+  - Implemented dual-read/single-write behavior for config I/O in Propaiclaw mode:
+    - Config reads still resolve existing legacy/canonical candidates.
+    - Config writes now target canonical path resolution by default (while preserving explicit config-path overrides).
+  - Added canonical write-state helper path resolution for migration-safe writes.
+  - Added regression coverage proving:
+    - legacy config remains readable in Propaiclaw mode,
+    - write operations persist to canonical `~/.propaiclaw/propaiclaw.json`,
+    - legacy source config remains unchanged after canonical write.
+
+- pending
+  - Stage 2.3 explicit migration tooling and reporting.
+
+- verification
+  - Command: `pnpm exec vitest run src/config/paths.test.ts src/config/io.compat.test.ts src/config/io.write-config.test.ts`
+    - Result: passed (`3` test files, `38` tests).
+  - Command: `pnpm exec vitest run src/propai/mapper.test.ts src/propai/packaging.test.ts src/propaiclaw-entry.messages.test.ts src/config/paths.test.ts src/config/io.compat.test.ts src/config/io.write-config.test.ts src/infra/home-dir.test.ts src/cli/profile.test.ts src/propai/realtor-workspace.test.ts src/channels/registry.helpers.test.ts`
+    - Result: passed (`10` test files, `130` tests).
+  - Command: `pnpm exec oxfmt --check README.md src/propaiclaw-entry.ts src/propai/mapper.ts src/propai/mapper.test.ts src/config/paths.ts src/config/paths.test.ts src/config/io.ts src/config/io.compat.test.ts src/infra/home-dir.ts src/infra/home-dir.test.ts src/cli/profile.ts src/cli/profile.test.ts src/propai/realtor-workspace.ts src/propai/realtor-workspace.test.ts src/channels/registry.ts src/channels/registry.helpers.test.ts HANDOFF.md`
+    - Result: passed (all matched files correctly formatted).
+
 ### Stage 3 - Service identity bridge (daemon/runtime)
 
 1. Add Propaiclaw service names and labels

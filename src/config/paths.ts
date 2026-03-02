@@ -162,6 +162,25 @@ export function resolveStateDir(
   return newDir;
 }
 
+/**
+ * State directory for write operations.
+ *
+ * Unlike resolveStateDir(), this does not fall back to existing legacy dirs
+ * when no explicit override is set. It always returns the canonical namespace
+ * for the current mode.
+ */
+export function resolveStateDirForWrite(
+  env: NodeJS.ProcessEnv = process.env,
+  homedir: () => string = envHomedir(env),
+): string {
+  const effectiveHomedir = () => resolveRequiredHomeDir(env, homedir);
+  const override = resolveStateDirOverride(env);
+  if (override) {
+    return resolveUserPath(override, env, effectiveHomedir);
+  }
+  return newStateDir(effectiveHomedir, env);
+}
+
 function resolveUserPath(
   input: string,
   env: NodeJS.ProcessEnv = process.env,
@@ -191,7 +210,7 @@ export const STATE_DIR = resolveStateDir();
  */
 export function resolveCanonicalConfigPath(
   env: NodeJS.ProcessEnv = process.env,
-  stateDir: string = resolveStateDir(env, envHomedir(env)),
+  stateDir: string = resolveStateDirForWrite(env, envHomedir(env)),
 ): string {
   const override = resolveConfigPathOverride(env);
   if (override) {

@@ -43,7 +43,13 @@ import { findLegacyConfigIssues } from "./legacy.js";
 import { applyMergePatch } from "./merge-patch.js";
 import { normalizeExecSafeBinProfilesInConfig } from "./normalize-exec-safe-bin.js";
 import { normalizeConfigPaths } from "./normalize-paths.js";
-import { resolveConfigPath, resolveDefaultConfigCandidates, resolveStateDir } from "./paths.js";
+import {
+  resolveCanonicalConfigPath,
+  resolveConfigPath,
+  resolveDefaultConfigCandidates,
+  resolveStateDir,
+  resolveStateDirForWrite,
+} from "./paths.js";
 import { isBlockedObjectKey } from "./prototype-keys.js";
 import { applyConfigOverrides } from "./runtime-overrides.js";
 import type { OpenClawConfig, ConfigFileSnapshot, LegacyConfigIssue } from "./types.js";
@@ -678,6 +684,9 @@ export function createConfigIO(overrides: ConfigIoDeps = {}) {
     : resolveDefaultConfigCandidates(deps.env, deps.homedir);
   const configPath =
     candidatePaths.find((candidate) => deps.fs.existsSync(candidate)) ?? requestedConfigPath;
+  const writeConfigPath = deps.configPath
+    ? requestedConfigPath
+    : resolveCanonicalConfigPath(deps.env, resolveStateDirForWrite(deps.env, deps.homedir));
 
   function loadConfig(): OpenClawConfig {
     try {
@@ -1089,8 +1098,8 @@ export function createConfigIO(overrides: ConfigIoDeps = {}) {
     // per issue #6070) rather than the raw caller input.
     let cfgToWrite = validated.config;
     try {
-      if (deps.fs.existsSync(configPath)) {
-        const currentRaw = await deps.fs.promises.readFile(configPath, "utf-8");
+      if (deps.fs.existsSync(writeConfigPath)) {
+        const currentRaw = await deps.fs.promises.readFile(writeConfigPath, "utf-8");
         const parsedRes = parseConfigJson5(currentRaw, deps.json5);
         if (parsedRes.ok) {
           // Use env snapshot from when config was loaded (if available) to avoid
@@ -1108,7 +1117,23 @@ export function createConfigIO(overrides: ConfigIoDeps = {}) {
       // If reading the current file fails, write cfg as-is (no env restoration)
     }
 
-    const dir = path.dirname(configPath);
+    const writePathExists = deps.fs.existsSync(writeConfigPath);
+    let writePathRaw: string | null = null;
+    let writePathParsed: unknown = {};
+    if (writePathExists) {
+      try {
+        writePathRaw = deps.fs.readFileSync(writeConfigPath, "utf-8");
+        const parsedRes = parseConfigJson5(writePathRaw, deps.json5);
+        if (parsedRes.ok) {
+          writePathParsed = parsedRes.parsed;
+        }
+      } catch {
+        writePathRaw = null;
+        writePathParsed = {};
+      }
+    }
+
+    const dir = path.dirname(writeConfigPath);
     await deps.fs.promises.mkdir(dir, { recursive: true, mode: 0o700 });
     const outputConfigBase =
       envRefMap && changedPaths
@@ -1131,17 +1156,32 @@ export function createConfigIO(overrides: ConfigIoDeps = {}) {
     const stampedOutputConfig = stampConfigVersion(outputConfig);
     const json = JSON.stringify(stampedOutputConfig, null, 2).trimEnd().concat("\n");
     const nextHash = hashConfigRaw(json);
-    const previousHash = resolveConfigSnapshotHash(snapshot);
+    const writingBackToReadPath = path.resolve(writeConfigPath) === path.resolve(configPath);
+    const existsBeforeWrite = writingBackToReadPath ? snapshot.exists : writePathExists;
+    const previousHash = existsBeforeWrite
+      ? writingBackToReadPath
+        ? resolveConfigSnapshotHash(snapshot)
+        : hashConfigRaw(writePathRaw)
+      : null;
     const changedPathCount = changedPaths?.size;
-    const previousBytes =
-      typeof snapshot.raw === "string" ? Buffer.byteLength(snapshot.raw, "utf-8") : null;
+    const previousBytes = writingBackToReadPath
+      ? typeof snapshot.raw === "string"
+        ? Buffer.byteLength(snapshot.raw, "utf-8")
+        : null
+      : typeof writePathRaw === "string"
+        ? Buffer.byteLength(writePathRaw, "utf-8")
+        : null;
     const nextBytes = Buffer.byteLength(json, "utf-8");
-    const hasMetaBefore = hasConfigMeta(snapshot.parsed);
+    const hasMetaBefore = writingBackToReadPath
+      ? hasConfigMeta(snapshot.parsed)
+      : hasConfigMeta(writePathParsed);
     const hasMetaAfter = hasConfigMeta(stampedOutputConfig);
-    const gatewayModeBefore = resolveGatewayMode(snapshot.resolved);
+    const gatewayModeBefore = writingBackToReadPath
+      ? resolveGatewayMode(snapshot.resolved)
+      : resolveGatewayMode(writePathParsed);
     const gatewayModeAfter = resolveGatewayMode(stampedOutputConfig);
     const suspiciousReasons = resolveConfigWriteSuspiciousReasons({
-      existsBefore: snapshot.exists,
+      existsBefore: existsBeforeWrite,
       previousBytes,
       nextBytes,
       hasMetaBefore,
@@ -1149,7 +1189,7 @@ export function createConfigIO(overrides: ConfigIoDeps = {}) {
       gatewayModeAfter,
     });
     const logConfigOverwrite = () => {
-      if (!snapshot.exists) {
+      if (!existsBeforeWrite) {
         return;
       }
       const isVitest = deps.env.VITEST === "true";
@@ -1160,7 +1200,7 @@ export function createConfigIO(overrides: ConfigIoDeps = {}) {
       const changeSummary =
         typeof changedPathCount === "number" ? `, changedPaths=${changedPathCount}` : "";
       deps.logger.warn(
-        `Config overwrite: ${configPath} (sha256 ${previousHash ?? "unknown"} -> ${nextHash}, backup=${configPath}.bak${changeSummary})`,
+        `Config overwrite: ${writeConfigPath} (sha256 ${previousHash ?? "unknown"} -> ${nextHash}, backup=${writeConfigPath}.bak${changeSummary})`,
       );
     };
     const logConfigWriteAnomalies = () => {
@@ -1173,13 +1213,15 @@ export function createConfigIO(overrides: ConfigIoDeps = {}) {
       if (isVitest && !shouldLogInVitest) {
         return;
       }
-      deps.logger.warn(`Config write anomaly: ${configPath} (${suspiciousReasons.join(", ")})`);
+      deps.logger.warn(
+        `Config write anomaly: ${writeConfigPath} (${suspiciousReasons.join(", ")})`,
+      );
     };
     const auditRecordBase = {
       ts: new Date().toISOString(),
       source: "config-io" as const,
       event: "config.write" as const,
-      configPath,
+      configPath: writeConfigPath,
       pid: process.pid,
       ppid: process.ppid,
       cwd: process.cwd(),
@@ -1196,7 +1238,7 @@ export function createConfigIO(overrides: ConfigIoDeps = {}) {
         deps.env.OPENCLAW_WATCH_COMMAND.trim().length > 0
           ? deps.env.OPENCLAW_WATCH_COMMAND.trim()
           : null,
-      existsBefore: snapshot.exists,
+      existsBefore: existsBeforeWrite,
       previousHash: previousHash ?? null,
       nextHash,
       previousBytes,
@@ -1229,7 +1271,7 @@ export function createConfigIO(overrides: ConfigIoDeps = {}) {
 
     const tmp = path.join(
       dir,
-      `${path.basename(configPath)}.${process.pid}.${crypto.randomUUID()}.tmp`,
+      `${path.basename(writeConfigPath)}.${process.pid}.${crypto.randomUUID()}.tmp`,
     );
 
     try {
@@ -1238,21 +1280,21 @@ export function createConfigIO(overrides: ConfigIoDeps = {}) {
         mode: 0o600,
       });
 
-      if (deps.fs.existsSync(configPath)) {
-        await rotateConfigBackups(configPath, deps.fs.promises);
-        await deps.fs.promises.copyFile(configPath, `${configPath}.bak`).catch(() => {
+      if (deps.fs.existsSync(writeConfigPath)) {
+        await rotateConfigBackups(writeConfigPath, deps.fs.promises);
+        await deps.fs.promises.copyFile(writeConfigPath, `${writeConfigPath}.bak`).catch(() => {
           // best-effort
         });
       }
 
       try {
-        await deps.fs.promises.rename(tmp, configPath);
+        await deps.fs.promises.rename(tmp, writeConfigPath);
       } catch (err) {
         const code = (err as { code?: string }).code;
         // Windows doesn't reliably support atomic replace via rename when dest exists.
         if (code === "EPERM" || code === "EEXIST") {
-          await deps.fs.promises.copyFile(tmp, configPath);
-          await deps.fs.promises.chmod(configPath, 0o600).catch(() => {
+          await deps.fs.promises.copyFile(tmp, writeConfigPath);
+          await deps.fs.promises.chmod(writeConfigPath, 0o600).catch(() => {
             // best-effort
           });
           await deps.fs.promises.unlink(tmp).catch(() => {
