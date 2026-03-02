@@ -129,6 +129,24 @@ Stage 1 progress update (2026-03-02, pass 2)
   - Command: `pnpm exec oxfmt --check README.md src/propaiclaw-entry.ts src/propai/mapper.ts src/propai/mapper.test.ts src/propaiclaw-entry.messages.ts src/propaiclaw-entry.messages.test.ts`
     - Result: passed (all matched files correctly formatted).
 
+Stage 1 progress update (2026-03-02, pass 3)
+
+- done
+  - Completed an additional Stage 1 doc slice for Propaiclaw-facing skill guidance:
+    - `docs/tools/skills.md`
+  - Reworded user-facing brand references from OpenClaw to Propaiclaw in that document while preserving technical/runtime identifiers (for example `openclaw.json`, `metadata.openclaw`, and `~/.openclaw` paths).
+  - No runtime behavior changes.
+
+- pending
+  - One remaining mixed-brand doc string was detected in `docs/channels/index.md` (`Propaiclaw/OpenClaw`) during the broader scan.
+  - Runtime/internal compatibility identifiers containing `OPENCLAW_*` remain intentionally unchanged for Stage 2 compatibility policy.
+
+- verification
+  - Command: `pnpm exec vitest run src/propai/mapper.test.ts src/propai/packaging.test.ts src/propaiclaw-entry.messages.test.ts`
+    - Result: passed (`3` test files, `51` tests).
+  - Command: `pnpm exec oxfmt --check docs/tools/skills.md README.md src/propaiclaw-entry.ts src/propai/mapper.ts src/propai/mapper.test.ts src/propaiclaw-entry.messages.ts src/propaiclaw-entry.messages.test.ts`
+    - Result: passed (all matched files correctly formatted).
+
 ### Stage 2 - Config and state namespace bridge
 
 1. Introduce Propaiclaw canonical paths/envs
