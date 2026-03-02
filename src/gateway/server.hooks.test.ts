@@ -169,6 +169,20 @@ describe("gateway server hooks", () => {
       expect(propaiclawHeaderEvents.some((e) => e.includes("Propaiclaw header auth"))).toBe(true);
       drainSystemEvents(resolveMainKey());
 
+      const resHeaderPrecedence = await fetch(`http://127.0.0.1:${port}/hooks/wake`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-propaiclaw-token": "hook-secret",
+          "x-openclaw-token": "wrong-token",
+        },
+        body: JSON.stringify({ text: "Header precedence auth" }),
+      });
+      expect(resHeaderPrecedence.status).toBe(200);
+      const headerPrecedenceEvents = await waitForSystemEvent();
+      expect(headerPrecedenceEvents.some((e) => e.includes("Header precedence auth"))).toBe(true);
+      drainSystemEvents(resolveMainKey());
+
       const resGet = await fetch(`http://127.0.0.1:${port}/hooks/wake`, {
         method: "GET",
         headers: { Authorization: "Bearer hook-secret" },

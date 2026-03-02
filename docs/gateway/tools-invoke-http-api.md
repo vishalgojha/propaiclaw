@@ -83,8 +83,12 @@ You can customize this deny list via `gateway.tools`:
 
 To help group policies resolve context, you can optionally set:
 
-- `x-openclaw-message-channel: <channel>` (example: `slack`, `telegram`)
-- `x-openclaw-account-id: <accountId>` (when multiple accounts exist)
+- `x-propaiclaw-message-channel: <channel>` (preferred; example: `slack`, `telegram`)
+- `x-openclaw-message-channel: <channel>` (legacy alias)
+- `x-propaiclaw-account-id: <accountId>` (preferred; when multiple accounts exist)
+- `x-openclaw-account-id: <accountId>` (legacy alias)
+- `x-propaiclaw-message-to: <target>` / `x-propaiclaw-thread-id: <threadId>` (preferred; target/thread hints for message-aware tool flows)
+- `x-openclaw-message-to: <target>` / `x-openclaw-thread-id: <threadId>` (legacy aliases)
 
 ## Responses
 

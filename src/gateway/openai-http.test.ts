@@ -225,6 +225,45 @@ describe("OpenAI-compatible HTTP API (e2e)", () => {
 
       {
         mockAgentOnce([{ text: "hello" }]);
+        const res = await postChatCompletions(
+          port,
+          { model: "openclaw", messages: [{ role: "user", content: "hi" }] },
+          {
+            "x-openclaw-agent-id": "beta",
+            "x-openclaw-session-key": "agent:beta:openai:legacy",
+          },
+        );
+        expect(res.status).toBe(200);
+
+        const opts = (agentCommand.mock.calls[0] as unknown[] | undefined)?.[0];
+        expect((opts as { sessionKey?: string } | undefined)?.sessionKey).toBe(
+          "agent:beta:openai:legacy",
+        );
+        await res.text();
+      }
+
+      {
+        mockAgentOnce([{ text: "hello" }]);
+        const res = await postChatCompletions(
+          port,
+          { model: "openclaw", messages: [{ role: "user", content: "hi" }] },
+          {
+            "x-propaiclaw-agent-id": "beta",
+            "x-propaiclaw-session-key": "agent:beta:openai:propaiclaw",
+            "x-openclaw-session-key": "agent:beta:openai:legacy",
+          },
+        );
+        expect(res.status).toBe(200);
+
+        const opts = (agentCommand.mock.calls[0] as unknown[] | undefined)?.[0];
+        expect((opts as { sessionKey?: string } | undefined)?.sessionKey).toBe(
+          "agent:beta:openai:propaiclaw",
+        );
+        await res.text();
+      }
+
+      {
+        mockAgentOnce([{ text: "hello" }]);
         const res = await postChatCompletions(port, {
           user: "alice",
           model: "openclaw",

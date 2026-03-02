@@ -602,7 +602,7 @@ The Gateway multiplexes **WebSocket + HTTP** on a single port:
 This HTTP surface includes the Control UI and the canvas host:
 
 - Control UI (SPA assets) (default base path `/`)
-- Canvas host: `/__openclaw__/canvas/` and `/__openclaw__/a2ui/` (arbitrary HTML/JS; treat as untrusted content)
+- Canvas host: `/__propaiclaw__/canvas/` and `/__propaiclaw__/a2ui/` (preferred), plus legacy aliases `/__openclaw__/canvas/` and `/__openclaw__/a2ui/` (arbitrary HTML/JS; treat as untrusted content)
 
 If you load canvas content in a normal browser, treat it like any other untrusted web page:
 

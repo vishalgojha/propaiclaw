@@ -419,6 +419,28 @@ Stage 4 progress update (2026-03-02, pass 2)
   - Command: `swift --version`
     - Result: failed (`swift` is not installed in this Windows environment), so Swift/iOS/macOS tests were not run here.
 
+Stage 4 progress update (2026-03-02, pass 3)
+
+- done
+  - Expanded external transport compatibility coverage across remaining HTTP surfaces:
+    - OpenAI and OpenResponses HTTP tests now cover legacy `x-openclaw-session-key`, preferred `x-propaiclaw-session-key`, and precedence when both are present.
+    - Hooks HTTP integration test now verifies token-header precedence when both `x-propaiclaw-token` and `x-openclaw-token` are sent.
+    - `/tools/invoke` tests now cover `x-openclaw-message-channel` / `x-openclaw-account-id` legacy behavior and preferred `x-propaiclaw-*` precedence when both aliases are present.
+  - Updated gateway transport docs to reflect propaiclaw-first compatibility on remaining surfaces:
+    - `docs/gateway/tools-invoke-http-api.md` now documents preferred `x-propaiclaw-*` headers plus legacy aliases.
+    - Canvas transport docs now list preferred `__propaiclaw__` paths with legacy `__openclaw__` aliases in:
+      - `docs/gateway/network-model.md`
+      - `docs/gateway/security/index.md`
+
+- pending
+  - Optional docs follow-up: non-English mirror pages for propaiclaw-first transport examples.
+
+- verification
+  - Command: `pnpm exec vitest run src/gateway/openai-http.test.ts src/gateway/openresponses-http.test.ts src/gateway/tools-invoke-http.test.ts src/gateway/server.hooks.test.ts`
+    - Result: passed (`4` test files, `31` tests).
+  - Command: `pnpm exec oxfmt --check src/gateway/openai-http.test.ts src/gateway/openresponses-http.test.ts src/gateway/tools-invoke-http.test.ts src/gateway/server.hooks.test.ts docs/gateway/tools-invoke-http-api.md docs/gateway/configuration-reference.md docs/gateway/network-model.md docs/gateway/security/index.md HANDOFF.md`
+    - Result: passed (all matched files correctly formatted).
+
 ### Stage 5 - Plugin SDK and extension contract bridge
 
 1. SDK alias strategy

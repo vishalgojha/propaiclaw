@@ -179,6 +179,55 @@ describe("OpenResponses HTTP API (e2e)", () => {
       await ensureResponseConsumed(resPropaiclawHeader);
 
       mockAgentOnce([{ text: "hello" }]);
+      const resPropaiclawSession = await postResponses(
+        port,
+        { model: "openclaw", input: "hi" },
+        {
+          "x-propaiclaw-agent-id": "beta",
+          "x-propaiclaw-session-key": "agent:beta:openresponses:custom",
+        },
+      );
+      expect(resPropaiclawSession.status).toBe(200);
+      const optsPropaiclawSession = (agentCommand.mock.calls[0] as unknown[] | undefined)?.[0];
+      expect((optsPropaiclawSession as { sessionKey?: string } | undefined)?.sessionKey).toBe(
+        "agent:beta:openresponses:custom",
+      );
+      await ensureResponseConsumed(resPropaiclawSession);
+
+      mockAgentOnce([{ text: "hello" }]);
+      const resLegacySession = await postResponses(
+        port,
+        { model: "openclaw", input: "hi" },
+        {
+          "x-openclaw-agent-id": "beta",
+          "x-openclaw-session-key": "agent:beta:openresponses:legacy",
+        },
+      );
+      expect(resLegacySession.status).toBe(200);
+      const optsLegacySession = (agentCommand.mock.calls[0] as unknown[] | undefined)?.[0];
+      expect((optsLegacySession as { sessionKey?: string } | undefined)?.sessionKey).toBe(
+        "agent:beta:openresponses:legacy",
+      );
+      await ensureResponseConsumed(resLegacySession);
+
+      mockAgentOnce([{ text: "hello" }]);
+      const resSessionPrecedence = await postResponses(
+        port,
+        { model: "openclaw", input: "hi" },
+        {
+          "x-propaiclaw-agent-id": "beta",
+          "x-propaiclaw-session-key": "agent:beta:openresponses:propaiclaw",
+          "x-openclaw-session-key": "agent:beta:openresponses:legacy",
+        },
+      );
+      expect(resSessionPrecedence.status).toBe(200);
+      const optsSessionPrecedence = (agentCommand.mock.calls[0] as unknown[] | undefined)?.[0];
+      expect((optsSessionPrecedence as { sessionKey?: string } | undefined)?.sessionKey).toBe(
+        "agent:beta:openresponses:propaiclaw",
+      );
+      await ensureResponseConsumed(resSessionPrecedence);
+
+      mockAgentOnce([{ text: "hello" }]);
       const resModel = await postResponses(port, { model: "openclaw:beta", input: "hi" });
       expect(resModel.status).toBe(200);
       const optsModel = (agentCommand.mock.calls[0] as unknown[] | undefined)?.[0];

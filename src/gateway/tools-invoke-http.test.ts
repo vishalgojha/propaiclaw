@@ -436,6 +436,46 @@ describe("POST /tools/invoke", () => {
     });
   });
 
+  it("propagates legacy x-openclaw message channel/account headers into tool context", async () => {
+    allowAgentsListForMain();
+
+    const res = await invokeAgentsList({
+      port: sharedPort,
+      headers: {
+        ...gatewayAuthHeaders(),
+        "x-openclaw-message-channel": "slack",
+        "x-openclaw-account-id": "acct-legacy",
+      },
+      sessionKey: "main",
+    });
+
+    expect(res.status).toBe(200);
+    expect(lastCreateOpenClawToolsContext?.agentChannel).toBe("slack");
+    expect(lastCreateOpenClawToolsContext?.agentAccountId).toBe("acct-legacy");
+    await res.json();
+  });
+
+  it("prefers x-propaiclaw message channel/account headers over legacy aliases", async () => {
+    allowAgentsListForMain();
+
+    const res = await invokeAgentsList({
+      port: sharedPort,
+      headers: {
+        ...gatewayAuthHeaders(),
+        "x-propaiclaw-message-channel": "discord",
+        "x-openclaw-message-channel": "slack",
+        "x-propaiclaw-account-id": "acct-propaiclaw",
+        "x-openclaw-account-id": "acct-legacy",
+      },
+      sessionKey: "main",
+    });
+
+    expect(res.status).toBe(200);
+    expect(lastCreateOpenClawToolsContext?.agentChannel).toBe("discord");
+    expect(lastCreateOpenClawToolsContext?.agentAccountId).toBe("acct-propaiclaw");
+    await res.json();
+  });
+
   it("denies sessions_send via HTTP gateway", async () => {
     cfg = {
       ...cfg,
