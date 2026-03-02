@@ -1,6 +1,11 @@
 import { randomBytes } from "node:crypto";
 
 export const CANVAS_CAPABILITY_PATH_PREFIX = "/__openclaw__/cap";
+const PROPAICLAW_CANVAS_CAPABILITY_PATH_PREFIX = "/__propaiclaw__/cap";
+export const CANVAS_CAPABILITY_PATH_PREFIX_ALIASES = [
+  CANVAS_CAPABILITY_PATH_PREFIX,
+  PROPAICLAW_CANVAS_CAPABILITY_PATH_PREFIX,
+] as const;
 export const CANVAS_CAPABILITY_QUERY_PARAM = "oc_cap";
 export const CANVAS_CAPABILITY_TTL_MS = 10 * 60_000;
 
@@ -15,6 +20,15 @@ export type NormalizedCanvasScopedUrl = {
 function normalizeCapability(raw: string | null | undefined): string | undefined {
   const trimmed = raw?.trim();
   return trimmed ? trimmed : undefined;
+}
+
+function resolveCapabilityPathPrefix(pathname: string): string | undefined {
+  for (const prefix of CANVAS_CAPABILITY_PATH_PREFIX_ALIASES) {
+    if (pathname.startsWith(`${prefix}/`)) {
+      return prefix;
+    }
+  }
+  return undefined;
 }
 
 export function mintCanvasCapabilityToken(): string {
@@ -41,13 +55,14 @@ export function buildCanvasScopedHostUrl(baseUrl: string, capability: string): s
 
 export function normalizeCanvasScopedUrl(rawUrl: string): NormalizedCanvasScopedUrl {
   const url = new URL(rawUrl, "http://localhost");
-  const prefix = `${CANVAS_CAPABILITY_PATH_PREFIX}/`;
+  const matchedPrefix = resolveCapabilityPathPrefix(url.pathname);
   let scopedPath = false;
   let malformedScopedPath = false;
   let capabilityFromPath: string | undefined;
   let rewrittenUrl: string | undefined;
 
-  if (url.pathname.startsWith(prefix)) {
+  if (matchedPrefix) {
+    const prefix = `${matchedPrefix}/`;
     scopedPath = true;
     const remainder = url.pathname.slice(prefix.length);
     const slashIndex = remainder.indexOf("/");

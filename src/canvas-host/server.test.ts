@@ -7,7 +7,15 @@ import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { WebSocket } from "ws";
 import { rawDataToString } from "../infra/ws.js";
 import { defaultRuntime } from "../runtime.js";
-import { A2UI_PATH, CANVAS_HOST_PATH, CANVAS_WS_PATH, injectCanvasLiveReload } from "./a2ui.js";
+import {
+  A2UI_PATH,
+  A2UI_PATH_ALIASES,
+  CANVAS_HOST_PATH,
+  CANVAS_HOST_PATH_ALIASES,
+  CANVAS_WS_PATH,
+  CANVAS_WS_PATH_ALIASES,
+  injectCanvasLiveReload,
+} from "./a2ui.js";
 import { createCanvasHostHandler, startCanvasHost } from "./server.js";
 
 const chokidarMockState = vi.hoisted(() => ({
@@ -21,6 +29,11 @@ const chokidarMockState = vi.hoisted(() => ({
 const CANVAS_WS_OPEN_TIMEOUT_MS = 2_000;
 const CANVAS_RELOAD_TIMEOUT_MS = 4_000;
 const CANVAS_RELOAD_TEST_TIMEOUT_MS = 12_000;
+const PROPAICLAW_A2UI_PATH = A2UI_PATH_ALIASES.find((path) => path !== A2UI_PATH) ?? A2UI_PATH;
+const PROPAICLAW_CANVAS_HOST_PATH =
+  CANVAS_HOST_PATH_ALIASES.find((path) => path !== CANVAS_HOST_PATH) ?? CANVAS_HOST_PATH;
+const PROPAICLAW_CANVAS_WS_PATH =
+  CANVAS_WS_PATH_ALIASES.find((path) => path !== CANVAS_WS_PATH) ?? CANVAS_WS_PATH;
 
 // Tests: avoid chokidar polling/fsevents; trigger "all" events manually.
 vi.mock("chokidar", () => {
@@ -99,6 +112,42 @@ describe("canvas host", () => {
       expect(html).toContain("Interactive test page");
       expect(html).toContain("openclawSendUserAction");
       expect(html).toContain(CANVAS_WS_PATH);
+    } finally {
+      await server.close();
+    }
+  });
+
+  it("accepts propaiclaw canvas aliases for host and websocket paths", async () => {
+    const dir = await createCaseDir();
+
+    const server = await startCanvasHost({
+      runtime: quietRuntime,
+      rootDir: dir,
+      port: 0,
+      listenHost: "127.0.0.1",
+      allowInTests: true,
+    });
+
+    try {
+      const res = await fetch(`http://127.0.0.1:${server.port}${PROPAICLAW_CANVAS_HOST_PATH}/`);
+      expect(res.status).toBe(200);
+
+      const ws = new WebSocket(`ws://127.0.0.1:${server.port}${PROPAICLAW_CANVAS_WS_PATH}`);
+      await new Promise<void>((resolve, reject) => {
+        const timer = setTimeout(
+          () => reject(new Error("ws open timeout")),
+          CANVAS_WS_OPEN_TIMEOUT_MS,
+        );
+        ws.on("open", () => {
+          clearTimeout(timer);
+          ws.close();
+          resolve();
+        });
+        ws.on("error", (err) => {
+          clearTimeout(timer);
+          reject(err);
+        });
+      });
     } finally {
       await server.close();
     }
@@ -268,6 +317,7 @@ describe("canvas host", () => {
     const bundlePath = path.join(a2uiRoot, "a2ui.bundle.js");
     const linkName = `test-link-${Date.now()}-${Math.random().toString(16).slice(2)}.txt`;
     const linkPath = path.join(a2uiRoot, linkName);
+    let symlinkSupported = true;
     let createdBundle = false;
     let createdLink = false;
 
@@ -278,8 +328,17 @@ describe("canvas host", () => {
       createdBundle = true;
     }
 
-    await fs.symlink(path.join(process.cwd(), "package.json"), linkPath);
-    createdLink = true;
+    try {
+      await fs.symlink(path.join(process.cwd(), "package.json"), linkPath);
+      createdLink = true;
+    } catch (err) {
+      const code = err && typeof err === "object" ? (err as { code?: string }).code : undefined;
+      if (code === "EPERM") {
+        symlinkSupported = false;
+      } else {
+        throw err;
+      }
+    }
 
     const server = await startCanvasHost({
       runtime: quietRuntime,
@@ -296,20 +355,29 @@ describe("canvas host", () => {
       expect(html).toContain("openclaw-a2ui-host");
       expect(html).toContain("openclawCanvasA2UIAction");
 
+      const aliasRes = await fetch(`http://127.0.0.1:${server.port}${PROPAICLAW_A2UI_PATH}/`);
+      expect(aliasRes.status).toBe(200);
+
       const bundleRes = await fetch(
         `http://127.0.0.1:${server.port}/__openclaw__/a2ui/a2ui.bundle.js`,
       );
       const js = await bundleRes.text();
       expect(bundleRes.status).toBe(200);
       expect(js).toContain("openclawA2UI");
+      const aliasBundleRes = await fetch(
+        `http://127.0.0.1:${server.port}${PROPAICLAW_A2UI_PATH}/a2ui.bundle.js`,
+      );
+      expect(aliasBundleRes.status).toBe(200);
       const traversalRes = await fetch(
         `http://127.0.0.1:${server.port}${A2UI_PATH}/%2e%2e%2fpackage.json`,
       );
       expect(traversalRes.status).toBe(404);
       expect(await traversalRes.text()).toBe("not found");
-      const symlinkRes = await fetch(`http://127.0.0.1:${server.port}${A2UI_PATH}/${linkName}`);
-      expect(symlinkRes.status).toBe(404);
-      expect(await symlinkRes.text()).toBe("not found");
+      if (symlinkSupported) {
+        const symlinkRes = await fetch(`http://127.0.0.1:${server.port}${A2UI_PATH}/${linkName}`);
+        expect(symlinkRes.status).toBe(404);
+        expect(await symlinkRes.text()).toBe("not found");
+      }
     } finally {
       await server.close();
       if (createdLink) {

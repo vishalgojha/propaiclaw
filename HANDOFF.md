@@ -391,6 +391,34 @@ Stage 4 progress update (2026-03-02, pass 1)
   - Command: `pnpm exec oxfmt --check docs/automation/webhook.md docs/gateway/configuration-reference.md docs/gateway/openai-http-api.md docs/gateway/openresponses-http-api.md src/gateway/hooks.ts src/gateway/http-utils.ts src/gateway/hooks.header-alias.test.ts src/gateway/openai-http.test.ts src/gateway/openresponses-http.test.ts src/gateway/server-http.ts src/gateway/server.hooks.test.ts src/gateway/tools-invoke-http.ts src/gateway/tools-invoke-http.test.ts`
     - Result: passed (all matched files correctly formatted).
 
+Stage 4 progress update (2026-03-02, pass 2)
+
+- done
+  - Added deep-link dual-scheme compatibility for transition:
+    - `DeepLinkParser` now accepts both `openclaw://` and `propaiclaw://`.
+    - iOS and macOS canvas WebView delegates now intercept both schemes.
+    - iOS and macOS app URL scheme registration now includes `propaiclaw` alongside `openclaw`.
+  - Added canvas path alias compatibility while keeping canonical output unchanged:
+    - A2UI/canvas/ws request matching now accepts both `__openclaw__` and `__propaiclaw__` path prefixes.
+    - Scoped capability URL normalization now accepts both `/__openclaw__/cap/...` and `/__propaiclaw__/cap/...`.
+    - Scoped URL generation remains canonical on `/__openclaw__/cap/...` to avoid changing existing output contracts.
+  - Added regression coverage for Stage 4.2 aliasing:
+    - `src/gateway/canvas-capability.alias.test.ts` (new).
+    - Extended `src/canvas-host/server.test.ts` and `src/gateway/server.canvas-auth.test.ts` for `propaiclaw` alias routes.
+    - Added `propaiclaw://` deep-link parsing tests in iOS/OpenClawKit test suites.
+
+- pending
+  - Stage 4.3 broader transport coverage across remaining compatibility surfaces.
+  - Optional docs follow-up: non-English mirror pages for propaiclaw-first header examples.
+
+- verification
+  - Command: `pnpm exec vitest run src/canvas-host/server.test.ts src/gateway/server.canvas-auth.test.ts src/gateway/canvas-capability.alias.test.ts src/gateway/server-methods/nodes.canvas-capability-refresh.test.ts`
+    - Result: passed (`4` test files, `16` tests).
+  - Command: `pnpm exec oxfmt --check src/canvas-host/a2ui.ts src/canvas-host/server.ts src/canvas-host/server.test.ts src/gateway/canvas-capability.ts src/gateway/canvas-capability.alias.test.ts src/gateway/server-http.ts src/gateway/server.canvas-auth.test.ts HANDOFF.md`
+    - Result: passed (all matched files correctly formatted).
+  - Command: `swift --version`
+    - Result: failed (`swift` is not installed in this Windows environment), so Swift/iOS/macOS tests were not run here.
+
 ### Stage 5 - Plugin SDK and extension contract bridge
 
 1. SDK alias strategy

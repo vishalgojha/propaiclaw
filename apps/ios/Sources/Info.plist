@@ -28,6 +28,7 @@
 			<key>CFBundleURLSchemes</key>
 			<array>
 				<string>openclaw</string>
+				<string>propaiclaw</string>
 			</array>
 		</dict>
 	</array>

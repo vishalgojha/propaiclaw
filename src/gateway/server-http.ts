@@ -9,10 +9,11 @@ import type { TlsOptions } from "node:tls";
 import type { WebSocketServer } from "ws";
 import { resolveAgentAvatar } from "../agents/identity-avatar.js";
 import {
-  A2UI_PATH,
-  CANVAS_HOST_PATH,
-  CANVAS_WS_PATH,
+  A2UI_PATH_ALIASES,
+  CANVAS_HOST_PATH_ALIASES,
+  CANVAS_WS_PATH_ALIASES,
   handleA2uiHttpRequest,
+  resolveAliasBasePath,
 } from "../canvas-host/a2ui.js";
 import type { CanvasHostHandler } from "../canvas-host/server.js";
 import { loadConfig } from "../config/config.js";
@@ -82,11 +83,9 @@ function sendJson(res: ServerResponse, status: number, body: unknown) {
 
 function isCanvasPath(pathname: string): boolean {
   return (
-    pathname === A2UI_PATH ||
-    pathname.startsWith(`${A2UI_PATH}/`) ||
-    pathname === CANVAS_HOST_PATH ||
-    pathname.startsWith(`${CANVAS_HOST_PATH}/`) ||
-    pathname === CANVAS_WS_PATH
+    resolveAliasBasePath(pathname, A2UI_PATH_ALIASES) !== undefined ||
+    resolveAliasBasePath(pathname, CANVAS_HOST_PATH_ALIASES) !== undefined ||
+    CANVAS_WS_PATH_ALIASES.some((candidate) => pathname === candidate)
   );
 }
 
@@ -652,7 +651,7 @@ export function attachGatewayUpgradeHandler(opts: {
       }
       if (canvasHost) {
         const url = new URL(req.url ?? "/", "http://localhost");
-        if (url.pathname === CANVAS_WS_PATH) {
+        if (CANVAS_WS_PATH_ALIASES.some((candidate) => url.pathname === candidate)) {
           const configSnapshot = loadConfig();
           const trustedProxies = configSnapshot.gateway?.trustedProxies ?? [];
           const allowRealIpFallback = configSnapshot.gateway?.allowRealIpFallback === true;

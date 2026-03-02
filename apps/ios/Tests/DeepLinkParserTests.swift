@@ -21,6 +21,19 @@ import Testing
             key: nil)))
     }
 
+    @Test func parseAcceptsPropaiclawScheme() {
+        let url = URL(string: "propaiclaw://agent?message=Hello")!
+        #expect(DeepLinkParser.parse(url) == .agent(.init(
+            message: "Hello",
+            sessionKey: nil,
+            thinking: nil,
+            deliver: false,
+            to: nil,
+            channel: nil,
+            timeoutSeconds: nil,
+            key: nil)))
+    }
+
     @Test func parseRejectsNonOpenClawScheme() {
         let url = URL(string: "https://example.com/agent?message=hi")!
         #expect(DeepLinkParser.parse(url) == nil)

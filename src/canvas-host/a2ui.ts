@@ -11,6 +11,30 @@ export const CANVAS_HOST_PATH = "/__openclaw__/canvas";
 
 export const CANVAS_WS_PATH = "/__openclaw__/ws";
 
+const PROPAICLAW_A2UI_PATH = "/__propaiclaw__/a2ui";
+const PROPAICLAW_CANVAS_HOST_PATH = "/__propaiclaw__/canvas";
+const PROPAICLAW_CANVAS_WS_PATH = "/__propaiclaw__/ws";
+
+export const A2UI_PATH_ALIASES = [A2UI_PATH, PROPAICLAW_A2UI_PATH] as const;
+export const CANVAS_HOST_PATH_ALIASES = [CANVAS_HOST_PATH, PROPAICLAW_CANVAS_HOST_PATH] as const;
+export const CANVAS_WS_PATH_ALIASES = [CANVAS_WS_PATH, PROPAICLAW_CANVAS_WS_PATH] as const;
+
+export function pathMatchesPathOrSubpath(pathname: string, basePath: string): boolean {
+  return pathname === basePath || pathname.startsWith(`${basePath}/`);
+}
+
+export function resolveAliasBasePath(
+  pathname: string,
+  basePaths: readonly string[],
+): string | undefined {
+  for (const basePath of basePaths) {
+    if (pathMatchesPathOrSubpath(pathname, basePath)) {
+      return basePath;
+    }
+  }
+  return undefined;
+}
+
 let cachedA2uiRootReal: string | null | undefined;
 let resolvingA2uiRoot: Promise<string | null> | null = null;
 let cachedA2uiResolvedAtMs = 0;
@@ -149,8 +173,7 @@ export async function handleA2uiHttpRequest(
   }
 
   const url = new URL(urlRaw, "http://localhost");
-  const basePath =
-    url.pathname === A2UI_PATH || url.pathname.startsWith(`${A2UI_PATH}/`) ? A2UI_PATH : undefined;
+  const basePath = resolveAliasBasePath(url.pathname, A2UI_PATH_ALIASES);
   if (!basePath) {
     return false;
   }

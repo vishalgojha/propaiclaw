@@ -1,16 +1,34 @@
 import { describe, expect, test } from "vitest";
 import { WebSocket, WebSocketServer } from "ws";
-import { A2UI_PATH, CANVAS_HOST_PATH, CANVAS_WS_PATH } from "../canvas-host/a2ui.js";
+import {
+  A2UI_PATH,
+  A2UI_PATH_ALIASES,
+  CANVAS_HOST_PATH,
+  CANVAS_HOST_PATH_ALIASES,
+  CANVAS_WS_PATH,
+  CANVAS_WS_PATH_ALIASES,
+} from "../canvas-host/a2ui.js";
 import type { CanvasHostHandler } from "../canvas-host/server.js";
 import { createAuthRateLimiter } from "./auth-rate-limit.js";
 import type { ResolvedGatewayAuth } from "./auth.js";
-import { CANVAS_CAPABILITY_PATH_PREFIX } from "./canvas-capability.js";
+import {
+  CANVAS_CAPABILITY_PATH_PREFIX,
+  CANVAS_CAPABILITY_PATH_PREFIX_ALIASES,
+} from "./canvas-capability.js";
 import { attachGatewayUpgradeHandler, createGatewayHttpServer } from "./server-http.js";
 import type { GatewayWsClient } from "./server/ws-types.js";
 import { withTempConfig } from "./test-temp-config.js";
 
 const WS_REJECT_TIMEOUT_MS = 2_000;
 const WS_CONNECT_TIMEOUT_MS = 2_000;
+const PROPAICLAW_A2UI_PATH = A2UI_PATH_ALIASES.find((path) => path !== A2UI_PATH) ?? A2UI_PATH;
+const PROPAICLAW_CANVAS_HOST_PATH =
+  CANVAS_HOST_PATH_ALIASES.find((path) => path !== CANVAS_HOST_PATH) ?? CANVAS_HOST_PATH;
+const PROPAICLAW_CANVAS_WS_PATH =
+  CANVAS_WS_PATH_ALIASES.find((path) => path !== CANVAS_WS_PATH) ?? CANVAS_WS_PATH;
+const PROPAICLAW_CANVAS_CAPABILITY_PATH_PREFIX =
+  CANVAS_CAPABILITY_PATH_PREFIX_ALIASES.find((path) => path !== CANVAS_CAPABILITY_PATH_PREFIX) ??
+  CANVAS_CAPABILITY_PATH_PREFIX;
 
 async function listen(
   server: ReturnType<typeof createGatewayHttpServer>,
@@ -99,13 +117,20 @@ function makeWsClient(params: {
   };
 }
 
-function scopedCanvasPath(capability: string, path: string): string {
-  return `${CANVAS_CAPABILITY_PATH_PREFIX}/${encodeURIComponent(capability)}${path}`;
+function scopedCanvasPath(
+  capability: string,
+  path: string,
+  prefix = CANVAS_CAPABILITY_PATH_PREFIX,
+): string {
+  return `${prefix}/${encodeURIComponent(capability)}${path}`;
 }
 
 const allowCanvasHostHttp: CanvasHostHandler["handleHttpRequest"] = async (req, res) => {
   const url = new URL(req.url ?? "/", "http://localhost");
-  if (url.pathname !== CANVAS_HOST_PATH && !url.pathname.startsWith(`${CANVAS_HOST_PATH}/`)) {
+  const isCanvasHostPath = CANVAS_HOST_PATH_ALIASES.some(
+    (candidate) => url.pathname === candidate || url.pathname.startsWith(`${candidate}/`),
+  );
+  if (!isCanvasHostPath) {
     return false;
   }
   res.statusCode = 200;
@@ -205,6 +230,16 @@ describe("gateway canvas host auth", () => {
           const activeNodeCapability = "active-node";
           const activeCanvasPath = scopedCanvasPath(activeNodeCapability, `${CANVAS_HOST_PATH}/`);
           const activeWsPath = scopedCanvasPath(activeNodeCapability, CANVAS_WS_PATH);
+          const activeCanvasAliasPath = scopedCanvasPath(
+            activeNodeCapability,
+            `${PROPAICLAW_CANVAS_HOST_PATH}/`,
+            PROPAICLAW_CANVAS_CAPABILITY_PATH_PREFIX,
+          );
+          const activeWsAliasPath = scopedCanvasPath(
+            activeNodeCapability,
+            PROPAICLAW_CANVAS_WS_PATH,
+            PROPAICLAW_CANVAS_CAPABILITY_PATH_PREFIX,
+          );
 
           const unauthCanvas = await fetch(`http://${host}:${listener.port}${CANVAS_HOST_PATH}/`);
           expect(unauthCanvas.status).toBe(401);
@@ -213,6 +248,10 @@ describe("gateway canvas host auth", () => {
             `http://${host}:${listener.port}${CANVAS_CAPABILITY_PATH_PREFIX}/broken`,
           );
           expect(malformedScoped.status).toBe(401);
+          const malformedScopedAlias = await fetch(
+            `http://${host}:${listener.port}${PROPAICLAW_CANVAS_CAPABILITY_PATH_PREFIX}/broken`,
+          );
+          expect(malformedScopedAlias.status).toBe(401);
 
           clients.add(
             makeWsClient({
@@ -264,8 +303,18 @@ describe("gateway canvas host auth", () => {
             `http://${host}:${listener.port}${scopedCanvasPath(activeNodeCapability, `${A2UI_PATH}/`)}`,
           );
           expect(scopedA2ui.status).toBe(200);
+          const scopedA2uiAlias = await fetch(
+            `http://${host}:${listener.port}${scopedCanvasPath(activeNodeCapability, `${PROPAICLAW_A2UI_PATH}/`, PROPAICLAW_CANVAS_CAPABILITY_PATH_PREFIX)}`,
+          );
+          expect(scopedA2uiAlias.status).toBe(200);
+
+          const scopedCanvasAlias = await fetch(
+            `http://${host}:${listener.port}${activeCanvasAliasPath}`,
+          );
+          expect(scopedCanvasAlias.status).toBe(200);
 
           await expectWsConnected(`ws://${host}:${listener.port}${activeWsPath}`);
+          await expectWsConnected(`ws://${host}:${listener.port}${activeWsAliasPath}`);
 
           clients.delete(activeNodeClient);
 

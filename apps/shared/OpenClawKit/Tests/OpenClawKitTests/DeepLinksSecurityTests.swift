@@ -23,6 +23,14 @@ import Testing
                 .init(host: "127.0.0.1", port: 18789, tls: false, token: "abc", password: nil)))
     }
 
+    @Test func gatewayDeepLinkAllowsLoopbackWsForPropaiclawScheme() {
+        let url = URL(
+            string: "propaiclaw://gateway?host=127.0.0.1&port=18789&tls=0&token=abc")!
+        #expect(
+            DeepLinkParser.parse(url) == .gateway(
+                .init(host: "127.0.0.1", port: 18789, tls: false, token: "abc", password: nil)))
+    }
+
     @Test func setupCodeRejectsInsecureNonLoopbackWs() {
         let payload = #"{"url":"ws://attacker.example:18789","token":"tok"}"#
         let encoded = Data(payload.utf8)

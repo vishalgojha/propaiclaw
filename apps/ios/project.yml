@@ -92,6 +92,7 @@ targets:
           - CFBundleURLName: ai.openclaw.ios
             CFBundleURLSchemes:
               - openclaw
+              - propaiclaw
         CFBundleShortVersionString: "2026.2.27"
         CFBundleVersion: "20260227"
         UILaunchScreen: {}

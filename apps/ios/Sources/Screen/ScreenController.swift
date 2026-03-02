@@ -11,7 +11,7 @@ final class ScreenController {
     var urlString: String = ""
     var errorText: String?
 
-    /// Callback invoked when an openclaw:// deep link is tapped in the canvas
+    /// Callback invoked when an app deep link is tapped in the canvas.
     var onDeepLink: ((URL) -> Void)?
 
     /// Callback invoked when the user clicks an A2UI action (e.g. button) inside the canvas web UI.
