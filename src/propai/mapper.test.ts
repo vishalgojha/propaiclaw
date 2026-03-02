@@ -62,6 +62,63 @@ describe("mapPropAiArgs", () => {
     expect(route.kind).toBe("error");
   });
 
+  it("maps channels list", () => {
+    const route = mapPropAiArgs(["channels", "list", "--json"]);
+    expect(route).toEqual({
+      kind: "single",
+      debug: false,
+      commandLabel: "channels-list",
+      args: ["channels", "list", "--json"],
+    });
+  });
+
+  it("maps channels add to whatsapp account shortcut", () => {
+    const route = mapPropAiArgs(["channels", "add", "team2", "--name", "Team Phone 2"]);
+    expect(route).toEqual({
+      kind: "single",
+      debug: false,
+      commandLabel: "channels-add",
+      args: ["channels", "add", "--channel", "whatsapp", "--account", "team2", "--name", "Team Phone 2"],
+    });
+  });
+
+  it("errors when channels add account id is missing", () => {
+    const route = mapPropAiArgs(["channels", "add"]);
+    expect(route).toEqual({
+      kind: "error",
+      debug: false,
+      message: "Missing account id. Usage: propai channels add <account-id> [options]",
+    });
+  });
+
+  it("maps channels remove to whatsapp account shortcut", () => {
+    const route = mapPropAiArgs(["channels", "remove", "team2"]);
+    expect(route).toEqual({
+      kind: "single",
+      debug: false,
+      commandLabel: "channels-remove",
+      args: ["channels", "remove", "--channel", "whatsapp", "--account", "team2"],
+    });
+  });
+
+  it("errors when channels remove account id is missing", () => {
+    const route = mapPropAiArgs(["channels", "remove"]);
+    expect(route).toEqual({
+      kind: "error",
+      debug: false,
+      message: "Missing account id. Usage: propai channels remove <account-id>",
+    });
+  });
+
+  it("errors on unsupported channels subcommand", () => {
+    const route = mapPropAiArgs(["channels", "status"]);
+    expect(route).toEqual({
+      kind: "error",
+      debug: false,
+      message: "Unsupported channels command. Use: propai channels <list|add|remove>",
+    });
+  });
+
   it("maps lead follow-up to message send", () => {
     const route = mapPropAiArgs(["lead", "follow-up", "+15555550123", "Checking in"]);
     expect(route).toEqual({
@@ -253,6 +310,8 @@ describe("propai help and failures", () => {
     expect(help).toContain("propai sync");
     expect(help).toContain("propai lead follow-up");
     expect(help).toContain("propai schedule daily");
+    expect(help).toContain("propai channels add");
+    expect(help).toContain("propai channels list");
     expect(help).toContain("--admin");
   });
 

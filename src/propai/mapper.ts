@@ -45,6 +45,9 @@ export function renderPropAiHelp(): string {
     "  propai setup",
     "  propai sync",
     "  propai connect <app>",
+    "  propai channels list",
+    "  propai channels add <account-id> [options]",
+    "  propai channels remove <account-id>",
     '  propai lead follow-up <target> "<message>"',
     '  propai schedule daily "<message>" --to <target>',
     "  propai history [target]",
@@ -55,6 +58,9 @@ export function renderPropAiHelp(): string {
     "  propai start",
     "  propai sync",
     "  propai connect whatsapp",
+    "  propai channels add team2 --name \"Team Phone 2\"",
+    "  propai channels list",
+    "  propai channels remove team2",
     '  propai lead follow-up +15555550123 "Just checking in on 123 Main St!"',
     '  propai schedule daily "Good morning check-in" --to +15555550123',
     "  propai history +15555550123 --limit 30",
@@ -275,6 +281,59 @@ export function mapPropAiArgs(argv: string[], now: Date = new Date()): PropAiCom
     };
   }
 
+  if (primary === "channels") {
+    if (secondary === "list") {
+      return {
+        kind: "single",
+        debug,
+        commandLabel: "channels-list",
+        args: ["channels", "list", ...rest],
+      };
+    }
+
+    if (secondary === "add") {
+      const accountId = rest[0]?.trim();
+      const passthrough = rest.slice(1);
+      if (!accountId) {
+        return {
+          kind: "error",
+          debug,
+          message: "Missing account id. Usage: propai channels add <account-id> [options]",
+        };
+      }
+      return {
+        kind: "single",
+        debug,
+        commandLabel: "channels-add",
+        args: ["channels", "add", "--channel", "whatsapp", "--account", accountId, ...passthrough],
+      };
+    }
+
+    if (secondary === "remove") {
+      const accountId = rest[0]?.trim();
+      const passthrough = rest.slice(1);
+      if (!accountId) {
+        return {
+          kind: "error",
+          debug,
+          message: "Missing account id. Usage: propai channels remove <account-id>",
+        };
+      }
+      return {
+        kind: "single",
+        debug,
+        commandLabel: "channels-remove",
+        args: ["channels", "remove", "--channel", "whatsapp", "--account", accountId, ...passthrough],
+      };
+    }
+
+    return {
+      kind: "error",
+      debug,
+      message: "Unsupported channels command. Use: propai channels <list|add|remove>",
+    };
+  }
+
   if (primary === "lead") {
     if (secondary !== "follow-up") {
       return {
@@ -407,6 +466,12 @@ export function renderFriendlyFailure(commandLabel: string): string {
       return "PropAi Sync setup could not complete. Re-run with `propai sync --debug` for raw diagnostics.";
     case "connect":
       return "PropAi Sync could not connect that app. Confirm your AI engine is running with `propai status`, then retry.";
+    case "channels-add":
+      return "PropAi Sync could not add the WhatsApp team channel. Re-run with `--debug` and verify your account id is valid.";
+    case "channels-list":
+      return "PropAi Sync could not list channel accounts. Confirm your AI engine is running with `propai status`.";
+    case "channels-remove":
+      return "PropAi Sync could not remove the WhatsApp team channel. Re-run with `--debug` and confirm the account id exists.";
     case "lead-follow-up":
       return "PropAi Sync could not send the follow-up. Confirm your connection with `propai status`, then retry.";
     case "schedule-daily":
