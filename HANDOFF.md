@@ -363,6 +363,34 @@ Stage 3 progress update (2026-03-02, pass 3)
 
 - Verify webhooks/hooks/control paths across both naming conventions.
 
+Stage 4 progress update (2026-03-02, pass 1)
+
+- done
+  - Added gateway header aliases while preserving legacy compatibility:
+    - Hook auth accepts `x-propaiclaw-token` and legacy `x-openclaw-token` (`Authorization: Bearer` remains preferred).
+    - OpenAI/OpenResponses routing accepts `x-propaiclaw-agent-id` / `x-propaiclaw-session-key` alongside legacy headers.
+    - Agent model routing now accepts `propaiclaw:<agentId>` alongside `openclaw:<agentId>` and `agent:<agentId>`.
+    - `/tools/invoke` now accepts `x-propaiclaw-message-channel`, `x-propaiclaw-account-id`, `x-propaiclaw-message-to`, and `x-propaiclaw-thread-id` with legacy fallback.
+  - Updated webhook query-token rejection text to prefer `X-Propaiclaw-Token` while retaining legacy `X-OpenClaw-Token`.
+  - Updated Stage 4 docs to prefer Propaiclaw naming for headers/examples while documenting legacy aliases:
+    - `docs/automation/webhook.md`
+    - `docs/gateway/openai-http-api.md`
+    - `docs/gateway/openresponses-http-api.md`
+    - `docs/gateway/configuration-reference.md`
+  - Added targeted regression coverage for hook token header alias precedence:
+    - `src/gateway/hooks.header-alias.test.ts`
+
+- pending
+  - Stage 4.2 deep-link and canvas URI/path aliasing.
+  - Stage 4.3 broader transport coverage across remaining compatibility surfaces.
+  - Optional docs follow-up: non-English mirror pages for propaiclaw-first header examples.
+
+- verification
+  - Command: `pnpm exec vitest run src/gateway/hooks.header-alias.test.ts src/gateway/openai-http.test.ts src/gateway/openresponses-http.test.ts src/gateway/server.hooks.test.ts src/gateway/tools-invoke-http.test.ts`
+    - Result: passed (`5` test files, `32` tests).
+  - Command: `pnpm exec oxfmt --check docs/automation/webhook.md docs/gateway/configuration-reference.md docs/gateway/openai-http-api.md docs/gateway/openresponses-http-api.md src/gateway/hooks.ts src/gateway/http-utils.ts src/gateway/hooks.header-alias.test.ts src/gateway/openai-http.test.ts src/gateway/openresponses-http.test.ts src/gateway/server-http.ts src/gateway/server.hooks.test.ts src/gateway/tools-invoke-http.ts src/gateway/tools-invoke-http.test.ts`
+    - Result: passed (all matched files correctly formatted).
+
 ### Stage 5 - Plugin SDK and extension contract bridge
 
 1. SDK alias strategy

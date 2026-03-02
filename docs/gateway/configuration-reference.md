@@ -486,14 +486,14 @@ BlueBubbles is the recommended iMessage path (plugin-backed, configured under `c
       enabled: true,
       dmPolicy: "pairing",
       // serverUrl, password, webhookPath, group controls, and advanced actions:
-      // see /channels/bluebubbles
+      // see /channels/whatsapp
     },
   },
 }
 ```
 
 - Core key paths covered here: `channels.bluebubbles`, `channels.bluebubbles.dmPolicy`.
-- Full BlueBubbles channel configuration is documented in [BlueBubbles](/channels/bluebubbles).
+- Full BlueBubbles channel configuration is documented in [BlueBubbles](/channels/whatsapp).
 
 ### iMessage
 
@@ -548,14 +548,14 @@ Microsoft Teams is extension-backed and configured under `channels.msteams`.
       enabled: true,
       configWrites: true,
       // appId, appPassword, tenantId, webhook, team/channel policies:
-      // see /channels/msteams
+      // see /channels/whatsapp
     },
   },
 }
 ```
 
 - Core key paths covered here: `channels.msteams`, `channels.msteams.configWrites`.
-- Full Teams config (credentials, webhook, DM/group policy, per-team/per-channel overrides) is documented in [Microsoft Teams](/channels/msteams).
+- Full Teams config (credentials, webhook, DM/group policy, per-team/per-channel overrides) is documented in [Microsoft Teams](/channels/whatsapp).
 
 ### IRC
 
@@ -581,7 +581,7 @@ IRC is extension-backed and configured under `channels.irc`.
 ```
 
 - Core key paths covered here: `channels.irc`, `channels.irc.dmPolicy`, `channels.irc.configWrites`, `channels.irc.nickserv.*`.
-- Full IRC channel configuration (host/port/TLS/channels/allowlists/mention gating) is documented in [IRC](/channels/irc).
+- Full IRC channel configuration (host/port/TLS/channels/allowlists/mention gating) is documented in [IRC](/channels/whatsapp).
 
 ### Multi-account (all channels)
 
@@ -2371,7 +2371,7 @@ See [Multiple Gateways](/gateway/multiple-gateways).
 }
 ```
 
-Auth: `Authorization: Bearer <token>` or `x-openclaw-token: <token>`.
+Auth: `Authorization: Bearer <token>` or `x-propaiclaw-token: <token>` (`x-openclaw-token` legacy alias).
 
 **Endpoints:**
 

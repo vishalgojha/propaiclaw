@@ -34,16 +34,19 @@ Notes:
 
 No custom headers required: encode the agent id in the OpenResponses `model` field:
 
-- `model: "openclaw:<agentId>"` (example: `"openclaw:main"`, `"openclaw:beta"`)
+- `model: "propaiclaw:<agentId>"` (preferred; example: `"propaiclaw:main"`, `"propaiclaw:beta"`)
+- `model: "openclaw:<agentId>"` (legacy alias)
 - `model: "agent:<agentId>"` (alias)
 
 Or target a specific OpenClaw agent by header:
 
-- `x-openclaw-agent-id: <agentId>` (default: `main`)
+- `x-propaiclaw-agent-id: <agentId>` (preferred; default: `main`)
+- `x-openclaw-agent-id: <agentId>` (legacy alias)
 
 Advanced:
 
-- `x-openclaw-session-key: <sessionKey>` to fully control session routing.
+- `x-propaiclaw-session-key: <sessionKey>` (preferred) to fully control session routing.
+- `x-openclaw-session-key: <sessionKey>` (legacy alias).
 
 ## Enabling the endpoint
 
@@ -311,9 +314,9 @@ Non-streaming:
 curl -sS http://127.0.0.1:18789/v1/responses \
   -H 'Authorization: Bearer YOUR_TOKEN' \
   -H 'Content-Type: application/json' \
-  -H 'x-openclaw-agent-id: main' \
+  -H 'x-propaiclaw-agent-id: main' \
   -d '{
-    "model": "openclaw",
+    "model": "propaiclaw",
     "input": "hi"
   }'
 ```
@@ -324,9 +327,9 @@ Streaming:
 curl -N http://127.0.0.1:18789/v1/responses \
   -H 'Authorization: Bearer YOUR_TOKEN' \
   -H 'Content-Type: application/json' \
-  -H 'x-openclaw-agent-id: main' \
+  -H 'x-propaiclaw-agent-id: main' \
   -d '{
-    "model": "openclaw",
+    "model": "propaiclaw",
     "stream": true,
     "input": "hi"
   }'

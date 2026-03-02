@@ -164,12 +164,14 @@ export function extractHookToken(req: IncomingMessage): string | undefined {
       return token;
     }
   }
-  const headerToken =
-    typeof req.headers["x-openclaw-token"] === "string"
-      ? req.headers["x-openclaw-token"].trim()
-      : "";
-  if (headerToken) {
-    return headerToken;
+  const headerTokens = [req.headers["x-propaiclaw-token"], req.headers["x-openclaw-token"]];
+  for (const candidate of headerTokens) {
+    if (typeof candidate === "string") {
+      const token = candidate.trim();
+      if (token) {
+        return token;
+      }
+    }
   }
   return undefined;
 }

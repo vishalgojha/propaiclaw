@@ -405,6 +405,37 @@ describe("POST /tools/invoke", () => {
     });
   });
 
+  it("prefers x-propaiclaw message target/thread headers over legacy aliases", async () => {
+    cfg = {
+      ...cfg,
+      agents: {
+        list: [{ id: "main", default: true, tools: { allow: ["sessions_spawn"] } }],
+      },
+      gateway: { tools: { allow: ["sessions_spawn"] } },
+    };
+
+    const res = await invokeTool({
+      port: sharedPort,
+      headers: {
+        ...gatewayAuthHeaders(),
+        "x-propaiclaw-message-to": "channel:propaiclaw",
+        "x-openclaw-message-to": "channel:legacy",
+        "x-propaiclaw-thread-id": "thread-propaiclaw",
+        "x-openclaw-thread-id": "thread-legacy",
+      },
+      tool: "sessions_spawn",
+      sessionKey: "main",
+    });
+
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.ok).toBe(true);
+    expect(body.result?.route).toEqual({
+      agentTo: "channel:propaiclaw",
+      agentThreadId: "thread-propaiclaw",
+    });
+  });
+
   it("denies sessions_send via HTTP gateway", async () => {
     cfg = {
       ...cfg,

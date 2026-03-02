@@ -24,6 +24,8 @@ export function getBearerToken(req: IncomingMessage): string | undefined {
 
 export function resolveAgentIdFromHeader(req: IncomingMessage): string | undefined {
   const raw =
+    getHeader(req, "x-propaiclaw-agent-id")?.trim() ||
+    getHeader(req, "x-propaiclaw-agent")?.trim() ||
     getHeader(req, "x-openclaw-agent-id")?.trim() ||
     getHeader(req, "x-openclaw-agent")?.trim() ||
     "";
@@ -40,6 +42,7 @@ export function resolveAgentIdFromModel(model: string | undefined): string | und
   }
 
   const m =
+    raw.match(/^propaiclaw[:/](?<agentId>[a-z0-9][a-z0-9_-]{0,63})$/i) ??
     raw.match(/^openclaw[:/](?<agentId>[a-z0-9][a-z0-9_-]{0,63})$/i) ??
     raw.match(/^agent:(?<agentId>[a-z0-9][a-z0-9_-]{0,63})$/i);
   const agentId = m?.groups?.agentId;
@@ -68,7 +71,9 @@ export function resolveSessionKey(params: {
   user?: string | undefined;
   prefix: string;
 }): string {
-  const explicit = getHeader(params.req, "x-openclaw-session-key")?.trim();
+  const explicit =
+    getHeader(params.req, "x-propaiclaw-session-key")?.trim() ||
+    getHeader(params.req, "x-openclaw-session-key")?.trim();
   if (explicit) {
     return explicit;
   }

@@ -166,6 +166,19 @@ describe("OpenResponses HTTP API (e2e)", () => {
       await ensureResponseConsumed(resHeader);
 
       mockAgentOnce([{ text: "hello" }]);
+      const resPropaiclawHeader = await postResponses(
+        port,
+        { model: "openclaw", input: "hi" },
+        { "x-propaiclaw-agent-id": "beta" },
+      );
+      expect(resPropaiclawHeader.status).toBe(200);
+      const optsPropaiclawHeader = (agentCommand.mock.calls[0] as unknown[] | undefined)?.[0];
+      expect(
+        (optsPropaiclawHeader as { sessionKey?: string } | undefined)?.sessionKey ?? "",
+      ).toMatch(/^agent:beta:/);
+      await ensureResponseConsumed(resPropaiclawHeader);
+
+      mockAgentOnce([{ text: "hello" }]);
       const resModel = await postResponses(port, { model: "openclaw:beta", input: "hi" });
       expect(resModel.status).toBe(200);
       const optsModel = (agentCommand.mock.calls[0] as unknown[] | undefined)?.[0];
@@ -173,6 +186,18 @@ describe("OpenResponses HTTP API (e2e)", () => {
         /^agent:beta:/,
       );
       await ensureResponseConsumed(resModel);
+
+      mockAgentOnce([{ text: "hello" }]);
+      const resPropaiclawModel = await postResponses(port, {
+        model: "propaiclaw:beta",
+        input: "hi",
+      });
+      expect(resPropaiclawModel.status).toBe(200);
+      const optsPropaiclawModel = (agentCommand.mock.calls[0] as unknown[] | undefined)?.[0];
+      expect(
+        (optsPropaiclawModel as { sessionKey?: string } | undefined)?.sessionKey ?? "",
+      ).toMatch(/^agent:beta:/);
+      await ensureResponseConsumed(resPropaiclawModel);
 
       mockAgentOnce([{ text: "hello" }]);
       const resUser = await postResponses(port, {

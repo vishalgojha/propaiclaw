@@ -167,8 +167,26 @@ describe("OpenAI-compatible HTTP API (e2e)", () => {
 
       {
         await expectAgentSessionKeyMatch({
+          body: { model: "openclaw", messages: [{ role: "user", content: "hi" }] },
+          headers: { "x-propaiclaw-agent-id": "beta" },
+          matcher: /^agent:beta:/,
+        });
+      }
+
+      {
+        await expectAgentSessionKeyMatch({
           body: {
             model: "openclaw:beta",
+            messages: [{ role: "user", content: "hi" }],
+          },
+          matcher: /^agent:beta:/,
+        });
+      }
+
+      {
+        await expectAgentSessionKeyMatch({
+          body: {
+            model: "propaiclaw:beta",
             messages: [{ role: "user", content: "hi" }],
           },
           matcher: /^agent:beta:/,
@@ -192,8 +210,8 @@ describe("OpenAI-compatible HTTP API (e2e)", () => {
           port,
           { model: "openclaw", messages: [{ role: "user", content: "hi" }] },
           {
-            "x-openclaw-agent-id": "beta",
-            "x-openclaw-session-key": "agent:beta:openai:custom",
+            "x-propaiclaw-agent-id": "beta",
+            "x-propaiclaw-session-key": "agent:beta:openai:custom",
           },
         );
         expect(res.status).toBe(200);
