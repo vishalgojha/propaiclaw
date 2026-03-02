@@ -47,18 +47,142 @@ Branch: main
 
 ## Pending
 
-1. Live validation in target realtor environment
+Goal: staged path from wrapper model to a Propaiclaw-first runtime for realtor workflows (WhatsApp + Browser + Canvas + plugins), while preserving tenant continuity.
 
-- Confirm no remaining rapid open/close behavior under real cron-event volume and active chat/tool stream traffic.
+### Stage 0 - Scope lock and migration policy
 
-2. Localization follow-up
+1. Confirm bounded scope
 
-- New template strings are currently added in English locale; mirror into other locales if needed.
+- Channels/features in scope for independence: WhatsApp, Browser tools, Canvas host, plugin runtime.
+- Out of scope for first cutover: non-realtor channels and non-essential platform surfaces.
 
-3. Optional product polish
+2. Define compatibility policy
 
-- Add per-template tenant presets (default account/agent/channel) if brokers require one-click tenant-aware provisioning.
-- Consider moving remaining hardcoded advanced-form labels to i18n keys for consistency.
+- Keep backward read compatibility for existing `.openclaw` state during migration.
+- Keep legacy command/protocol aliases active until staged cutover is complete.
+
+3. Establish acceptance gates
+
+- No tenant data loss.
+- No broker-facing command regression.
+- Existing sessions/config continue to load.
+
+### Stage 1 - User-facing rebrand completion (no runtime break)
+
+1. Remove remaining user-facing `openclaw` text in Propaiclaw flows
+
+- Help, examples, error hints, and wrapper diagnostics should show `propai`/`propaiclaw`.
+
+2. Keep runtime internals unchanged for now
+
+- Continue using current OpenClaw internals under the hood during this stage.
+
+3. Add regression tests
+
+- Tests for command output/help/error paths to ensure no user-facing brand leaks.
+
+### Stage 2 - Config and state namespace bridge
+
+1. Introduce Propaiclaw canonical paths/envs
+
+- Add canonical Propaiclaw config/state paths for new installs.
+- Add Propaiclaw env aliases while continuing to honor legacy `OPENCLAW_*`.
+
+2. Dual-read, single-write migration strategy
+
+- Read both legacy and new locations.
+- Write canonical Propaiclaw locations after migration.
+
+3. Migration tooling
+
+- Add explicit migration command flow (dry-run + apply).
+- Emit clear per-tenant migration report.
+
+### Stage 3 - Service identity bridge (daemon/runtime)
+
+1. Add Propaiclaw service names and labels
+
+- New service labels/names for launchd/systemd/windows task paths.
+
+2. Backward service compatibility
+
+- Status/restart/doctor flows detect and handle both legacy and new service identities.
+
+3. Add cross-platform tests
+
+- Service naming, detection, and restart behavior for profile and default modes.
+
+### Stage 4 - External protocol compatibility layer
+
+1. Header/token aliases
+
+- Accept both legacy and new auth headers.
+- Prefer Propaiclaw naming in docs/output.
+
+2. Deep-link and canvas aliasing
+
+- Support both legacy and Propaiclaw URI schemes during transition.
+
+3. Transport tests
+
+- Verify webhooks/hooks/control paths across both naming conventions.
+
+### Stage 5 - Plugin SDK and extension contract bridge
+
+1. SDK alias strategy
+
+- Provide Propaiclaw SDK import path while preserving existing `openclaw/plugin-sdk` compatibility.
+
+2. Extension loading checks
+
+- Ensure bundled and external plugins load under both import namespaces.
+
+3. Migration notes for plugin authors
+
+- Publish concise compatibility guidance and timeline.
+
+### Stage 6 - Realtor UX hardening and command simplification
+
+1. Simplify high-frequency realtor actions
+
+- Keep `groups allow`, `lead follow-up`, `schedule daily`, `sync`, `start` as minimal-path commands.
+
+2. Agent Tasks polish
+
+- Add tenant presets and safer defaults for account/agent/channel.
+- Finish i18n coverage for newly added templates and labels.
+
+3. Stability validation
+
+- Re-test UI under high event throughput to confirm no open/close flicker recurrence.
+
+### Stage 7 - Tenant migration rollout
+
+1. Pilot rollout
+
+- Migrate a small set of realtor tenants first with audit logs enabled.
+
+2. Full rollout
+
+- Expand migration in batches after pilot pass criteria.
+
+3. Rollback path
+
+- Keep reversible mapping for config/service identity in case of live failures.
+
+### Stage 8 - Cutover and deprecation
+
+1. Default to Propaiclaw runtime identity for new installs
+
+- Legacy names remain accepted for a deprecation window.
+
+2. Deprecation messaging
+
+- Emit warnings for legacy paths/flags with clear migration guidance.
+
+3. Final cleanup
+
+- Remove legacy-only code after deprecation window and stability period.
 
 ## Verification run
 
