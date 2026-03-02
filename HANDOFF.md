@@ -103,6 +103,32 @@ Stage 1 progress update (2026-03-02)
   - Command: `pnpm exec oxfmt --check README.md src/propaiclaw-entry.ts src/propai/mapper.ts src/propai/mapper.test.ts`
     - Result: passed (all matched files correctly formatted).
 
+Stage 1 progress update (2026-03-02, pass 2)
+
+- done
+  - Ran a wider Stage 1.1 leak pass across Propaiclaw-facing command/help/error surfaces in `README.md`, `src/propaiclaw-entry.ts`, and `src/propai/*`.
+  - No additional user-facing `openclaw` leaks found in Propaiclaw command flows beyond first-slice fixes.
+  - Added focused entrypoint message helpers and regression tests for:
+    - debug runtime line
+    - runtime launch failure line
+    - runtime signal-exit line
+    - config-invalid hint line
+  - Wrapper execution path remains unchanged (still resolves and runs `openclaw.mjs`).
+
+- pending
+  - Any future Stage 1 text leaks outside currently scanned Propaiclaw surfaces (none identified in this pass).
+  - Stage 2+ migration and identity work remains pending by plan.
+
+- verification
+  - Command: `pnpm exec vitest run src/propai/mapper.test.ts src/propai/packaging.test.ts src/propaiclaw-entry.messages.test.ts`
+    - Result: passed (`3` test files, `51` tests).
+  - Command: `pnpm exec vitest run src/propai/mapper.test.ts src/propai/packaging.test.ts`
+    - Result: passed (`2` test files, `47` tests).
+  - Command: `pnpm exec oxfmt --check README.md src/propaiclaw-entry.ts src/propai/mapper.ts src/propai/mapper.test.ts`
+    - Result: passed (all matched files correctly formatted).
+  - Command: `pnpm exec oxfmt --check README.md src/propaiclaw-entry.ts src/propai/mapper.ts src/propai/mapper.test.ts src/propaiclaw-entry.messages.ts src/propaiclaw-entry.messages.test.ts`
+    - Result: passed (all matched files correctly formatted).
+
 ### Stage 2 - Config and state namespace bridge
 
 1. Introduce Propaiclaw canonical paths/envs

@@ -24,6 +24,12 @@ import {
 } from "./propai/mapper.js";
 import { initializeRealtorWorkspaceProfile } from "./propai/realtor-workspace.js";
 import { maybeSeedRealtorWorkspaceBeforeSetup } from "./propai/setup-bootstrap.js";
+import {
+  formatConfigInvalidHint,
+  formatRuntimeDebugLine,
+  formatRuntimeLaunchFailure,
+  formatRuntimeSignalExit,
+} from "./propaiclaw-entry.messages.js";
 import { normalizeAccountId, normalizeAgentId } from "./routing/session-key.js";
 import { listWhatsAppAccountIds, resolveDefaultWhatsAppAccountId } from "./web/accounts.js";
 
@@ -106,7 +112,7 @@ function runOpenClawCommand(params: {
 }): Promise<number> {
   const { openClawWrapperPath, args, debug, commandLabel } = params;
   if (debug) {
-    process.stderr.write(`[${CLI_COMMAND_NAME} debug] runtime ${args.join(" ")}\n`);
+    process.stderr.write(formatRuntimeDebugLine(CLI_COMMAND_NAME, args));
   }
   return new Promise((resolve) => {
     const child = spawn(process.execPath, [openClawWrapperPath, ...args], {
@@ -116,16 +122,17 @@ function runOpenClawCommand(params: {
 
     child.once("error", (error) => {
       process.stderr.write(
-        `[${CLI_COMMAND_NAME}] Failed to launch Propaiclaw runtime: ${error instanceof Error ? error.message : String(error)}\n`,
+        formatRuntimeLaunchFailure(
+          CLI_COMMAND_NAME,
+          error instanceof Error ? error.message : String(error),
+        ),
       );
       resolve(1);
     });
 
     child.once("exit", (code, signal) => {
       if (signal) {
-        process.stderr.write(
-          `[${CLI_COMMAND_NAME}] Propaiclaw runtime exited due to signal ${signal}\n`,
-        );
+        process.stderr.write(formatRuntimeSignalExit(CLI_COMMAND_NAME, signal));
         resolve(1);
         return;
       }
@@ -206,9 +213,7 @@ async function runRoute(route: PropAiCommandRoute): Promise<number> {
       try {
         const snapshot = await readConfigFileSnapshot();
         if (!snapshot.valid) {
-          process.stderr.write(
-            `[${CLI_COMMAND_NAME}] Config is invalid. Run "${CLI_COMMAND_NAME} sync --debug" and retry.\n`,
-          );
+          process.stderr.write(formatConfigInvalidHint(CLI_COMMAND_NAME));
           for (const issue of snapshot.issues) {
             process.stderr.write(`  - ${issue.path || "<root>"}: ${issue.message}\n`);
           }
@@ -292,9 +297,7 @@ async function runRoute(route: PropAiCommandRoute): Promise<number> {
       try {
         const { snapshot, writeOptions } = await readConfigFileSnapshotForWrite();
         if (!snapshot.valid) {
-          process.stderr.write(
-            `[${CLI_COMMAND_NAME}] Config is invalid. Run "${CLI_COMMAND_NAME} sync --debug" and retry.\n`,
-          );
+          process.stderr.write(formatConfigInvalidHint(CLI_COMMAND_NAME));
           for (const issue of snapshot.issues) {
             process.stderr.write(`  - ${issue.path || "<root>"}: ${issue.message}\n`);
           }
