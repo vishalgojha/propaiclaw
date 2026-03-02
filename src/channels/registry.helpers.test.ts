@@ -60,4 +60,12 @@ describe("channel registry helpers", () => {
     );
     expect(channels).toEqual(["whatsapp"]);
   });
+
+  it("prefers PROPAICLAW_CHANNELS_ONLY over OPENCLAW_CHANNELS_ONLY", () => {
+    const channels = withEnv(
+      { PROPAICLAW_CHANNELS_ONLY: "whatsapp", OPENCLAW_CHANNELS_ONLY: "telegram" },
+      () => listChatChannels().map((channel) => channel.id),
+    );
+    expect(channels).toEqual(["whatsapp"]);
+  });
 });

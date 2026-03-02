@@ -3,6 +3,19 @@ import { describe, expect, it } from "vitest";
 import { expandHomePrefix, resolveEffectiveHomeDir, resolveRequiredHomeDir } from "./home-dir.js";
 
 describe("resolveEffectiveHomeDir", () => {
+  it("prefers PROPAICLAW_HOME over OPENCLAW_HOME, HOME, and USERPROFILE", () => {
+    const env = {
+      PROPAICLAW_HOME: "/srv/propaiclaw-home",
+      OPENCLAW_HOME: "/srv/openclaw-home",
+      HOME: "/home/other",
+      USERPROFILE: "C:/Users/other",
+    } as NodeJS.ProcessEnv;
+
+    expect(resolveEffectiveHomeDir(env, () => "/fallback")).toBe(
+      path.resolve("/srv/propaiclaw-home"),
+    );
+  });
+
   it("prefers OPENCLAW_HOME over HOME and USERPROFILE", () => {
     const env = {
       OPENCLAW_HOME: "/srv/openclaw-home",
@@ -30,6 +43,15 @@ describe("resolveEffectiveHomeDir", () => {
   it("expands OPENCLAW_HOME when set to ~", () => {
     const env = {
       OPENCLAW_HOME: "~/svc",
+      HOME: "/home/alice",
+    } as NodeJS.ProcessEnv;
+
+    expect(resolveEffectiveHomeDir(env)).toBe(path.resolve("/home/alice/svc"));
+  });
+
+  it("expands PROPAICLAW_HOME when set to ~", () => {
+    const env = {
+      PROPAICLAW_HOME: "~/svc",
       HOME: "/home/alice",
     } as NodeJS.ProcessEnv;
 

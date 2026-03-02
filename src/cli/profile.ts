@@ -7,6 +7,23 @@ export type CliProfileParseResult =
   | { ok: true; profile: string | null; argv: string[] }
   | { ok: false; error: string };
 
+function isTruthyEnvValue(value: string | undefined): boolean {
+  const normalized = value?.trim().toLowerCase();
+  return normalized === "1" || normalized === "true" || normalized === "yes" || normalized === "on";
+}
+
+function isPropaiclawMode(env: Record<string, string | undefined>): boolean {
+  return isTruthyEnvValue(env.PROPAICLAW_MODE) || isTruthyEnvValue(env.OPENCLAW_PROPAICLAW_MODE);
+}
+
+function resolveProfileStateDirBasename(env: Record<string, string | undefined>): string {
+  return isPropaiclawMode(env) ? ".propaiclaw" : ".openclaw";
+}
+
+function resolveProfileConfigFilename(env: Record<string, string | undefined>): string {
+  return isPropaiclawMode(env) ? "propaiclaw.json" : "openclaw.json";
+}
+
 function takeValue(
   raw: string,
   next: string | undefined,
@@ -94,7 +111,8 @@ function resolveProfileStateDir(
   homedir: () => string,
 ): string {
   const suffix = profile.toLowerCase() === "default" ? "" : `-${profile}`;
-  return path.join(resolveRequiredHomeDir(env as NodeJS.ProcessEnv, homedir), `.openclaw${suffix}`);
+  const base = resolveProfileStateDirBasename(env);
+  return path.join(resolveRequiredHomeDir(env as NodeJS.ProcessEnv, homedir), `${base}${suffix}`);
 }
 
 export function applyCliProfileEnv(params: {
@@ -111,17 +129,36 @@ export function applyCliProfileEnv(params: {
 
   // Convenience only: fill defaults, never override explicit env values.
   env.OPENCLAW_PROFILE = profile;
+  if (!env.PROPAICLAW_PROFILE?.trim()) {
+    env.PROPAICLAW_PROFILE = profile;
+  }
 
-  const stateDir = env.OPENCLAW_STATE_DIR?.trim() || resolveProfileStateDir(profile, env, homedir);
+  const stateDir =
+    env.PROPAICLAW_STATE_DIR?.trim() ||
+    env.OPENCLAW_STATE_DIR?.trim() ||
+    resolveProfileStateDir(profile, env, homedir);
   if (!env.OPENCLAW_STATE_DIR?.trim()) {
     env.OPENCLAW_STATE_DIR = stateDir;
   }
+  if (!env.PROPAICLAW_STATE_DIR?.trim()) {
+    env.PROPAICLAW_STATE_DIR = stateDir;
+  }
 
+  const configPath =
+    env.PROPAICLAW_CONFIG_PATH?.trim() ||
+    env.OPENCLAW_CONFIG_PATH?.trim() ||
+    path.join(stateDir, resolveProfileConfigFilename(env));
   if (!env.OPENCLAW_CONFIG_PATH?.trim()) {
-    env.OPENCLAW_CONFIG_PATH = path.join(stateDir, "openclaw.json");
+    env.OPENCLAW_CONFIG_PATH = configPath;
+  }
+  if (!env.PROPAICLAW_CONFIG_PATH?.trim()) {
+    env.PROPAICLAW_CONFIG_PATH = configPath;
   }
 
   if (profile === "dev" && !env.OPENCLAW_GATEWAY_PORT?.trim()) {
     env.OPENCLAW_GATEWAY_PORT = "19001";
+  }
+  if (profile === "dev" && !env.PROPAICLAW_GATEWAY_PORT?.trim()) {
+    env.PROPAICLAW_GATEWAY_PORT = "19001";
   }
 }

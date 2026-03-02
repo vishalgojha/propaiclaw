@@ -61,9 +61,13 @@ describe("applyCliProfileEnv", () => {
     });
     const expectedStateDir = path.join(path.resolve("/home/peter"), ".openclaw-dev");
     expect(env.OPENCLAW_PROFILE).toBe("dev");
+    expect(env.PROPAICLAW_PROFILE).toBe("dev");
     expect(env.OPENCLAW_STATE_DIR).toBe(expectedStateDir);
+    expect(env.PROPAICLAW_STATE_DIR).toBe(expectedStateDir);
     expect(env.OPENCLAW_CONFIG_PATH).toBe(path.join(expectedStateDir, "openclaw.json"));
+    expect(env.PROPAICLAW_CONFIG_PATH).toBe(path.join(expectedStateDir, "openclaw.json"));
     expect(env.OPENCLAW_GATEWAY_PORT).toBe("19001");
+    expect(env.PROPAICLAW_GATEWAY_PORT).toBe("19001");
   });
 
   it("does not override explicit env values", () => {
@@ -77,8 +81,10 @@ describe("applyCliProfileEnv", () => {
       homedir: () => "/home/peter",
     });
     expect(env.OPENCLAW_STATE_DIR).toBe("/custom");
+    expect(env.PROPAICLAW_STATE_DIR).toBe("/custom");
     expect(env.OPENCLAW_GATEWAY_PORT).toBe("19099");
     expect(env.OPENCLAW_CONFIG_PATH).toBe(path.join("/custom", "openclaw.json"));
+    expect(env.PROPAICLAW_CONFIG_PATH).toBe(path.join("/custom", "openclaw.json"));
   });
 
   it("uses OPENCLAW_HOME when deriving profile state dir", () => {
@@ -96,6 +102,28 @@ describe("applyCliProfileEnv", () => {
     expect(env.OPENCLAW_STATE_DIR).toBe(path.join(resolvedHome, ".openclaw-work"));
     expect(env.OPENCLAW_CONFIG_PATH).toBe(
       path.join(resolvedHome, ".openclaw-work", "openclaw.json"),
+    );
+  });
+
+  it("uses propaiclaw canonical dirs/files when PROPAICLAW_MODE is enabled", () => {
+    const env: Record<string, string | undefined> = {
+      PROPAICLAW_MODE: "1",
+      PROPAICLAW_HOME: "/srv/propaiclaw-home",
+    };
+    applyCliProfileEnv({
+      profile: "work",
+      env,
+      homedir: () => "/home/fallback",
+    });
+
+    const resolvedHome = path.resolve("/srv/propaiclaw-home");
+    expect(env.OPENCLAW_STATE_DIR).toBe(path.join(resolvedHome, ".propaiclaw-work"));
+    expect(env.PROPAICLAW_STATE_DIR).toBe(path.join(resolvedHome, ".propaiclaw-work"));
+    expect(env.OPENCLAW_CONFIG_PATH).toBe(
+      path.join(resolvedHome, ".propaiclaw-work", "propaiclaw.json"),
+    );
+    expect(env.PROPAICLAW_CONFIG_PATH).toBe(
+      path.join(resolvedHome, ".propaiclaw-work", "propaiclaw.json"),
     );
   });
 });

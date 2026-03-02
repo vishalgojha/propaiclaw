@@ -1,6 +1,7 @@
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
+import { resolveStateDir } from "../config/paths.js";
 
 type EnvLike = Record<string, string | undefined>;
 
@@ -32,12 +33,12 @@ function resolveDefaultTimezone(): string {
 }
 
 function resolveDefaultWorkspaceDir(env: EnvLike = process.env): string {
-  const profile = env.OPENCLAW_PROFILE?.trim();
-  const homeDir = os.homedir();
+  const profile = env.PROPAICLAW_PROFILE?.trim() || env.OPENCLAW_PROFILE?.trim();
+  const stateDir = resolveStateDir(env as NodeJS.ProcessEnv, os.homedir);
   if (profile && profile.toLowerCase() !== "default") {
-    return path.join(homeDir, ".openclaw", `workspace-${profile}`);
+    return path.join(stateDir, `workspace-${profile}`);
   }
-  return path.join(homeDir, ".openclaw", "workspace");
+  return path.join(stateDir, "workspace");
 }
 
 function resolveWorkspaceDir(workspaceDir: string | undefined, env: EnvLike = process.env): string {

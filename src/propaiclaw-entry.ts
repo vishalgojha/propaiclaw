@@ -48,11 +48,32 @@ function resolveCliCommandName(argv = process.argv): string {
 const CLI_COMMAND_NAME = resolveCliCommandName();
 
 function resolvePropaiclawChildEnv(): NodeJS.ProcessEnv {
+  const stateDir =
+    process.env.PROPAICLAW_STATE_DIR?.trim() || process.env.OPENCLAW_STATE_DIR?.trim();
+  const configPath =
+    process.env.PROPAICLAW_CONFIG_PATH?.trim() || process.env.OPENCLAW_CONFIG_PATH?.trim();
+  const homeDir = process.env.PROPAICLAW_HOME?.trim() || process.env.OPENCLAW_HOME?.trim();
+  const profile = process.env.PROPAICLAW_PROFILE?.trim() || process.env.OPENCLAW_PROFILE?.trim();
+  const gatewayPort =
+    process.env.PROPAICLAW_GATEWAY_PORT?.trim() || process.env.OPENCLAW_GATEWAY_PORT?.trim();
+  const channelsOnly =
+    process.env.PROPAICLAW_CHANNELS_ONLY?.trim() ||
+    process.env.OPENCLAW_CHANNELS_ONLY?.trim() ||
+    "whatsapp";
+
   return {
     ...process.env,
     PROPAICLAW_MODE: "1",
     OPENCLAW_PROPAICLAW_MODE: "1",
-    OPENCLAW_CHANNELS_ONLY: "whatsapp",
+    PROPAICLAW_CHANNELS_ONLY: channelsOnly,
+    OPENCLAW_CHANNELS_ONLY: channelsOnly,
+    ...(stateDir ? { PROPAICLAW_STATE_DIR: stateDir, OPENCLAW_STATE_DIR: stateDir } : {}),
+    ...(configPath ? { PROPAICLAW_CONFIG_PATH: configPath, OPENCLAW_CONFIG_PATH: configPath } : {}),
+    ...(homeDir ? { PROPAICLAW_HOME: homeDir, OPENCLAW_HOME: homeDir } : {}),
+    ...(profile ? { PROPAICLAW_PROFILE: profile, OPENCLAW_PROFILE: profile } : {}),
+    ...(gatewayPort
+      ? { PROPAICLAW_GATEWAY_PORT: gatewayPort, OPENCLAW_GATEWAY_PORT: gatewayPort }
+      : {}),
   };
 }
 

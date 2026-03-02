@@ -76,4 +76,45 @@ describe("initializeRealtorWorkspaceProfile", () => {
     expect(identity).toContain("Mira");
     expect(identity).toContain("America/New_York");
   });
+
+  it("uses propaiclaw canonical state dir when PROPAICLAW_MODE is enabled", async () => {
+    const tempHome = await createTempDir("propaiclaw-home-");
+    const previous = {
+      PROPAICLAW_MODE: process.env.PROPAICLAW_MODE,
+      PROPAICLAW_HOME: process.env.PROPAICLAW_HOME,
+      OPENCLAW_HOME: process.env.OPENCLAW_HOME,
+      OPENCLAW_STATE_DIR: process.env.OPENCLAW_STATE_DIR,
+      PROPAICLAW_STATE_DIR: process.env.PROPAICLAW_STATE_DIR,
+    };
+
+    try {
+      process.env.PROPAICLAW_MODE = "1";
+      process.env.PROPAICLAW_HOME = tempHome;
+      delete process.env.OPENCLAW_HOME;
+      delete process.env.OPENCLAW_STATE_DIR;
+      delete process.env.PROPAICLAW_STATE_DIR;
+
+      const result = await initializeRealtorWorkspaceProfile({});
+      expect(result.workspaceDir).toBe(
+        path.join(path.resolve(tempHome), ".propaiclaw", "workspace"),
+      );
+    } finally {
+      if (previous.PROPAICLAW_MODE === undefined) delete process.env.PROPAICLAW_MODE;
+      else process.env.PROPAICLAW_MODE = previous.PROPAICLAW_MODE;
+
+      if (previous.PROPAICLAW_HOME === undefined) delete process.env.PROPAICLAW_HOME;
+      else process.env.PROPAICLAW_HOME = previous.PROPAICLAW_HOME;
+
+      if (previous.OPENCLAW_HOME === undefined) delete process.env.OPENCLAW_HOME;
+      else process.env.OPENCLAW_HOME = previous.OPENCLAW_HOME;
+
+      if (previous.OPENCLAW_STATE_DIR === undefined) delete process.env.OPENCLAW_STATE_DIR;
+      else process.env.OPENCLAW_STATE_DIR = previous.OPENCLAW_STATE_DIR;
+
+      if (previous.PROPAICLAW_STATE_DIR === undefined) delete process.env.PROPAICLAW_STATE_DIR;
+      else process.env.PROPAICLAW_STATE_DIR = previous.PROPAICLAW_STATE_DIR;
+
+      await fs.rm(tempHome, { recursive: true, force: true });
+    }
+  });
 });

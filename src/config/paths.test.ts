@@ -12,6 +12,16 @@ import {
 } from "./paths.js";
 
 describe("oauth paths", () => {
+  it("prefers PROPAICLAW_OAUTH_DIR over OPENCLAW_OAUTH_DIR", () => {
+    const env = {
+      PROPAICLAW_OAUTH_DIR: "/custom/propaiclaw-oauth",
+      OPENCLAW_OAUTH_DIR: "/custom/openclaw-oauth",
+      OPENCLAW_STATE_DIR: "/custom/state",
+    } as NodeJS.ProcessEnv;
+
+    expect(resolveOAuthDir(env, "/custom/state")).toBe(path.resolve("/custom/propaiclaw-oauth"));
+  });
+
   it("prefers OPENCLAW_OAUTH_DIR over OPENCLAW_STATE_DIR", () => {
     const env = {
       OPENCLAW_OAUTH_DIR: "/custom/oauth",
@@ -58,12 +68,34 @@ describe("state + config path candidates", () => {
     expect(candidates[0]).toBe(path.join(resolvedHome, ".openclaw", "openclaw.json"));
   }
 
+  function expectPropaiclawHomeDefaults(env: NodeJS.ProcessEnv): void {
+    const configuredHome = env.PROPAICLAW_HOME;
+    if (!configuredHome) {
+      throw new Error("PROPAICLAW_HOME must be set for this assertion helper");
+    }
+    const resolvedHome = path.resolve(configuredHome);
+    expect(resolveStateDir(env)).toBe(path.join(resolvedHome, ".propaiclaw"));
+
+    const candidates = resolveDefaultConfigCandidates(env);
+    expect(candidates[0]).toBe(path.join(resolvedHome, ".propaiclaw", "propaiclaw.json"));
+    expect(candidates[1]).toBe(path.join(resolvedHome, ".propaiclaw", "openclaw.json"));
+  }
+
   it("uses OPENCLAW_STATE_DIR when set", () => {
     const env = {
       OPENCLAW_STATE_DIR: "/new/state",
     } as NodeJS.ProcessEnv;
 
     expect(resolveStateDir(env, () => "/home/test")).toBe(path.resolve("/new/state"));
+  });
+
+  it("prefers PROPAICLAW_STATE_DIR over OPENCLAW_STATE_DIR when both are set", () => {
+    const env = {
+      PROPAICLAW_STATE_DIR: "/new/propaiclaw-state",
+      OPENCLAW_STATE_DIR: "/new/openclaw-state",
+    } as NodeJS.ProcessEnv;
+
+    expect(resolveStateDir(env, () => "/home/test")).toBe(path.resolve("/new/propaiclaw-state"));
   });
 
   it("uses OPENCLAW_HOME for default state/config locations", () => {
@@ -79,6 +111,15 @@ describe("state + config path candidates", () => {
       HOME: "/home/other",
     } as NodeJS.ProcessEnv;
     expectOpenClawHomeDefaults(env);
+  });
+
+  it("uses PROPAICLAW_HOME + PROPAICLAW_MODE for canonical propaiclaw defaults", () => {
+    const env = {
+      PROPAICLAW_HOME: "/srv/propaiclaw-home",
+      PROPAICLAW_MODE: "1",
+      OPENCLAW_HOME: "/srv/openclaw-home",
+    } as NodeJS.ProcessEnv;
+    expectPropaiclawHomeDefaults(env);
   });
 
   it("orders default config candidates in a stable order", () => {
@@ -124,6 +165,15 @@ describe("state + config path candidates", () => {
     });
   });
 
+  it("in propaiclaw mode, falls back to existing ~/.openclaw when ~/.propaiclaw is missing", async () => {
+    await withTempRoot("propaiclaw-state-legacy-", async (root) => {
+      const legacyDir = path.join(root, ".openclaw");
+      await fs.mkdir(legacyDir, { recursive: true });
+      const resolved = resolveStateDir({ PROPAICLAW_MODE: "1" } as NodeJS.ProcessEnv, () => root);
+      expect(resolved).toBe(legacyDir);
+    });
+  });
+
   it("CONFIG_PATH prefers existing config when present", async () => {
     await withTempRoot("openclaw-config-", async (root) => {
       const legacyDir = path.join(root, ".openclaw");
@@ -147,6 +197,21 @@ describe("state + config path candidates", () => {
       const env = { OPENCLAW_STATE_DIR: overrideDir } as NodeJS.ProcessEnv;
       const resolved = resolveConfigPath(env, overrideDir, () => root);
       expect(resolved).toBe(path.join(overrideDir, "openclaw.json"));
+    });
+  });
+
+  it("in propaiclaw mode, prefers existing openclaw config before canonical fallback", async () => {
+    await withTempRoot("propaiclaw-config-candidate-", async (root) => {
+      const legacyDir = path.join(root, ".openclaw");
+      await fs.mkdir(legacyDir, { recursive: true });
+      const legacyConfig = path.join(legacyDir, "openclaw.json");
+      await fs.writeFile(legacyConfig, "{}", "utf-8");
+
+      const resolved = resolveConfigPathCandidate(
+        { PROPAICLAW_MODE: "1" } as NodeJS.ProcessEnv,
+        () => root,
+      );
+      expect(resolved).toBe(legacyConfig);
     });
   });
 });

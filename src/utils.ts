@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { resolveOAuthDir } from "./config/paths.js";
+import { resolveOAuthDir, resolveStateDir } from "./config/paths.js";
 import { logVerbose, shouldLogVerbose } from "./globals.js";
 import {
   expandHomePrefix,
@@ -305,20 +305,7 @@ export function resolveConfigDir(
   env: NodeJS.ProcessEnv = process.env,
   homedir: () => string = os.homedir,
 ): string {
-  const override = env.OPENCLAW_STATE_DIR?.trim() || env.CLAWDBOT_STATE_DIR?.trim();
-  if (override) {
-    return resolveUserPath(override);
-  }
-  const newDir = path.join(resolveRequiredHomeDir(env, homedir), ".openclaw");
-  try {
-    const hasNew = fs.existsSync(newDir);
-    if (hasNew) {
-      return newDir;
-    }
-  } catch {
-    // best-effort
-  }
-  return newDir;
+  return resolveStateDir(env, homedir);
 }
 
 export function resolveHomeDir(): string | undefined {
@@ -329,6 +316,10 @@ function resolveHomeDisplayPrefix(): { home: string; prefix: string } | undefine
   const home = resolveHomeDir();
   if (!home) {
     return undefined;
+  }
+  const explicitPropaiclawHome = process.env.PROPAICLAW_HOME?.trim();
+  if (explicitPropaiclawHome) {
+    return { home, prefix: "$PROPAICLAW_HOME" };
   }
   const explicitHome = process.env.OPENCLAW_HOME?.trim();
   if (explicitHome) {
@@ -390,5 +381,5 @@ export function formatTerminalLink(
   return `\u001b]8;;${safeUrl}\u0007${safeLabel}\u001b]8;;\u0007`;
 }
 
-// Configuration root; can be overridden via OPENCLAW_STATE_DIR.
+// Configuration root; can be overridden via PROPAICLAW_STATE_DIR / OPENCLAW_STATE_DIR.
 export const CONFIG_DIR = resolveConfigDir();

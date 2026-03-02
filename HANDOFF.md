@@ -160,6 +160,27 @@ Stage 1 progress update (2026-03-02, pass 4)
   - Command: `pnpm exec oxfmt --check docs/channels/index.md`
     - Result: passed (file correctly formatted).
 
+Stage 1 progress update (2026-03-02, pass 5, closeout)
+
+- done
+  - Completed an additional repo-wide Propaiclaw-facing brand scan for mixed `propai`/`propaiclaw` + `openclaw` strings.
+  - No additional user-facing Stage 1 brand leaks were found in Propaiclaw command/help/error surfaces; remaining `openclaw` mentions are technical compatibility identifiers or internal wrapper references.
+  - Stage 1 acceptance criteria remain satisfied:
+    - Help/examples/errors in Propaiclaw flows do not leak `openclaw` user-facing text.
+    - Wrapper execution path remains intact.
+    - Regression tests remain green.
+
+- pending
+  - Stage 2+ bridge and migration work.
+
+- verification
+  - Command: `pnpm exec vitest run src/propai/mapper.test.ts src/propai/packaging.test.ts src/propaiclaw-entry.messages.test.ts`
+    - Result: passed (`3` test files, `51` tests).
+  - Command: `pnpm exec oxfmt --check README.md docs/channels/index.md docs/tools/skills.md src/propaiclaw-entry.ts src/propai/mapper.ts src/propai/mapper.test.ts src/propaiclaw-entry.messages.ts src/propaiclaw-entry.messages.test.ts`
+    - Result: passed (all matched files correctly formatted).
+  - Command: `pnpm test:install:smoke`
+    - Result: failed in local environment (Docker unavailable: `docker` command not found in WSL distro).
+
 ### Stage 2 - Config and state namespace bridge
 
 1. Introduce Propaiclaw canonical paths/envs
@@ -177,6 +198,35 @@ Stage 1 progress update (2026-03-02, pass 4)
 - Add explicit migration command flow (dry-run + apply).
 - Emit clear per-tenant migration report.
 
+Stage 2 progress update (2026-03-02, pass 1)
+
+- done
+  - Added Propaiclaw canonical env aliases with dual-read behavior while preserving legacy compatibility:
+    - Home/state/config overrides now accept `PROPAICLAW_*` and legacy `OPENCLAW_*`.
+    - Propaiclaw mode (`PROPAICLAW_MODE` / `OPENCLAW_PROPAICLAW_MODE`) now resolves canonical defaults under:
+      - state dir: `~/.propaiclaw`
+      - config file: `propaiclaw.json`
+  - Added compatibility bridging in Propaiclaw wrapper child env:
+    - Mirrors Propaiclaw and OpenClaw path/profile/port/channel envs to keep legacy code paths functional.
+  - Added/updated tests for:
+    - path resolution (`src/config/paths.test.ts`)
+    - home dir aliasing (`src/infra/home-dir.test.ts`)
+    - CLI profile env population (`src/cli/profile.test.ts`)
+    - default realtor workspace resolution in Propaiclaw mode (`src/propai/realtor-workspace.test.ts`)
+    - channel allowlist env precedence (`src/channels/registry.helpers.test.ts`)
+
+- pending
+  - Stage 2.2 dual-read/single-write migration write-path behavior.
+  - Stage 2.3 explicit migration tooling and reporting.
+
+- verification
+  - Command: `pnpm exec vitest run src/config/paths.test.ts src/infra/home-dir.test.ts src/cli/profile.test.ts src/propai/realtor-workspace.test.ts src/channels/registry.helpers.test.ts`
+    - Result: passed (`5` test files, `56` tests).
+  - Command: `pnpm exec vitest run src/propai/mapper.test.ts src/propai/packaging.test.ts src/propaiclaw-entry.messages.test.ts src/config/paths.test.ts src/infra/home-dir.test.ts src/cli/profile.test.ts src/propai/realtor-workspace.test.ts src/channels/registry.helpers.test.ts`
+    - Result: passed (`8` test files, `107` tests).
+  - Command: `pnpm exec oxfmt --check src/config/paths.ts src/infra/home-dir.ts src/utils.ts src/cli/profile.ts src/propai/realtor-workspace.ts src/propaiclaw-entry.ts src/channels/registry.ts src/config/paths.test.ts src/infra/home-dir.test.ts src/cli/profile.test.ts src/propai/realtor-workspace.test.ts src/channels/registry.helpers.test.ts`
+    - Result: passed (all matched files correctly formatted).
+
 ### Stage 3 - Service identity bridge (daemon/runtime)
 
 1. Add Propaiclaw service names and labels
@@ -190,6 +240,15 @@ Stage 1 progress update (2026-03-02, pass 4)
 3. Add cross-platform tests
 
 - Service naming, detection, and restart behavior for profile and default modes.
+
+Stage 3 progress update (2026-03-02, pass 1)
+
+- done
+  - CI polish applied for install smoke PR stability:
+    - `.github/workflows/install-smoke.yml` now uses `cancel-in-progress: false` to avoid auto-cancelling in-flight smoke runs on new PR commits.
+
+- pending
+  - Stage 3 service identity bridge implementation and cross-platform service tests.
 
 ### Stage 4 - External protocol compatibility layer
 
