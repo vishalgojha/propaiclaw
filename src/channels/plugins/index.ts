@@ -1,5 +1,10 @@
 import { requireActivePluginRegistry } from "../../plugins/runtime.js";
-import { CHAT_CHANNEL_ORDER, type ChatChannelId, normalizeAnyChannelId } from "../registry.js";
+import {
+  CHAT_CHANNEL_ORDER,
+  type ChatChannelId,
+  normalizeAnyChannelId,
+  resolveRuntimeChannelAllowlist,
+} from "../registry.js";
 import type { ChannelId, ChannelPlugin } from "./types.js";
 
 // Channel plugins registry (runtime).
@@ -29,7 +34,10 @@ function dedupeChannels(channels: ChannelPlugin[]): ChannelPlugin[] {
 }
 
 export function listChannelPlugins(): ChannelPlugin[] {
-  const combined = dedupeChannels(listPluginChannels());
+  const allowlist = resolveRuntimeChannelAllowlist();
+  const combined = dedupeChannels(listPluginChannels()).filter(
+    (plugin) => !allowlist || allowlist.has(plugin.id),
+  );
   return combined.toSorted((a, b) => {
     const indexA = CHAT_CHANNEL_ORDER.indexOf(a.id as ChatChannelId);
     const indexB = CHAT_CHANNEL_ORDER.indexOf(b.id as ChatChannelId);

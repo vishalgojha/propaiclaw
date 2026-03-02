@@ -18,6 +18,7 @@ import {
   createOutboundTestPlugin,
   createTestRegistry,
 } from "../../test-utils/channel-plugins.js";
+import { withEnv } from "../../test-utils/env.js";
 import { getChannelPluginCatalogEntry, listChannelPluginCatalogEntries } from "./catalog.js";
 import { resolveChannelConfigWrites } from "./config-writes.js";
 import {
@@ -65,7 +66,7 @@ describe("channel plugin registry", () => {
 
   it("sorts channel plugins by configured order", () => {
     const registry = createTestRegistry(
-      ["slack", "telegram", "signal"].map((id) => ({
+      ["slack", "telegram", "signal", "whatsapp"].map((id) => ({
         pluginId: id,
         plugin: createPlugin(id),
         source: "test",
@@ -73,7 +74,23 @@ describe("channel plugin registry", () => {
     );
     setActivePluginRegistry(registry);
     const pluginIds = listChannelPlugins().map((plugin) => plugin.id);
-    expect(pluginIds).toEqual(["telegram", "slack", "signal"]);
+    expect(pluginIds).toEqual(["whatsapp"]);
+  });
+
+  it("keeps whatsapp when OPENCLAW_CHANNELS_ONLY includes non-whatsapp ids", () => {
+    const registry = createTestRegistry(
+      ["slack", "telegram", "whatsapp"].map((id) => ({
+        pluginId: id,
+        plugin: createPlugin(id),
+        source: "test",
+      })),
+    );
+    setActivePluginRegistry(registry);
+
+    const pluginIds = withEnv({ OPENCLAW_CHANNELS_ONLY: "telegram,whatsapp" }, () =>
+      listChannelPlugins().map((plugin) => plugin.id),
+    );
+    expect(pluginIds).toEqual(["whatsapp"]);
   });
 });
 

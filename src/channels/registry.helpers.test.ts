@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { withEnv } from "../test-utils/env.js";
 import {
   formatChannelSelectionLine,
   listChatChannels,
@@ -6,22 +7,21 @@ import {
 } from "./registry.js";
 
 describe("channel registry helpers", () => {
-  it("normalizes aliases + trims whitespace", () => {
-    expect(normalizeChatChannelId(" imsg ")).toBe("imessage");
-    expect(normalizeChatChannelId("gchat")).toBe("googlechat");
-    expect(normalizeChatChannelId("google-chat")).toBe("googlechat");
-    expect(normalizeChatChannelId("internet-relay-chat")).toBe("irc");
-    expect(normalizeChatChannelId("telegram")).toBe("telegram");
+  it("only resolves whatsapp and trims whitespace", () => {
+    expect(normalizeChatChannelId(" whatsapp ")).toBe("whatsapp");
+    expect(normalizeChatChannelId("telegram")).toBeNull();
+    expect(normalizeChatChannelId("imsg")).toBeNull();
+    expect(normalizeChatChannelId("gchat")).toBeNull();
     expect(normalizeChatChannelId("web")).toBeNull();
     expect(normalizeChatChannelId("nope")).toBeNull();
   });
 
-  it("keeps Telegram first in the default order", () => {
+  it("keeps WhatsApp as the only default channel", () => {
     const channels = listChatChannels();
-    expect(channels[0]?.id).toBe("telegram");
+    expect(channels.map((channel) => channel.id)).toEqual(["whatsapp"]);
   });
 
-  it("does not include MS Teams by default", () => {
+  it("does not include MS Teams", () => {
     const channels = listChatChannels();
     expect(channels.some((channel) => channel.id === "msteams")).toBe(false);
   });
@@ -35,8 +35,29 @@ describe("channel registry helpers", () => {
     const line = formatChannelSelectionLine(first, (path, label) =>
       [label, path].filter(Boolean).join(":"),
     );
-    expect(line).not.toContain("Docs:");
-    expect(line).toContain("/channels/telegram");
-    expect(line).toContain("https://openclaw.ai");
+    expect(line).toContain("Docs:");
+    expect(line).toContain("/channels/whatsapp");
+    expect(line).toContain("WhatsApp");
+  });
+
+  it("enforces whatsapp-only list without mode flags", () => {
+    const channels = withEnv(
+      { OPENCLAW_PROPAICLAW_MODE: undefined, OPENCLAW_CHANNELS_ONLY: undefined },
+      () => listChatChannels().map((channel) => channel.id),
+    );
+    expect(channels).toEqual(["whatsapp"]);
+
+    const normalizedTelegram = withEnv(
+      { OPENCLAW_PROPAICLAW_MODE: undefined, OPENCLAW_CHANNELS_ONLY: undefined },
+      () => normalizeChatChannelId("telegram"),
+    );
+    expect(normalizedTelegram).toBeNull();
+  });
+
+  it("ignores explicit allowlist requests for non-whatsapp channels", () => {
+    const channels = withEnv({ OPENCLAW_CHANNELS_ONLY: "telegram, whatsapp" }, () =>
+      listChatChannels().map((channel) => channel.id),
+    );
+    expect(channels).toEqual(["whatsapp"]);
   });
 });

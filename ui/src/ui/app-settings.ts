@@ -426,14 +426,29 @@ export async function loadChannelsTab(host: SettingsHost) {
   ]);
 }
 
-export async function loadCron(host: SettingsHost) {
+export async function loadCron(
+  host: SettingsHost,
+  opts?: { includeChannels?: boolean; includeModelSuggestions?: boolean; includeRuns?: boolean },
+) {
   const cronHost = host as unknown as OpenClawApp;
-  await Promise.all([
-    loadChannels(host as unknown as OpenClawApp, false),
-    loadCronStatus(cronHost),
-    loadCronJobs(cronHost),
-    loadCronModelSuggestions(cronHost),
-  ]);
+  const includeChannels = opts?.includeChannels ?? true;
+  const includeModelSuggestions = opts?.includeModelSuggestions ?? true;
+  const includeRuns = opts?.includeRuns ?? true;
+
+  const tasks: Array<Promise<unknown>> = [loadCronStatus(cronHost), loadCronJobs(cronHost)];
+  if (includeChannels) {
+    tasks.push(loadChannels(host as unknown as OpenClawApp, false));
+  }
+  if (includeModelSuggestions) {
+    tasks.push(loadCronModelSuggestions(cronHost));
+  }
+
+  await Promise.all(tasks);
+
+  if (!includeRuns) {
+    return;
+  }
+
   if (cronHost.cronRunsScope === "all") {
     await loadCronRuns(cronHost, null);
     return;

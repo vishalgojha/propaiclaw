@@ -281,7 +281,7 @@ export function renderAgentCron(params: {
         <div class="row" style="justify-content: space-between;">
           <div>
             <div class="card-title">Scheduler</div>
-            <div class="card-sub">Gateway cron status.</div>
+            <div class="card-sub">Gateway agent task status.</div>
           </div>
           <button class="btn btn--sm" ?disabled=${params.loading} @click=${params.onRefresh}>
             ${params.loading ? "Refreshing…" : "Refresh"}
@@ -311,7 +311,7 @@ export function renderAgentCron(params: {
       </section>
     </section>
     <section class="card">
-      <div class="card-title">Agent Cron Jobs</div>
+      <div class="card-title">Agent Tasks</div>
       <div class="card-sub">Scheduled jobs targeting this agent.</div>
       ${
         jobs.length === 0

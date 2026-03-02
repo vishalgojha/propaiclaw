@@ -60,7 +60,7 @@ export function formatCronSchedule(job: CronJob) {
   if (s.kind === "every") {
     return `Every ${formatDurationHuman(s.everyMs)}`;
   }
-  return `Cron ${s.expr}${s.tz ? ` (${s.tz})` : ""}`;
+  return `Pattern ${s.expr}${s.tz ? ` (${s.tz})` : ""}`;
 }
 
 export function formatCronPayload(job: CronJob) {

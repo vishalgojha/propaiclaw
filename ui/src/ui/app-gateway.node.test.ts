@@ -2,6 +2,10 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { GATEWAY_EVENT_UPDATE_AVAILABLE } from "../../../src/gateway/events.js";
 import { connectGateway } from "./app-gateway.ts";
 
+const { loadCronMock } = vi.hoisted(() => ({
+  loadCronMock: vi.fn(),
+}));
+
 type GatewayClientMock = {
   start: ReturnType<typeof vi.fn>;
   stop: ReturnType<typeof vi.fn>;
@@ -66,6 +70,13 @@ vi.mock("./gateway.ts", () => {
   return { GatewayBrowserClient, resolveGatewayErrorDetailCode };
 });
 
+vi.mock("./app-settings.ts", () => ({
+  applySettings: vi.fn(),
+  loadCron: loadCronMock,
+  refreshActiveTab: vi.fn(),
+  setLastActiveSessionKey: vi.fn(),
+}));
+
 function createHost() {
   return {
     settings: {
@@ -112,6 +123,8 @@ function createHost() {
 describe("connectGateway", () => {
   beforeEach(() => {
     gatewayClientInstances.length = 0;
+    loadCronMock.mockReset();
+    vi.useRealTimers();
   });
 
   it("ignores stale client onGap callbacks after reconnect", () => {
@@ -225,5 +238,46 @@ describe("connectGateway", () => {
 
     expect(host.lastError).toContain("gateway token mismatch");
     expect(host.lastErrorCode).toBe("AUTH_TOKEN_MISMATCH");
+  });
+
+  it("debounces cron events and uses lightweight cron refresh", () => {
+    vi.useFakeTimers();
+    const host = createHost();
+    host.tab = "cron";
+
+    connectGateway(host);
+    const client = gatewayClientInstances[0];
+    expect(client).toBeDefined();
+
+    client.emitEvent({ event: "cron" });
+    client.emitEvent({ event: "cron" });
+    client.emitEvent({ event: "cron" });
+
+    expect(loadCronMock).not.toHaveBeenCalled();
+
+    vi.advanceTimersByTime(300);
+
+    expect(loadCronMock).toHaveBeenCalledTimes(1);
+    expect(loadCronMock).toHaveBeenLastCalledWith(host, {
+      includeChannels: false,
+      includeModelSuggestions: false,
+      includeRuns: true,
+    });
+  });
+
+  it("clears pending cron refresh timers when reconnecting", () => {
+    vi.useFakeTimers();
+    const host = createHost();
+    host.tab = "cron";
+
+    connectGateway(host);
+    const firstClient = gatewayClientInstances[0];
+    expect(firstClient).toBeDefined();
+    firstClient.emitEvent({ event: "cron" });
+
+    connectGateway(host);
+
+    vi.advanceTimersByTime(400);
+    expect(loadCronMock).not.toHaveBeenCalled();
   });
 });

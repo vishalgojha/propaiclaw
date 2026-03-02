@@ -89,6 +89,37 @@ describe("cron view", () => {
     expect(container.textContent).not.toContain("multi-select");
   });
 
+  it("shows quick realtor task templates for new jobs", () => {
+    const container = document.createElement("div");
+    render(renderCron(createProps()), container);
+
+    expect(container.textContent).toContain("Quick templates");
+    expect(container.textContent).toContain("Listing Broadcast");
+    expect(container.textContent).toContain("Buyer Match Alerts");
+    expect(container.textContent).toContain("Weekly Broker Digest");
+  });
+
+  it("applies template defaults when a quick template is selected", () => {
+    const container = document.createElement("div");
+    const onFormChange = vi.fn();
+    render(renderCron(createProps({ onFormChange })), container);
+
+    const template = container.querySelector('button[data-template-id="buyer-match-alerts"]');
+    expect(template).not.toBeNull();
+    template?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+
+    expect(onFormChange).toHaveBeenCalled();
+    const patch = onFormChange.mock.calls.at(-1)?.[0] as Partial<
+      import("../ui-types.ts").CronFormState
+    >;
+    expect(patch.name).toBe("Buyer Match Alerts");
+    expect(patch.scheduleKind).toBe("every");
+    expect(patch.everyAmount).toBe("30");
+    expect(patch.everyUnit).toBe("minutes");
+    expect(patch.payloadKind).toBe("agentTurn");
+    expect(patch.deliveryMode).toBe("announce");
+  });
+
   it("toggles run status filter via dropdown checkboxes", () => {
     const container = document.createElement("div");
     const onRunsFiltersChange = vi.fn();
@@ -557,7 +588,7 @@ describe("cron view", () => {
     );
 
     expect(container.textContent).toContain("Name is required.");
-    expect(container.textContent).toContain("Cron expression is required.");
+    expect(container.textContent).toContain("Schedule expression is required.");
     expect(container.textContent).toContain("Agent message is required.");
     expect(container.textContent).toContain("Can't add job yet");
     expect(container.textContent).toContain("Fix 3 fields to continue.");

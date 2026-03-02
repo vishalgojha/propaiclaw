@@ -48,12 +48,12 @@ describe("maybeSeedRealtorWorkspaceBeforeSetup", () => {
       },
       {
         env: {
-          PROPAI_BROKERAGE_NAME: "Acme Realty",
-          PROPAI_OWNER_NAME: "Vishal",
-          PROPAI_AGENT_NAME: "Acme Assistant",
-          PROPAI_CITY: "Miami",
-          PROPAI_TIMEZONE: "America/New_York",
-          PROPAI_FOCUS: "Inbound WhatsApp lead triage",
+          PROPAICLAW_BROKERAGE_NAME: "Acme Realty",
+          PROPAICLAW_OWNER_NAME: "Vishal",
+          PROPAICLAW_AGENT_NAME: "Acme Assistant",
+          PROPAICLAW_CITY: "Miami",
+          PROPAICLAW_TIMEZONE: "America/New_York",
+          PROPAICLAW_FOCUS: "Inbound WhatsApp lead triage",
         },
         initProfile,
         stdoutWrite,
@@ -70,7 +70,39 @@ describe("maybeSeedRealtorWorkspaceBeforeSetup", () => {
       workspaceDir: "C:\\realtor-ws",
       overwrite: false,
     });
-    expect(stdoutWrite).toHaveBeenCalledWith("[propai] Prepared realtor workspace profile (1 files).\n");
+    expect(stdoutWrite).toHaveBeenCalledWith(
+      "[propaiclaw] Prepared realtor workspace profile (1 files).\n",
+    );
+  });
+
+  it("still accepts legacy PROPAI_* env vars", async () => {
+    const initProfile = vi.fn(async () => ({
+      workspaceDir: "C:\\legacy-ws",
+      writtenFiles: ["AGENTS.md"],
+      skippedFiles: [],
+    }));
+
+    await maybeSeedRealtorWorkspaceBeforeSetup(
+      {
+        commandLabel: "sync",
+        args: ["onboard", "--workspace", "C:\\legacy-ws"],
+        debug: false,
+      },
+      {
+        env: {
+          PROPAI_BROKERAGE_NAME: "Legacy Realty",
+          PROPAI_OWNER_NAME: "Owner",
+        },
+        initProfile,
+      },
+    );
+
+    expect(initProfile).toHaveBeenCalledWith(
+      expect.objectContaining({
+        brokerageName: "Legacy Realty",
+        ownerName: "Owner",
+      }),
+    );
   });
 
   it("fails open and logs warning when profile seed errors", async () => {
@@ -89,7 +121,7 @@ describe("maybeSeedRealtorWorkspaceBeforeSetup", () => {
     );
 
     expect(stderrWrite).toHaveBeenCalledWith(
-      "[propai] Could not pre-seed realtor workspace profile. Continuing setup.\n",
+      "[propaiclaw] Could not pre-seed realtor workspace profile. Continuing setup.\n",
     );
   });
 });

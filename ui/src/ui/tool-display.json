@@ -140,7 +140,7 @@
     },
     "cron": {
       "icon": "loader",
-      "title": "Cron",
+      "title": "Agent Tasks",
       "actions": {
         "status": { "label": "status" },
         "list": { "label": "list" },

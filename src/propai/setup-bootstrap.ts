@@ -30,6 +30,16 @@ function readEnvTrim(env: EnvLike, key: string): string | undefined {
   return normalized.length > 0 ? normalized : undefined;
 }
 
+function readEnvTrimFirst(env: EnvLike, keys: string[]): string | undefined {
+  for (const key of keys) {
+    const value = readEnvTrim(env, key);
+    if (value) {
+      return value;
+    }
+  }
+  return undefined;
+}
+
 export function readLongOptionValue(tokens: string[], flag: string): string | undefined {
   for (let index = 0; index < tokens.length; index += 1) {
     const token = tokens[index] ?? "";
@@ -52,15 +62,18 @@ function isSetupLikeCommand(label: string): boolean {
   return label === "setup" || label === "sync";
 }
 
-function buildProfileInputFromRoute(route: SetupBootstrapRoute, env: EnvLike): RealtorWorkspaceProfileInput {
+function buildProfileInputFromRoute(
+  route: SetupBootstrapRoute,
+  env: EnvLike,
+): RealtorWorkspaceProfileInput {
   const workspaceDir = readLongOptionValue(route.args, "--workspace");
   return {
-    brokerageName: readEnvTrim(env, "PROPAI_BROKERAGE_NAME"),
-    ownerName: readEnvTrim(env, "PROPAI_OWNER_NAME"),
-    agentName: readEnvTrim(env, "PROPAI_AGENT_NAME"),
-    timezone: readEnvTrim(env, "PROPAI_TIMEZONE"),
-    city: readEnvTrim(env, "PROPAI_CITY"),
-    focus: readEnvTrim(env, "PROPAI_FOCUS"),
+    brokerageName: readEnvTrimFirst(env, ["PROPAICLAW_BROKERAGE_NAME", "PROPAI_BROKERAGE_NAME"]),
+    ownerName: readEnvTrimFirst(env, ["PROPAICLAW_OWNER_NAME", "PROPAI_OWNER_NAME"]),
+    agentName: readEnvTrimFirst(env, ["PROPAICLAW_AGENT_NAME", "PROPAI_AGENT_NAME"]),
+    timezone: readEnvTrimFirst(env, ["PROPAICLAW_TIMEZONE", "PROPAI_TIMEZONE"]),
+    city: readEnvTrimFirst(env, ["PROPAICLAW_CITY", "PROPAI_CITY"]),
+    focus: readEnvTrimFirst(env, ["PROPAICLAW_FOCUS", "PROPAI_FOCUS"]),
     workspaceDir,
     overwrite: false,
   };
@@ -82,14 +95,16 @@ export async function maybeSeedRealtorWorkspaceBeforeSetup(
   try {
     const result = await initProfile(buildProfileInputFromRoute(route, env));
     if (result.writtenFiles.length > 0) {
-      stdoutWrite(`[propai] Prepared realtor workspace profile (${result.writtenFiles.length} files).\n`);
+      stdoutWrite(
+        `[propaiclaw] Prepared realtor workspace profile (${result.writtenFiles.length} files).\n`,
+      );
     }
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     if (route.debug) {
-      stderrWrite(`[propai debug] Workspace pre-seed failed (continuing setup): ${message}\n`);
+      stderrWrite(`[propaiclaw debug] Workspace pre-seed failed (continuing setup): ${message}\n`);
       return;
     }
-    stderrWrite("[propai] Could not pre-seed realtor workspace profile. Continuing setup.\n");
+    stderrWrite("[propaiclaw] Could not pre-seed realtor workspace profile. Continuing setup.\n");
   }
 }

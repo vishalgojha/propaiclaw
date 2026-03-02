@@ -217,6 +217,151 @@ type BlockingField = {
   inputId: string;
 };
 
+type CronTaskTemplate = {
+  id: string;
+  title: string;
+  subtitle: string;
+  scheduleLabel: string;
+  patch: Partial<CronFormState>;
+};
+
+function getTaskTemplates(): CronTaskTemplate[] {
+  return [
+    {
+      id: "listing-broadcast",
+      title: t("cron.templates.listingBroadcast.title"),
+      subtitle: t("cron.templates.listingBroadcast.subtitle"),
+      scheduleLabel: t("cron.templates.schedule.every2Hours"),
+      patch: {
+        name: t("cron.templates.listingBroadcast.name"),
+        description: t("cron.templates.listingBroadcast.description"),
+        scheduleKind: "every",
+        everyAmount: "2",
+        everyUnit: "hours",
+        sessionTarget: "isolated",
+        wakeMode: "next-heartbeat",
+        payloadKind: "agentTurn",
+        payloadText: t("cron.templates.listingBroadcast.prompt"),
+        payloadThinking: "low",
+        deliveryMode: "announce",
+        deliveryChannel: "last",
+        deleteAfterRun: false,
+        enabled: true,
+      },
+    },
+    {
+      id: "buyer-match-alerts",
+      title: t("cron.templates.buyerMatchAlerts.title"),
+      subtitle: t("cron.templates.buyerMatchAlerts.subtitle"),
+      scheduleLabel: t("cron.templates.schedule.every30Minutes"),
+      patch: {
+        name: t("cron.templates.buyerMatchAlerts.name"),
+        description: t("cron.templates.buyerMatchAlerts.description"),
+        scheduleKind: "every",
+        everyAmount: "30",
+        everyUnit: "minutes",
+        sessionTarget: "isolated",
+        wakeMode: "next-heartbeat",
+        payloadKind: "agentTurn",
+        payloadText: t("cron.templates.buyerMatchAlerts.prompt"),
+        payloadThinking: "low",
+        deliveryMode: "announce",
+        deliveryChannel: "last",
+        deleteAfterRun: false,
+        enabled: true,
+      },
+    },
+    {
+      id: "lead-followup",
+      title: t("cron.templates.leadFollowup.title"),
+      subtitle: t("cron.templates.leadFollowup.subtitle"),
+      scheduleLabel: t("cron.templates.schedule.daily10am"),
+      patch: {
+        name: t("cron.templates.leadFollowup.name"),
+        description: t("cron.templates.leadFollowup.description"),
+        scheduleKind: "cron",
+        cronExpr: "0 10 * * *",
+        cronTz: "",
+        sessionTarget: "isolated",
+        wakeMode: "next-heartbeat",
+        payloadKind: "agentTurn",
+        payloadText: t("cron.templates.leadFollowup.prompt"),
+        payloadThinking: "low",
+        deliveryMode: "announce",
+        deliveryChannel: "last",
+        deleteAfterRun: false,
+        enabled: true,
+      },
+    },
+    {
+      id: "group-engagement",
+      title: t("cron.templates.groupEngagement.title"),
+      subtitle: t("cron.templates.groupEngagement.subtitle"),
+      scheduleLabel: t("cron.templates.schedule.every6Hours"),
+      patch: {
+        name: t("cron.templates.groupEngagement.name"),
+        description: t("cron.templates.groupEngagement.description"),
+        scheduleKind: "every",
+        everyAmount: "6",
+        everyUnit: "hours",
+        sessionTarget: "isolated",
+        wakeMode: "next-heartbeat",
+        payloadKind: "agentTurn",
+        payloadText: t("cron.templates.groupEngagement.prompt"),
+        payloadThinking: "low",
+        deliveryMode: "announce",
+        deliveryChannel: "last",
+        deleteAfterRun: false,
+        enabled: true,
+      },
+    },
+    {
+      id: "stale-lead-rescue",
+      title: t("cron.templates.staleLeadRescue.title"),
+      subtitle: t("cron.templates.staleLeadRescue.subtitle"),
+      scheduleLabel: t("cron.templates.schedule.every15Minutes"),
+      patch: {
+        name: t("cron.templates.staleLeadRescue.name"),
+        description: t("cron.templates.staleLeadRescue.description"),
+        scheduleKind: "every",
+        everyAmount: "15",
+        everyUnit: "minutes",
+        sessionTarget: "isolated",
+        wakeMode: "next-heartbeat",
+        payloadKind: "agentTurn",
+        payloadText: t("cron.templates.staleLeadRescue.prompt"),
+        payloadThinking: "low",
+        deliveryMode: "announce",
+        deliveryChannel: "last",
+        deleteAfterRun: false,
+        enabled: true,
+      },
+    },
+    {
+      id: "weekly-digest",
+      title: t("cron.templates.weeklyDigest.title"),
+      subtitle: t("cron.templates.weeklyDigest.subtitle"),
+      scheduleLabel: t("cron.templates.schedule.monday8am"),
+      patch: {
+        name: t("cron.templates.weeklyDigest.name"),
+        description: t("cron.templates.weeklyDigest.description"),
+        scheduleKind: "cron",
+        cronExpr: "0 8 * * 1",
+        cronTz: "",
+        sessionTarget: "isolated",
+        wakeMode: "next-heartbeat",
+        payloadKind: "agentTurn",
+        payloadText: t("cron.templates.weeklyDigest.prompt"),
+        payloadThinking: "low",
+        deliveryMode: "announce",
+        deliveryChannel: "last",
+        deleteAfterRun: false,
+        enabled: true,
+      },
+    },
+  ];
+}
+
 function errorIdForField(key: CronFieldKey) {
   return `cron-error-${key}`;
 }
@@ -352,6 +497,7 @@ export function renderCron(props: CronProps) {
   const isEditing = Boolean(props.editingJobId);
   const isAgentTurn = props.form.payloadKind === "agentTurn";
   const isCronSchedule = props.form.scheduleKind === "cron";
+  const templates = getTaskTemplates();
   const channelOptions = buildChannelOptions(props);
   const selectedJob =
     props.runsJobId == null ? undefined : props.jobs.find((job) => job.id === props.runsJobId);
@@ -359,7 +505,11 @@ export function renderCron(props: CronProps) {
     props.runsScope === "all"
       ? t("cron.jobList.allJobs")
       : (selectedJob?.name ?? props.runsJobId ?? t("cron.jobList.selectJob"));
-  const runs = props.runs;
+  const runs = [...props.runs].sort((a, b) => {
+    const left = typeof a.ts === "number" ? a.ts : 0;
+    const right = typeof b.ts === "number" ? b.ts : 0;
+    return props.runsSortDir === "asc" ? left - right : right - left;
+  });
   const runStatusOptions = getRunStatusOptions();
   const runDeliveryOptions = getRunDeliveryOptions();
   const selectedStatusLabels = runStatusOptions
@@ -702,6 +852,35 @@ export function renderCron(props: CronProps) {
           <div class="cron-required-legend">
             <span class="cron-required-marker" aria-hidden="true">*</span> ${t("cron.form.required")}
           </div>
+          ${
+            !isEditing
+              ? html`
+                  <section class="cron-form-section">
+                    <div class="cron-form-section__title">${t("cron.templates.title")}</div>
+                    <div class="cron-form-section__sub">${t("cron.templates.subtitle")}</div>
+                    <div class="cron-template-list">
+                      ${templates.map(
+                        (template) => html`
+                          <button
+                            type="button"
+                            class="cron-template-card"
+                            data-template-id=${template.id}
+                            @click=${() => props.onFormChange({ ...template.patch })}
+                          >
+                            <span class="cron-template-card__top">
+                              <span class="cron-template-card__title">${template.title}</span>
+                              <span class="chip">${template.scheduleLabel}</span>
+                            </span>
+                            <span class="cron-template-card__sub">${template.subtitle}</span>
+                            <span class="cron-template-card__cta">${t("cron.templates.apply")}</span>
+                          </button>
+                        `,
+                      )}
+                    </div>
+                  </section>
+                `
+              : nothing
+          }
           <section class="cron-form-section">
             <div class="cron-form-section__title">${t("cron.form.basics")}</div>
             <div class="cron-form-section__sub">${t("cron.form.basicsSub")}</div>
@@ -1486,7 +1665,7 @@ function renderJob(job: CronJob, props: CronProps) {
             ?disabled=${props.busy}
             @click=${(event: Event) => {
               event.stopPropagation();
-              selectAnd(() => props.onLoadRuns(job.id));
+              props.onLoadRuns(job.id);
             }}
           >
             ${t("cron.jobList.history")}

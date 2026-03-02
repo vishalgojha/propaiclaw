@@ -1,21 +1,21 @@
 {
-  "name": "openclaw",
+  "name": "propaiclaw",
   "version": "2026.2.27",
-  "description": "Multi-channel AI gateway with extensible messaging integrations",
+  "description": "WhatsApp-first realtor CLI wrapper built on OpenClaw",
   "keywords": [],
-  "homepage": "https://github.com/openclaw/openclaw#readme",
+  "homepage": "https://github.com/vishalgojha/propaiclaw#readme",
   "bugs": {
-    "url": "https://github.com/openclaw/openclaw/issues"
+    "url": "https://github.com/vishalgojha/propaiclaw/issues"
   },
   "license": "MIT",
   "author": "",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/openclaw/openclaw.git"
+    "url": "git+https://github.com/vishalgojha/propaiclaw.git"
   },
   "bin": {
-    "openclaw": "openclaw.mjs",
-    "propai": "propai.mjs"
+    "propai": "propai.mjs",
+    "propaiclaw": "propaiclaw.mjs"
   },
   "directories": {
     "doc": "docs",
@@ -26,6 +26,7 @@
     "LICENSE",
     "openclaw.mjs",
     "propai.mjs",
+    "propaiclaw.mjs",
     "README-header.png",
     "README.md",
     "assets/",

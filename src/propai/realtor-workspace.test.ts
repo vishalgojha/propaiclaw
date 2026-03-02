@@ -26,8 +26,8 @@ describe("initializeRealtorWorkspaceProfile", () => {
     const heartbeat = await fs.readFile(path.join(workspaceDir, "HEARTBEAT.md"), "utf-8");
 
     expect(agents).toContain("My Realty Team");
-    expect(soul).toContain("PropAI Assistant");
-    expect(identity).toContain("PropAI Assistant");
+    expect(soul).toContain("Propaiclaw Assistant");
+    expect(identity).toContain("Propaiclaw Assistant");
     expect(user).toContain("Broker Owner");
     expect(heartbeat).toContain("HEARTBEAT_OK");
   });
@@ -77,4 +77,3 @@ describe("initializeRealtorWorkspaceProfile", () => {
     expect(identity).toContain("America/New_York");
   });
 });
-

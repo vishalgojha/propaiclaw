@@ -116,13 +116,54 @@ export const CHAT_CHANNEL_ALIASES: Record<string, ChatChannelId> = {
   gchat: "googlechat",
 };
 
+function normalizeAllowlistEntry(raw: string): string | null {
+  const normalized = raw.trim().toLowerCase();
+  if (!normalized) {
+    return null;
+  }
+  return CHAT_CHANNEL_ALIASES[normalized] ?? normalized;
+}
+
+function parseChannelAllowlist(raw: string): Set<string> | null {
+  const entries = raw
+    .split(/[,\s]+/)
+    .map((entry) => normalizeAllowlistEntry(entry))
+    .filter((entry): entry is string => Boolean(entry));
+  return entries.length > 0 ? new Set(entries) : null;
+}
+
+const CHANNEL_HARD_ALLOWLIST = new Set<string>(["whatsapp"]);
+
+function restrictToHardAllowlist(input: Set<string> | null): Set<string> {
+  if (!input) {
+    return new Set(CHANNEL_HARD_ALLOWLIST);
+  }
+  const restricted = new Set<string>();
+  for (const id of input) {
+    if (CHANNEL_HARD_ALLOWLIST.has(id)) {
+      restricted.add(id);
+    }
+  }
+  return restricted;
+}
+
+export function resolveRuntimeChannelAllowlist(): Set<string> {
+  const explicit = process.env.OPENCLAW_CHANNELS_ONLY ?? process.env.PROPAICLAW_CHANNELS_ONLY;
+  if (typeof explicit === "string" && explicit.trim().length > 0) {
+    return restrictToHardAllowlist(parseChannelAllowlist(explicit));
+  }
+  return new Set(CHANNEL_HARD_ALLOWLIST);
+}
+
 const normalizeChannelKey = (raw?: string | null): string | undefined => {
   const normalized = raw?.trim().toLowerCase();
   return normalized || undefined;
 };
 
 export function listChatChannels(): ChatChannelMeta[] {
-  return CHAT_CHANNEL_ORDER.map((id) => CHAT_CHANNEL_META[id]);
+  const allowlist = resolveRuntimeChannelAllowlist();
+  const ids = CHAT_CHANNEL_ORDER.filter((id) => allowlist.has(id));
+  return ids.map((id) => CHAT_CHANNEL_META[id]);
 }
 
 export function listChatChannelAliases(): string[] {
@@ -139,7 +180,14 @@ export function normalizeChatChannelId(raw?: string | null): ChatChannelId | nul
     return null;
   }
   const resolved = CHAT_CHANNEL_ALIASES[normalized] ?? normalized;
-  return CHAT_CHANNEL_ORDER.includes(resolved) ? resolved : null;
+  if (!CHAT_CHANNEL_ORDER.includes(resolved)) {
+    return null;
+  }
+  const allowlist = resolveRuntimeChannelAllowlist();
+  if (!allowlist.has(resolved)) {
+    return null;
+  }
+  return resolved;
 }
 
 // Channel docking: prefer this helper in shared code. Importing from
@@ -168,7 +216,15 @@ export function normalizeAnyChannelId(raw?: string | null): ChannelId | null {
     }
     return (entry.plugin.meta.aliases ?? []).some((alias) => alias.trim().toLowerCase() === key);
   });
-  return hit?.plugin.id ?? null;
+  const resolved = hit?.plugin.id ?? null;
+  if (!resolved) {
+    return null;
+  }
+  const allowlist = resolveRuntimeChannelAllowlist();
+  if (!allowlist.has(resolved)) {
+    return null;
+  }
+  return resolved;
 }
 
 export function formatChannelPrimerLine(meta: ChatChannelMeta): string {

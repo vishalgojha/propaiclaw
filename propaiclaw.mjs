@@ -49,5 +49,5 @@ if (await tryImport("./dist/propaiclaw-entry.js")) {
 } else if (await tryImport("./dist/propaiclaw-entry.mjs")) {
   // OK
 } else {
-  throw new Error("propai: missing dist/propaiclaw-entry.(m)js (build output).");
+  throw new Error("propaiclaw: missing dist/propaiclaw-entry.(m)js (build output).");
 }

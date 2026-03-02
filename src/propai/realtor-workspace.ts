@@ -109,10 +109,7 @@ ${profile.focus}
 `;
 }
 
-function buildSoulContent(profile: {
-  brokerageName: string;
-  agentName: string;
-}): string {
+function buildSoulContent(profile: { brokerageName: string; agentName: string }): string {
   return `# SOUL.md - ${profile.agentName}
 
 You are the calm, reliable front-office AI for ${profile.brokerageName}.
@@ -131,10 +128,7 @@ You are the calm, reliable front-office AI for ${profile.brokerageName}.
 `;
 }
 
-function buildIdentityContent(profile: {
-  agentName: string;
-  timezone: string;
-}): string {
+function buildIdentityContent(profile: { agentName: string; timezone: string }): string {
   return `# IDENTITY.md - Agent Identity
 
 - Name: ${profile.agentName}
@@ -165,10 +159,7 @@ function buildUserContent(profile: {
 `;
 }
 
-function buildHeartbeatContent(profile: {
-  brokerageName: string;
-  ownerName: string;
-}): string {
+function buildHeartbeatContent(profile: { brokerageName: string; ownerName: string }): string {
   return `# HEARTBEAT.md - Daily Check Routine
 
 Use this checklist when heartbeat polls arrive.
@@ -208,7 +199,7 @@ export async function initializeRealtorWorkspaceProfile(
 ): Promise<RealtorWorkspaceProfileResult> {
   const brokerageName = trimOrFallback(input.brokerageName, "My Realty Team");
   const ownerName = trimOrFallback(input.ownerName, "Broker Owner");
-  const agentName = trimOrFallback(input.agentName, "PropAI Assistant");
+  const agentName = trimOrFallback(input.agentName, "Propaiclaw Assistant");
   const timezone = trimOrFallback(input.timezone, resolveDefaultTimezone());
   const city = trimOrFallback(input.city, "Your City");
   const focus = trimOrFallback(
@@ -259,4 +250,3 @@ export async function initializeRealtorWorkspaceProfile(
     skippedFiles,
   };
 }
-

@@ -47,6 +47,36 @@ describe("mapPropAiArgs", () => {
     });
   });
 
+  it("maps dashboard shortcut", () => {
+    const route = mapPropAiArgs(["dashboard"]);
+    expect(route).toEqual({
+      kind: "single",
+      debug: false,
+      commandLabel: "dashboard",
+      args: ["dashboard"],
+    });
+  });
+
+  it("maps ui alias to dashboard", () => {
+    const route = mapPropAiArgs(["ui", "--open"]);
+    expect(route).toEqual({
+      kind: "single",
+      debug: false,
+      commandLabel: "dashboard",
+      args: ["dashboard", "--open"],
+    });
+  });
+
+  it("maps tui shortcut", () => {
+    const route = mapPropAiArgs(["tui", "--deliver"]);
+    expect(route).toEqual({
+      kind: "single",
+      debug: false,
+      commandLabel: "tui",
+      args: ["tui", "--deliver"],
+    });
+  });
+
   it("maps connect command", () => {
     const route = mapPropAiArgs(["connect", "whatsapp", "--account", "primary"]);
     expect(route).toEqual({
@@ -60,6 +90,28 @@ describe("mapPropAiArgs", () => {
   it("errors when connect app is missing", () => {
     const route = mapPropAiArgs(["connect"]);
     expect(route.kind).toBe("error");
+  });
+
+  it("rejects non-whatsapp connect targets", () => {
+    const route = mapPropAiArgs(["connect", "telegram"]);
+    expect(route).toEqual({
+      kind: "error",
+      debug: false,
+      message: "Only WhatsApp is supported right now. Usage: propaiclaw connect whatsapp",
+    });
+  });
+
+  it("renders error usage with the active command name", () => {
+    const route = mapPropAiArgs(
+      ["connect", "telegram"],
+      new Date("2026-03-01T08:00:00.000Z"),
+      "propai",
+    );
+    expect(route).toEqual({
+      kind: "error",
+      debug: false,
+      message: "Only WhatsApp is supported right now. Usage: propai connect whatsapp",
+    });
   });
 
   it("maps channels list", () => {
@@ -78,7 +130,16 @@ describe("mapPropAiArgs", () => {
       kind: "single",
       debug: false,
       commandLabel: "channels-add",
-      args: ["channels", "add", "--channel", "whatsapp", "--account", "team2", "--name", "Team Phone 2"],
+      args: [
+        "channels",
+        "add",
+        "--channel",
+        "whatsapp",
+        "--account",
+        "team2",
+        "--name",
+        "Team Phone 2",
+      ],
     });
   });
 
@@ -87,7 +148,7 @@ describe("mapPropAiArgs", () => {
     expect(route).toEqual({
       kind: "error",
       debug: false,
-      message: "Missing account id. Usage: propai channels add <account-id> [options]",
+      message: "Missing account id. Usage: propaiclaw channels add <account-id> [options]",
     });
   });
 
@@ -106,7 +167,7 @@ describe("mapPropAiArgs", () => {
     expect(route).toEqual({
       kind: "error",
       debug: false,
-      message: "Missing account id. Usage: propai channels remove <account-id>",
+      message: "Missing account id. Usage: propaiclaw channels remove <account-id>",
     });
   });
 
@@ -115,7 +176,119 @@ describe("mapPropAiArgs", () => {
     expect(route).toEqual({
       kind: "error",
       debug: false,
-      message: "Unsupported channels command. Use: propai channels <list|add|remove>",
+      message: "Unsupported channels command. Use: propaiclaw channels <list|add|remove>",
+    });
+  });
+
+  it("maps groups list to directory command", () => {
+    const route = mapPropAiArgs(["groups", "list"]);
+    expect(route).toEqual({
+      kind: "local",
+      debug: false,
+      commandLabel: "groups-list",
+      params: {
+        accountId: undefined,
+        agentId: undefined,
+      },
+    });
+  });
+
+  it("maps groups list with account/agent scope options", () => {
+    const route = mapPropAiArgs(["groups", "list", "--account", "tenant-a", "--agent", "realtor"]);
+    expect(route).toEqual({
+      kind: "local",
+      debug: false,
+      commandLabel: "groups-list",
+      params: {
+        accountId: "tenant-a",
+        agentId: "realtor",
+      },
+    });
+  });
+
+  it("errors when groups list receives unexpected positional args", () => {
+    const route = mapPropAiArgs(["groups", "list", "extra"]);
+    expect(route).toEqual({
+      kind: "error",
+      debug: false,
+      message:
+        "Unexpected argument(s): extra. Usage: propaiclaw groups list [--account <id>] [--agent <id>]",
+    });
+  });
+
+  it("maps groups allow to local allowlist update", () => {
+    const route = mapPropAiArgs([
+      "groups",
+      "allow",
+      "120000000000001@g.us",
+      "120000000000002@g.us",
+    ]);
+    expect(route).toEqual({
+      kind: "local",
+      debug: false,
+      commandLabel: "groups-allow",
+      params: {
+        groupIds: ["120000000000001@g.us", "120000000000002@g.us"],
+        accountId: undefined,
+        agentId: undefined,
+      },
+    });
+  });
+
+  it("maps groups allow with account scope option", () => {
+    const route = mapPropAiArgs(["groups", "allow", "Family Investors", "--account", "tenant-a"]);
+    expect(route).toEqual({
+      kind: "local",
+      debug: false,
+      commandLabel: "groups-allow",
+      params: {
+        groupIds: ["Family Investors"],
+        accountId: "tenant-a",
+        agentId: undefined,
+      },
+    });
+  });
+
+  it("maps groups allow-all to wildcard allowlist", () => {
+    const route = mapPropAiArgs(["groups", "allow-all"]);
+    expect(route).toEqual({
+      kind: "local",
+      debug: false,
+      commandLabel: "groups-allow",
+      params: {
+        groupIds: ["*"],
+        accountId: undefined,
+        agentId: undefined,
+      },
+    });
+  });
+
+  it("errors when groups allow is missing group ids", () => {
+    const route = mapPropAiArgs(["groups", "allow"]);
+    expect(route).toEqual({
+      kind: "error",
+      debug: false,
+      message: "Missing group id. Usage: propaiclaw groups allow <group-id...>",
+    });
+  });
+
+  it("errors when groups allow uses an unsupported option", () => {
+    const route = mapPropAiArgs(["groups", "allow", "Family Investors", "--query", "family"]);
+    expect(route).toEqual({
+      kind: "error",
+      debug: false,
+      message:
+        "Unsupported option --query. Use: propaiclaw groups <list|allow|allow-all> [--account <id>] [--agent <id>]",
+    });
+  });
+
+  it("errors when --account is provided without value", () => {
+    const route = mapPropAiArgs(["groups", "allow", "Family Investors", "--account"]);
+    expect(route).toEqual({
+      kind: "error",
+      debug: false,
+      message:
+        "Missing value for --account. Usage: propaiclaw groups allow <group-id...> --account <id>",
     });
   });
 
@@ -125,7 +298,16 @@ describe("mapPropAiArgs", () => {
       kind: "single",
       debug: false,
       commandLabel: "lead-follow-up",
-      args: ["message", "send", "--target", "+15555550123", "--message", "Checking in"],
+      args: [
+        "message",
+        "send",
+        "--target",
+        "+15555550123",
+        "--message",
+        "Checking in",
+        "--channel",
+        "whatsapp",
+      ],
     });
   });
 
@@ -140,7 +322,16 @@ describe("mapPropAiArgs", () => {
       kind: "single",
       debug: false,
       commandLabel: "history-target",
-      args: ["message", "read", "--target", "+15555550123", "--limit", "25"],
+      args: [
+        "message",
+        "read",
+        "--target",
+        "+15555550123",
+        "--channel",
+        "whatsapp",
+        "--limit",
+        "25",
+      ],
     });
   });
 
@@ -198,7 +389,7 @@ describe("mapPropAiArgs", () => {
         "isolated",
         "--announce",
         "--name",
-        "propai-daily-20260301T080000Z",
+        "propaiclaw-daily-20260301T080000Z",
         "--to",
         "+15555550123",
         "--channel",
@@ -231,6 +422,8 @@ describe("mapPropAiArgs", () => {
         "--session",
         "isolated",
         "--announce",
+        "--channel",
+        "whatsapp",
         "--name",
         "custom-job",
         "--to",
@@ -254,7 +447,7 @@ describe("mapPropAiArgs", () => {
     expect(route).toEqual({
       kind: "error",
       debug: false,
-      message: "Advanced passthrough is disabled. Use: propai --admin raw <openclaw args...>",
+      message: "Advanced passthrough is disabled. Use: propaiclaw --admin raw <openclaw args...>",
     });
   });
 
@@ -302,21 +495,26 @@ describe("mapPropAiArgs", () => {
   });
 });
 
-describe("propai help and failures", () => {
+describe("propaiclaw help and failures", () => {
   it("renders help text with core commands", () => {
     const help = renderPropAiHelp();
-    expect(help).toContain("propai profile init");
-    expect(help).toContain("propai start");
-    expect(help).toContain("propai sync");
-    expect(help).toContain("propai lead follow-up");
-    expect(help).toContain("propai schedule daily");
-    expect(help).toContain("propai channels add");
-    expect(help).toContain("propai channels list");
+    expect(help).toContain("propaiclaw profile init");
+    expect(help).toContain("propaiclaw start");
+    expect(help).toContain("propaiclaw sync");
+    expect(help).toContain("propaiclaw dashboard");
+    expect(help).toContain("propaiclaw tui");
+    expect(help).toContain("propaiclaw lead follow-up");
+    expect(help).toContain("propaiclaw schedule daily");
+    expect(help).toContain("propaiclaw channels add");
+    expect(help).toContain("propaiclaw channels list");
+    expect(help).toContain("propaiclaw groups allow");
     expect(help).toContain("--admin");
   });
 
   it("renders friendly failure text", () => {
     expect(renderFriendlyFailure("connect")).toContain("could not connect");
+    expect(renderFriendlyFailure("dashboard")).toContain("could not open the dashboard");
+    expect(renderFriendlyFailure("tui")).toContain("could not start TUI mode");
     expect(renderFriendlyFailure("unknown")).toContain("command failed");
   });
 });

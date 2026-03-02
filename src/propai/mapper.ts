@@ -1,3 +1,5 @@
+import { normalizeWhatsAppGroupAllowlistEntries } from "./group-allowlist.js";
+
 export type PropAiCommandRoute =
   | {
       kind: "help";
@@ -33,45 +35,76 @@ export type PropAiCommandRoute =
         workspaceDir?: string;
         overwrite: boolean;
       };
+    }
+  | {
+      kind: "local";
+      debug: boolean;
+      commandLabel: "groups-list";
+      params: {
+        accountId?: string;
+        agentId?: string;
+      };
+    }
+  | {
+      kind: "local";
+      debug: boolean;
+      commandLabel: "groups-allow";
+      params: {
+        groupIds: string[];
+        accountId?: string;
+        agentId?: string;
+      };
     };
 
-export function renderPropAiHelp(): string {
+export function renderPropAiHelp(commandName = "propaiclaw"): string {
   return [
-    "PropAI Realtor CLI (realtor-first wrapper for OpenClaw)",
+    "Propaiclaw Realtor CLI (WhatsApp-first wrapper for OpenClaw)",
     "",
     "Usage:",
-    "  propai profile init [brokerage-name] [options]",
-    "  propai start",
-    "  propai setup",
-    "  propai sync",
-    "  propai connect <app>",
-    "  propai channels list",
-    "  propai channels add <account-id> [options]",
-    "  propai channels remove <account-id>",
-    '  propai lead follow-up <target> "<message>"',
-    '  propai schedule daily "<message>" --to <target>',
-    "  propai history [target]",
-    "  propai status",
+    `  ${commandName} profile init [brokerage-name] [options]`,
+    `  ${commandName} start`,
+    `  ${commandName} setup`,
+    `  ${commandName} sync`,
+    `  ${commandName} dashboard`,
+    `  ${commandName} ui`,
+    `  ${commandName} tui`,
+    `  ${commandName} connect whatsapp`,
+    `  ${commandName} channels list`,
+    `  ${commandName} channels add <account-id> [options]`,
+    `  ${commandName} channels remove <account-id>`,
+    `  ${commandName} groups list [--account <id>] [--agent <id>]`,
+    `  ${commandName} groups allow <group-id...> [--account <id>] [--agent <id>]`,
+    `  ${commandName} groups allow-all [--account <id>] [--agent <id>]`,
+    `  ${commandName} lead follow-up <target> "<message>"`,
+    `  ${commandName} schedule daily "<message>" --to <target>`,
+    `  ${commandName} history [target]`,
+    `  ${commandName} status`,
     "",
     "Examples:",
-    '  propai profile init "Acme Realty" --owner "Vishal" --city "Miami"',
-    "  propai start",
-    "  propai sync",
-    "  propai connect whatsapp",
-    "  propai channels add team2 --name \"Team Phone 2\"",
-    "  propai channels list",
-    "  propai channels remove team2",
-    '  propai lead follow-up +15555550123 "Just checking in on 123 Main St!"',
-    '  propai schedule daily "Good morning check-in" --to +15555550123',
-    "  propai history +15555550123 --limit 30",
-    "  propai status",
+    `  ${commandName} profile init "Acme Realty" --owner "Vishal" --city "Miami"`,
+    `  ${commandName} start`,
+    `  ${commandName} sync`,
+    `  ${commandName} dashboard`,
+    `  ${commandName} tui`,
+    `  ${commandName} connect whatsapp`,
+    `  ${commandName} channels add team2 --name "Team Phone 2"`,
+    `  ${commandName} channels list`,
+    `  ${commandName} channels remove team2`,
+    `  ${commandName} groups list --account tenant-a`,
+    `  ${commandName} groups allow "Family Investors"`,
+    `  ${commandName} groups allow 1203630@g.us 1203631@g.us --account tenant-a`,
+    `  ${commandName} groups allow-all --account tenant-a`,
+    `  ${commandName} lead follow-up +15555550123 "Just checking in on 123 Main St!"`,
+    `  ${commandName} schedule daily "Good morning check-in" --to +15555550123`,
+    `  ${commandName} history +15555550123 --limit 30`,
+    `  ${commandName} status`,
     "",
     "Flags:",
     "  --debug   Show underlying OpenClaw command and keep raw diagnostics",
     "  --admin   Enable advanced/developer passthrough commands",
     "",
     "Advanced (admin only):",
-    "  propai --admin raw <openclaw args...>",
+    `  ${commandName} --admin raw <openclaw args...>`,
   ].join("\n");
 }
 
@@ -109,6 +142,13 @@ function hasOptionFlag(tokens: string[], name: string): boolean {
     return true;
   }
   return tokens.some((token) => token.startsWith(`${name}=`));
+}
+
+function withDefaultWhatsappChannel(tokens: string[]): string[] {
+  if (hasOptionFlag(tokens, "--channel")) {
+    return tokens;
+  }
+  return ["--channel", "whatsapp", ...tokens];
 }
 
 type ParsedLongOptions = {
@@ -151,7 +191,10 @@ function parseLongOptions(tokens: string[]): ParsedLongOptions {
   return { options, positionals, invalidOption: null };
 }
 
-function readStringOption(options: Map<string, string | true>, ...names: string[]): string | undefined {
+function readStringOption(
+  options: Map<string, string | true>,
+  ...names: string[]
+): string | undefined {
   for (const name of names) {
     const value = options.get(name);
     if (typeof value === "string") {
@@ -164,9 +207,61 @@ function readStringOption(options: Map<string, string | true>, ...names: string[
   return undefined;
 }
 
+type GroupScopeParseResult =
+  | {
+      ok: true;
+      accountId?: string;
+      agentId?: string;
+    }
+  | {
+      ok: false;
+      message: string;
+    };
+
+function parseGroupScopeOptions(
+  options: Map<string, string | true>,
+  commandName: string,
+): GroupScopeParseResult {
+  const allowed = new Set(["account", "agent"]);
+  for (const key of options.keys()) {
+    if (!allowed.has(key)) {
+      return {
+        ok: false,
+        message: `Unsupported option --${key}. Use: ${commandName} groups <list|allow|allow-all> [--account <id>] [--agent <id>]`,
+      };
+    }
+  }
+
+  const accountRaw = options.get("account");
+  if (accountRaw === true) {
+    return {
+      ok: false,
+      message: `Missing value for --account. Usage: ${commandName} groups allow <group-id...> --account <id>`,
+    };
+  }
+  const agentRaw = options.get("agent");
+  if (agentRaw === true) {
+    return {
+      ok: false,
+      message: `Missing value for --agent. Usage: ${commandName} groups allow <group-id...> --agent <id>`,
+    };
+  }
+
+  const accountId = readStringOption(options, "account");
+  const agentId = readStringOption(options, "agent");
+  return {
+    ok: true,
+    accountId,
+    agentId,
+  };
+}
+
 function buildDailyJobName(now: Date): string {
-  const stamp = now.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}Z$/, "Z");
-  return `propai-daily-${stamp}`;
+  const stamp = now
+    .toISOString()
+    .replace(/[-:]/g, "")
+    .replace(/\.\d{3}Z$/, "Z");
+  return `propaiclaw-daily-${stamp}`;
 }
 
 function mapStatus(debug: boolean, options: string[]): PropAiCommandRoute {
@@ -180,7 +275,11 @@ function mapStatus(debug: boolean, options: string[]): PropAiCommandRoute {
   };
 }
 
-export function mapPropAiArgs(argv: string[], now: Date = new Date()): PropAiCommandRoute {
+export function mapPropAiArgs(
+  argv: string[],
+  now: Date = new Date(),
+  commandName = "propaiclaw",
+): PropAiCommandRoute {
   const { debug, admin, tokens } = parseGlobalFlags(argv);
   const [primary, secondary, ...rest] = tokens;
 
@@ -206,12 +305,32 @@ export function mapPropAiArgs(argv: string[], now: Date = new Date()): PropAiCom
     return { kind: "single", debug, commandLabel: primary, args };
   }
 
+  if (primary === "dashboard" || primary === "ui" || primary === "web") {
+    const dashboardArgs = [secondary, ...rest].filter((part): part is string => Boolean(part));
+    return {
+      kind: "single",
+      debug,
+      commandLabel: "dashboard",
+      args: ["dashboard", ...dashboardArgs],
+    };
+  }
+
+  if (primary === "tui" || primary === "chat") {
+    const tuiArgs = [secondary, ...rest].filter((part): part is string => Boolean(part));
+    return {
+      kind: "single",
+      debug,
+      commandLabel: "tui",
+      args: ["tui", ...tuiArgs],
+    };
+  }
+
   if (primary === "profile") {
     if (secondary !== "init") {
       return {
         kind: "error",
         debug,
-        message: "Unsupported profile command. Use: propai profile init [brokerage-name] [options]",
+        message: `Unsupported profile command. Use: ${commandName} profile init [brokerage-name] [options]`,
       };
     }
 
@@ -228,8 +347,7 @@ export function mapPropAiArgs(argv: string[], now: Date = new Date()): PropAiCom
       return {
         kind: "error",
         debug,
-        message:
-          "Too many positional values. Usage: propai profile init [brokerage-name] [--owner ... --agent-name ...]",
+        message: `Too many positional values. Usage: ${commandName} profile init [brokerage-name] [--owner ... --agent-name ...]`,
       };
     }
 
@@ -261,23 +379,33 @@ export function mapPropAiArgs(argv: string[], now: Date = new Date()): PropAiCom
   }
 
   if (primary === "status") {
-    return mapStatus(debug, [secondary, ...rest].filter((part): part is string => Boolean(part)));
+    return mapStatus(
+      debug,
+      [secondary, ...rest].filter((part): part is string => Boolean(part)),
+    );
   }
 
   if (primary === "connect") {
-    const app = secondary?.trim();
+    const app = secondary?.trim().toLowerCase();
     if (!app) {
       return {
         kind: "error",
         debug,
-        message: "Missing app name. Usage: propai connect <app>",
+        message: `Missing app name. Usage: ${commandName} connect whatsapp`,
+      };
+    }
+    if (app !== "whatsapp") {
+      return {
+        kind: "error",
+        debug,
+        message: `Only WhatsApp is supported right now. Usage: ${commandName} connect whatsapp`,
       };
     }
     return {
       kind: "single",
       debug,
       commandLabel: "connect",
-      args: ["channels", "login", "--channel", app, ...rest],
+      args: ["channels", "login", "--channel", "whatsapp", ...rest],
     };
   }
 
@@ -298,7 +426,7 @@ export function mapPropAiArgs(argv: string[], now: Date = new Date()): PropAiCom
         return {
           kind: "error",
           debug,
-          message: "Missing account id. Usage: propai channels add <account-id> [options]",
+          message: `Missing account id. Usage: ${commandName} channels add <account-id> [options]`,
         };
       }
       return {
@@ -316,21 +444,133 @@ export function mapPropAiArgs(argv: string[], now: Date = new Date()): PropAiCom
         return {
           kind: "error",
           debug,
-          message: "Missing account id. Usage: propai channels remove <account-id>",
+          message: `Missing account id. Usage: ${commandName} channels remove <account-id>`,
         };
       }
       return {
         kind: "single",
         debug,
         commandLabel: "channels-remove",
-        args: ["channels", "remove", "--channel", "whatsapp", "--account", accountId, ...passthrough],
+        args: [
+          "channels",
+          "remove",
+          "--channel",
+          "whatsapp",
+          "--account",
+          accountId,
+          ...passthrough,
+        ],
       };
     }
 
     return {
       kind: "error",
       debug,
-      message: "Unsupported channels command. Use: propai channels <list|add|remove>",
+      message: `Unsupported channels command. Use: ${commandName} channels <list|add|remove>`,
+    };
+  }
+
+  if (primary === "groups") {
+    if (secondary === "list") {
+      const parsed = parseLongOptions(rest);
+      if (parsed.invalidOption) {
+        return {
+          kind: "error",
+          debug,
+          message: `Unsupported option format: ${parsed.invalidOption}. Use long options like --account tenant-a.`,
+        };
+      }
+      if (parsed.positionals.length > 0) {
+        return {
+          kind: "error",
+          debug,
+          message: `Unexpected argument(s): ${parsed.positionals.join(" ")}. Usage: ${commandName} groups list [--account <id>] [--agent <id>]`,
+        };
+      }
+      const scope = parseGroupScopeOptions(parsed.options, commandName);
+      if (!scope.ok) {
+        return { kind: "error", debug, message: scope.message };
+      }
+      return {
+        kind: "local",
+        debug,
+        commandLabel: "groups-list",
+        params: {
+          accountId: scope.accountId,
+          agentId: scope.agentId,
+        },
+      };
+    }
+
+    if (secondary === "allow" || secondary === "add") {
+      const parsed = parseLongOptions(rest);
+      if (parsed.invalidOption) {
+        return {
+          kind: "error",
+          debug,
+          message: `Unsupported option format: ${parsed.invalidOption}. Use long options like --account tenant-a.`,
+        };
+      }
+      const scope = parseGroupScopeOptions(parsed.options, commandName);
+      if (!scope.ok) {
+        return { kind: "error", debug, message: scope.message };
+      }
+      const groupIds = normalizeWhatsAppGroupAllowlistEntries(parsed.positionals);
+      if (groupIds.length === 0) {
+        return {
+          kind: "error",
+          debug,
+          message: `Missing group id. Usage: ${commandName} groups allow <group-id...>`,
+        };
+      }
+      return {
+        kind: "local",
+        debug,
+        commandLabel: "groups-allow",
+        params: {
+          groupIds,
+          accountId: scope.accountId,
+          agentId: scope.agentId,
+        },
+      };
+    }
+
+    if (secondary === "allow-all") {
+      const parsed = parseLongOptions(rest);
+      if (parsed.invalidOption) {
+        return {
+          kind: "error",
+          debug,
+          message: `Unsupported option format: ${parsed.invalidOption}. Use long options like --account tenant-a.`,
+        };
+      }
+      if (parsed.positionals.length > 0) {
+        return {
+          kind: "error",
+          debug,
+          message: `Unexpected argument(s): ${parsed.positionals.join(" ")}. Usage: ${commandName} groups allow-all [--account <id>] [--agent <id>]`,
+        };
+      }
+      const scope = parseGroupScopeOptions(parsed.options, commandName);
+      if (!scope.ok) {
+        return { kind: "error", debug, message: scope.message };
+      }
+      return {
+        kind: "local",
+        debug,
+        commandLabel: "groups-allow",
+        params: {
+          groupIds: ["*"],
+          accountId: scope.accountId,
+          agentId: scope.agentId,
+        },
+      };
+    }
+
+    return {
+      kind: "error",
+      debug,
+      message: `Unsupported groups command. Use: ${commandName} groups <list|allow|allow-all>`,
     };
   }
 
@@ -339,8 +579,7 @@ export function mapPropAiArgs(argv: string[], now: Date = new Date()): PropAiCom
       return {
         kind: "error",
         debug,
-        message:
-          "Unsupported lead command. Use: propai lead follow-up <target> \"<message>\"",
+        message: `Unsupported lead command. Use: ${commandName} lead follow-up <target> "<message>"`,
       };
     }
     const target = rest[0]?.trim();
@@ -350,15 +589,22 @@ export function mapPropAiArgs(argv: string[], now: Date = new Date()): PropAiCom
       return {
         kind: "error",
         debug,
-        message:
-          "Missing follow-up target or message. Usage: propai lead follow-up <target> \"<message>\"",
+        message: `Missing follow-up target or message. Usage: ${commandName} lead follow-up <target> "<message>"`,
       };
     }
     return {
       kind: "single",
       debug,
       commandLabel: "lead-follow-up",
-      args: ["message", "send", "--target", target, "--message", message, ...passthrough],
+      args: [
+        "message",
+        "send",
+        "--target",
+        target,
+        "--message",
+        message,
+        ...withDefaultWhatsappChannel(passthrough),
+      ],
     };
   }
 
@@ -369,7 +615,7 @@ export function mapPropAiArgs(argv: string[], now: Date = new Date()): PropAiCom
         kind: "single",
         debug,
         commandLabel: "history-target",
-        args: ["message", "read", "--target", maybeTarget, ...rest],
+        args: ["message", "read", "--target", maybeTarget, ...withDefaultWhatsappChannel(rest)],
       };
     }
     return {
@@ -385,7 +631,7 @@ export function mapPropAiArgs(argv: string[], now: Date = new Date()): PropAiCom
       return {
         kind: "error",
         debug,
-        message: "Unsupported schedule command. Use: propai schedule daily \"<message>\" --to <target>",
+        message: `Unsupported schedule command. Use: ${commandName} schedule daily "<message>" --to <target>`,
       };
     }
     const message = rest[0];
@@ -394,16 +640,17 @@ export function mapPropAiArgs(argv: string[], now: Date = new Date()): PropAiCom
       return {
         kind: "error",
         debug,
-        message: "Missing daily message. Usage: propai schedule daily \"<message>\" --to <target>",
+        message: `Missing daily message. Usage: ${commandName} schedule daily "<message>" --to <target>`,
       };
     }
     if (!hasOptionFlag(options, "--to")) {
       return {
         kind: "error",
         debug,
-        message: "Missing destination. Usage: propai schedule daily \"<message>\" --to <target>",
+        message: `Missing destination. Usage: ${commandName} schedule daily "<message>" --to <target>`,
       };
     }
+    const scheduleOptions = withDefaultWhatsappChannel(options);
     const args = [
       "cron",
       "add",
@@ -418,7 +665,7 @@ export function mapPropAiArgs(argv: string[], now: Date = new Date()): PropAiCom
     if (!hasOptionFlag(options, "--name")) {
       args.push("--name", buildDailyJobName(now));
     }
-    args.push(...options);
+    args.push(...scheduleOptions);
     return {
       kind: "single",
       debug,
@@ -432,14 +679,14 @@ export function mapPropAiArgs(argv: string[], now: Date = new Date()): PropAiCom
       return {
         kind: "error",
         debug,
-        message: 'Advanced passthrough is disabled. Use: propai --admin raw <openclaw args...>',
+        message: `Advanced passthrough is disabled. Use: ${commandName} --admin raw <openclaw args...>`,
       };
     }
     if (!secondary) {
       return {
         kind: "error",
         debug,
-        message: "Missing OpenClaw arguments. Usage: propai raw <openclaw args...>",
+        message: `Missing OpenClaw arguments. Usage: ${commandName} raw <openclaw args...>`,
       };
     }
     return {
@@ -453,38 +700,46 @@ export function mapPropAiArgs(argv: string[], now: Date = new Date()): PropAiCom
   return {
     kind: "error",
     debug,
-    message: `Unknown command: ${primary}. Run "propai --help".`,
+    message: `Unknown command: ${primary}. Run "${commandName} --help".`,
   };
 }
 
-export function renderFriendlyFailure(commandLabel: string): string {
+export function renderFriendlyFailure(commandLabel: string, commandName = "propaiclaw"): string {
   switch (commandLabel) {
     case "start":
-      return "PropAi Sync could not start your AI engine. Try `propai start --debug` for full diagnostics.";
+      return `Propaiclaw could not start your AI engine. Try \`${commandName} start --debug\` for full diagnostics.`;
     case "setup":
     case "sync":
-      return "PropAi Sync setup could not complete. Re-run with `propai sync --debug` for raw diagnostics.";
+      return `Propaiclaw setup could not complete. Re-run with \`${commandName} sync --debug\` for raw diagnostics.`;
+    case "dashboard":
+      return `Propaiclaw could not open the dashboard. Confirm the gateway is running with \`${commandName} start\`, then retry.`;
+    case "tui":
+      return `Propaiclaw could not start TUI mode. Confirm the gateway is running with \`${commandName} start\`, then retry.`;
     case "connect":
-      return "PropAi Sync could not connect that app. Confirm your AI engine is running with `propai status`, then retry.";
+      return `Propaiclaw could not connect WhatsApp. Confirm your AI engine is running with \`${commandName} status\`, then retry.`;
     case "channels-add":
-      return "PropAi Sync could not add the WhatsApp team channel. Re-run with `--debug` and verify your account id is valid.";
+      return "Propaiclaw could not add the WhatsApp team channel. Re-run with `--debug` and verify your account id is valid.";
     case "channels-list":
-      return "PropAi Sync could not list channel accounts. Confirm your AI engine is running with `propai status`.";
+      return `Propaiclaw could not list channel accounts. Confirm your AI engine is running with \`${commandName} status\`.`;
     case "channels-remove":
-      return "PropAi Sync could not remove the WhatsApp team channel. Re-run with `--debug` and confirm the account id exists.";
+      return "Propaiclaw could not remove the WhatsApp team channel. Re-run with `--debug` and confirm the account id exists.";
+    case "groups-list":
+      return `Propaiclaw could not list WhatsApp groups. Confirm your account is linked with \`${commandName} connect whatsapp\`, then retry.`;
+    case "groups-allow":
+      return "Propaiclaw could not update the WhatsApp group allowlist. Re-run with `--debug` to inspect the failure.";
     case "lead-follow-up":
-      return "PropAi Sync could not send the follow-up. Confirm your connection with `propai status`, then retry.";
+      return `Propaiclaw could not send the follow-up. Confirm your connection with \`${commandName} status\`, then retry.`;
     case "schedule-daily":
-      return "PropAi Sync could not create the daily follow-up schedule. Run with `--debug` to inspect the underlying cron command.";
+      return "Propaiclaw could not create the daily follow-up schedule. Run with `--debug` to inspect the underlying cron command.";
     case "profile-init":
-      return "PropAi could not initialize the realtor workspace profile. Re-run with `--debug` for diagnostics.";
+      return "Propaiclaw could not initialize the realtor workspace profile. Re-run with `--debug` for diagnostics.";
     case "history":
     case "history-target":
-      return "PropAi Sync could not load conversation history. Ensure your AI engine is running, then retry.";
+      return "Propaiclaw could not load conversation history. Ensure your AI engine is running, then retry.";
     case "status":
     case "health":
-      return "PropAi Sync could not fetch status. Start the service first with `propai start`.";
+      return `Propaiclaw could not fetch status. Start the service first with \`${commandName} start\`.`;
     default:
-      return "PropAi Sync command failed. Re-run with `--debug` for raw OpenClaw output.";
+      return "Propaiclaw command failed. Re-run with `--debug` for raw OpenClaw output.";
   }
 }

@@ -18,7 +18,7 @@ export default defineConfig([
     platform: "node",
   },
   {
-    entry: "src/propai-entry.ts",
+    entry: "src/propaiclaw-entry.ts",
     env,
     fixedExtension: false,
     platform: "node",

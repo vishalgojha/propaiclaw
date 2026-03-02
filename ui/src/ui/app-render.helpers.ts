@@ -356,7 +356,7 @@ export function parseSessionKey(key: string): SessionKeyInfo {
 
   // ── Cron job ─────────────────────────────────────
   if (normalized.startsWith("cron:") || key.includes(":cron:")) {
-    return { prefix: "Cron:", fallbackName: "Cron Job:" };
+    return { prefix: "Agent Task:", fallbackName: "Agent Task:" };
   }
 
   // ── Direct chat  (agent:<x>:<channel>:direct:<id>) ──
@@ -398,6 +398,9 @@ export function resolveSessionDisplayName(
   const applyTypedPrefix = (name: string): string => {
     if (!prefix) {
       return name;
+    }
+    if (prefix === "Agent Task:" && /^cron:\s*/i.test(name)) {
+      return name.replace(/^cron:\s*/i, "Agent Task: ");
     }
     const prefixPattern = new RegExp(`^${prefix.replace(/[.*+?^${}()|[\\]\\]/g, "\\$&")}\\s*`, "i");
     return prefixPattern.test(name) ? name : `${prefix} ${name}`;

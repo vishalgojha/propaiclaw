@@ -1,4 +1,5 @@
 import type { OpenClawConfig, SkillConfig } from "../../config/config.js";
+import { isTruthyEnvValue } from "../../infra/env.js";
 import {
   evaluateRuntimeEligibility,
   hasBinary,
@@ -52,8 +53,31 @@ function isBundledSkill(entry: SkillEntry): boolean {
   return BUNDLED_SOURCES.has(entry.skill.source);
 }
 
+const PROPAICLAW_BUNDLED_SKILLS_ALLOWLIST = [
+  "action-suggester",
+  "india-location-normalizer",
+  "lead-extractor",
+  "lead-storage",
+  "message-parser",
+  "summary-generator",
+];
+
+function resolvePropaiclawBundledAllowlist(): string[] | undefined {
+  if (
+    isTruthyEnvValue(process.env.OPENCLAW_PROPAICLAW_MODE) ||
+    isTruthyEnvValue(process.env.PROPAICLAW_MODE)
+  ) {
+    return [...PROPAICLAW_BUNDLED_SKILLS_ALLOWLIST];
+  }
+  return undefined;
+}
+
 export function resolveBundledAllowlist(config?: OpenClawConfig): string[] | undefined {
-  return normalizeAllowlist(config?.skills?.allowBundled);
+  const configured = config?.skills?.allowBundled;
+  if (Array.isArray(configured)) {
+    return normalizeAllowlist(configured);
+  }
+  return resolvePropaiclawBundledAllowlist();
 }
 
 export function isBundledSkillAllowed(entry: SkillEntry, allowlist?: string[]): boolean {
@@ -75,7 +99,7 @@ export function shouldIncludeSkill(params: {
   const { entry, config, eligibility } = params;
   const skillKey = resolveSkillKey(entry.skill, entry);
   const skillConfig = resolveSkillConfig(config, skillKey);
-  const allowBundled = normalizeAllowlist(config?.skills?.allowBundled);
+  const allowBundled = resolveBundledAllowlist(config);
 
   if (skillConfig?.enabled === false) {
     return false;

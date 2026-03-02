@@ -75,6 +75,7 @@ type GatewayHost = {
   execApprovalQueue: ExecApprovalRequest[];
   execApprovalError: string | null;
   updateAvailable: UpdateAvailable | null;
+  cronEventRefreshTimer?: number | null;
 };
 
 type SessionDefaultsSnapshot = {
@@ -137,6 +138,10 @@ function applySessionDefaults(host: GatewayHost, defaults?: SessionDefaultsSnaps
 }
 
 export function connectGateway(host: GatewayHost) {
+  if (host.cronEventRefreshTimer != null) {
+    window.clearTimeout(host.cronEventRefreshTimer);
+    host.cronEventRefreshTimer = null;
+  }
   host.lastError = null;
   host.lastErrorCode = null;
   host.hello = null;
@@ -293,7 +298,17 @@ function handleGatewayEventUnsafe(host: GatewayHost, evt: GatewayEventFrame) {
   }
 
   if (evt.event === "cron" && host.tab === "cron") {
-    void loadCron(host as unknown as Parameters<typeof loadCron>[0]);
+    if (host.cronEventRefreshTimer != null) {
+      window.clearTimeout(host.cronEventRefreshTimer);
+    }
+    host.cronEventRefreshTimer = window.setTimeout(() => {
+      host.cronEventRefreshTimer = null;
+      void loadCron(host as unknown as Parameters<typeof loadCron>[0], {
+        includeChannels: false,
+        includeModelSuggestions: false,
+        includeRuns: true,
+      });
+    }, 300);
   }
 
   if (evt.event === "device.pair.requested" || evt.event === "device.pair.resolved") {

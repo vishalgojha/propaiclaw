@@ -37,12 +37,12 @@ describe("parseSessionKey", () => {
 
   it("identifies cron sessions", () => {
     expect(parseSessionKey("agent:main:cron:daily-briefing-uuid")).toEqual({
-      prefix: "Cron:",
-      fallbackName: "Cron Job:",
+      prefix: "Agent Task:",
+      fallbackName: "Agent Task:",
     });
     expect(parseSessionKey("cron:daily-briefing-uuid")).toEqual({
-      prefix: "Cron:",
-      fallbackName: "Cron Job:",
+      prefix: "Agent Task:",
+      fallbackName: "Agent Task:",
     });
   });
 
@@ -119,8 +119,8 @@ describe("resolveSessionDisplayName", () => {
     expect(resolveSessionDisplayName("agent:main:subagent:abc-123")).toBe("Subagent:");
   });
 
-  it("returns 'Cron Job:' for cron key without row", () => {
-    expect(resolveSessionDisplayName("agent:main:cron:abc-123")).toBe("Cron Job:");
+  it("returns 'Agent Task:' for cron key without row", () => {
+    expect(resolveSessionDisplayName("agent:main:cron:abc-123")).toBe("Agent Task:");
   });
 
   it("parses direct chat key with channel", () => {
@@ -224,31 +224,31 @@ describe("resolveSessionDisplayName", () => {
     ).toBe("Subagent: Task Runner");
   });
 
-  it("prefixes cron label with Cron:", () => {
+  it("prefixes cron label with Agent Task:", () => {
     expect(
       resolveSessionDisplayName(
         "agent:main:cron:abc-123",
         row({ key: "agent:main:cron:abc-123", label: "daily-briefing" }),
       ),
-    ).toBe("Cron: daily-briefing");
+    ).toBe("Agent Task: daily-briefing");
   });
 
-  it("prefixes cron displayName with Cron:", () => {
+  it("prefixes cron displayName with Agent Task:", () => {
     expect(
       resolveSessionDisplayName(
         "agent:main:cron:abc-123",
         row({ key: "agent:main:cron:abc-123", displayName: "Nightly Sync" }),
       ),
-    ).toBe("Cron: Nightly Sync");
+    ).toBe("Agent Task: Nightly Sync");
   });
 
-  it("does not double-prefix cron labels that already include Cron:", () => {
+  it("normalizes legacy cron labels that already include Cron:", () => {
     expect(
       resolveSessionDisplayName(
         "agent:main:cron:abc-123",
         row({ key: "agent:main:cron:abc-123", label: "Cron: Nightly Sync" }),
       ),
-    ).toBe("Cron: Nightly Sync");
+    ).toBe("Agent Task: Nightly Sync");
   });
 
   it("does not double-prefix subagent display names that already include Subagent:", () => {

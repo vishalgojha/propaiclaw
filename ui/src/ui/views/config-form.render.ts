@@ -266,7 +266,7 @@ export const SECTION_META: Record<string, { label: string; description: string }
   broadcast: { label: "Broadcast", description: "Broadcast and notification settings" },
   audio: { label: "Audio", description: "Audio input/output settings" },
   session: { label: "Session", description: "Session management and persistence" },
-  cron: { label: "Cron", description: "Scheduled tasks and automation" },
+  cron: { label: "Agent Tasks", description: "Scheduled agent tasks and automation" },
   web: { label: "Web", description: "Web server and API settings" },
   discovery: { label: "Discovery", description: "Service discovery and networking" },
   canvasHost: { label: "Canvas Host", description: "Canvas rendering and display" },

@@ -643,6 +643,59 @@
   gap: 14px 16px;
 }
 
+.cron-template-list {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.cron-template-card {
+  display: grid;
+  gap: 8px;
+  width: 100%;
+  text-align: left;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--card);
+  padding: 10px 12px;
+  cursor: pointer;
+  transition:
+    border-color var(--duration-fast) ease,
+    background var(--duration-fast) ease;
+}
+
+.cron-template-card:hover {
+  border-color: var(--accent);
+  background: var(--bg-hover);
+}
+
+.cron-template-card__top {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  align-items: center;
+}
+
+.cron-template-card__title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-strong);
+}
+
+.cron-template-card__sub {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.cron-template-card__cta {
+  font-size: 11px;
+  color: var(--accent);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
 .cron-help {
   color: var(--muted);
   font-size: 12px;
@@ -929,6 +982,10 @@
   .cron-form-grid {
     grid-template-columns: 1fr;
     gap: 12px;
+  }
+
+  .cron-template-list {
+    grid-template-columns: 1fr;
   }
 
   .cron-span-2 {
