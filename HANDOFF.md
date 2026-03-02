@@ -315,6 +315,39 @@ Stage 3 progress update (2026-03-02, pass 2)
       - `ERROR: docker daemon is not reachable.`
       - `Start Docker Desktop (or docker engine) and retry.`
 
+Stage 3 progress update (2026-03-02, pass 3)
+
+- done
+  - Long-term smoke workflow split implemented:
+    - Local optional smoke: `pnpm test:install:smoke` -> `test:install:smoke:local` (skips cleanly when Docker is unavailable).
+    - Strict smoke: `pnpm test:install:smoke:strict` (required Docker; fails fast on missing/unreachable daemon).
+  - CI workflow hardened as source-of-truth:
+    - `install-smoke.yml` now includes nightly schedule trigger.
+    - `workflow_dispatch` now supports `full` input for full installer smoke.
+    - CI job now always uses strict smoke command (`pnpm test:install:smoke:strict`).
+    - Nightly/manual-full runs enable CLI + previous-version smoke checks (heavier coverage).
+  - Added remote smoke control helpers:
+    - `pnpm test:install:smoke:ci:dispatch` (dispatch install-smoke workflow).
+    - `pnpm test:install:smoke:ci:status` (list recent install-smoke runs).
+
+- pending
+  - Optional future CI enhancement: split nightly smoke into a larger explicit matrix job.
+  - Branch protection settings are repository-admin configuration (outside codebase).
+
+- verification
+  - Command: `pnpm exec vitest run src/cli/program/command-registry.test.ts src/cli/program/register.maintenance.test.ts src/cli/argv.test.ts src/commands/migrate-state.test.ts`
+    - Result: passed (`4` test files, `54` tests).
+  - Command: `pnpm exec vitest run src/propai/mapper.test.ts src/propai/packaging.test.ts src/propaiclaw-entry.messages.test.ts src/config/paths.test.ts src/config/io.compat.test.ts src/config/io.write-config.test.ts src/infra/home-dir.test.ts src/cli/profile.test.ts src/propai/realtor-workspace.test.ts src/channels/registry.helpers.test.ts src/commands/migrate-state.test.ts src/cli/program/register.maintenance.test.ts src/cli/program/command-registry.test.ts src/cli/argv.test.ts`
+    - Result: passed (`14` test files, `184` tests).
+  - Command: `bash scripts/test-install-sh-local.sh`
+    - Result: passed with expected local-skip message when Docker daemon unavailable.
+  - Command: `bash scripts/test-install-sh-docker.sh`
+    - Result: failed fast as expected with strict preflight message when Docker daemon unavailable.
+  - Command: `node scripts/install-smoke-ci.mjs status --repo vishalgojha/propaiclaw --limit 3`
+    - Result: passed; listed recent install-smoke workflow runs.
+  - Command: `pnpm exec oxfmt --check src/cli/program/command-registry.ts src/cli/program/command-registry.test.ts src/cli/program/register.maintenance.ts src/cli/program/register.maintenance.test.ts src/cli/argv.ts src/cli/argv.test.ts src/commands/migrate-state.ts src/commands/migrate-state.test.ts scripts/install-smoke-ci.mjs package.json HANDOFF.md`
+    - Result: passed (all matched files correctly formatted).
+
 ### Stage 4 - External protocol compatibility layer
 
 1. Header/token aliases
