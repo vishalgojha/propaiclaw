@@ -91,7 +91,24 @@ const resolvePluginSdkAccountIdAlias = (): string | null => {
   return resolvePluginSdkAliasFile({ srcFile: "account-id.ts", distFile: "account-id.js" });
 };
 
+const buildPluginSdkAliases = (params: {
+  pluginSdkAlias: string | null;
+  pluginSdkAccountIdAlias: string | null;
+}): Record<string, string> | null => {
+  const aliases: Record<string, string> = {};
+  if (params.pluginSdkAlias) {
+    aliases["openclaw/plugin-sdk"] = params.pluginSdkAlias;
+    aliases["propaiclaw/plugin-sdk"] = params.pluginSdkAlias;
+  }
+  if (params.pluginSdkAccountIdAlias) {
+    aliases["openclaw/plugin-sdk/account-id"] = params.pluginSdkAccountIdAlias;
+    aliases["propaiclaw/plugin-sdk/account-id"] = params.pluginSdkAccountIdAlias;
+  }
+  return Object.keys(aliases).length > 0 ? aliases : null;
+};
+
 export const __testing = {
+  buildPluginSdkAliases,
   resolvePluginSdkAliasFile,
 };
 
@@ -430,17 +447,16 @@ export function loadOpenClawPlugins(options: PluginLoadOptions = {}): PluginRegi
     }
     const pluginSdkAlias = resolvePluginSdkAlias();
     const pluginSdkAccountIdAlias = resolvePluginSdkAccountIdAlias();
+    const pluginSdkAliases = buildPluginSdkAliases({
+      pluginSdkAlias,
+      pluginSdkAccountIdAlias,
+    });
     jitiLoader = createJiti(import.meta.url, {
       interopDefault: true,
       extensions: [".ts", ".tsx", ".mts", ".cts", ".mtsx", ".ctsx", ".js", ".mjs", ".cjs", ".json"],
-      ...(pluginSdkAlias || pluginSdkAccountIdAlias
+      ...(pluginSdkAliases
         ? {
-            alias: {
-              ...(pluginSdkAlias ? { "openclaw/plugin-sdk": pluginSdkAlias } : {}),
-              ...(pluginSdkAccountIdAlias
-                ? { "openclaw/plugin-sdk/account-id": pluginSdkAccountIdAlias }
-                : {}),
-            },
+            alias: pluginSdkAliases,
           }
         : {}),
     });

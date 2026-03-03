@@ -34,8 +34,29 @@ Contents (examples):
 
 Delivery:
 
-- Publish as `openclaw/plugin-sdk` (or export from core under `openclaw/plugin-sdk`).
+- Publish as `propaiclaw/plugin-sdk` (preferred), with `openclaw/plugin-sdk`
+  preserved as a compatibility alias during the transition window.
 - Semver with explicit stability guarantees.
+
+### Import namespace migration (Stage 5 bridge)
+
+For plugin authors, use these imports for new work:
+
+- `propaiclaw/plugin-sdk`
+- `propaiclaw/plugin-sdk/account-id`
+
+Legacy imports remain supported for compatibility:
+
+- `openclaw/plugin-sdk`
+- `openclaw/plugin-sdk/account-id`
+
+Timeline:
+
+- Stage 5: dual-namespace support for runtime loading and author guidance.
+- Stage 8 deprecation window: legacy `openclaw/*` imports still accepted while
+  deprecation messaging is active.
+- Final cleanup: remove legacy-only namespace support after Stage 8 cutover and
+  stability window.
 
 ### 2) Plugin Runtime (execution surface, injected)
 
@@ -154,7 +175,7 @@ Notes:
 
 ### Phase 0: scaffolding
 
-- Introduce `openclaw/plugin-sdk`.
+- Introduce `propaiclaw/plugin-sdk` with `openclaw/plugin-sdk` compatibility aliases.
 - Add `api.runtime` to `OpenClawPluginApi` with the surface above.
 - Maintain existing imports during a transition window (deprecation warnings).
 

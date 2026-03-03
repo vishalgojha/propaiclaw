@@ -455,6 +455,29 @@ Stage 4 progress update (2026-03-02, pass 3)
 
 - Publish concise compatibility guidance and timeline.
 
+Stage 5 progress update (2026-03-03, pass 1)
+
+- done
+  - Added plugin loader SDK alias bridging for both namespaces:
+    - `openclaw/plugin-sdk` and `propaiclaw/plugin-sdk`
+    - `openclaw/plugin-sdk/account-id` and `propaiclaw/plugin-sdk/account-id`
+  - Added extension loading regression coverage in `src/plugins/loader.test.ts`:
+    - verifies alias map generation for legacy + Propaiclaw SDK paths
+    - verifies plugins importing SDK helpers under both namespaces load successfully
+  - Added plugin-author migration guidance and timeline in `docs/refactor/plugin-sdk.md`:
+    - prefer `propaiclaw/plugin-sdk*` for new work
+    - retain `openclaw/plugin-sdk*` compatibility through Stage 8 transition window
+
+- pending
+  - Optional non-English mirror update for Stage 5 migration guidance (`docs/zh-CN/refactor/plugin-sdk.md`).
+  - Stage 6+ work remains pending by plan.
+
+- verification
+  - Command: `pnpm exec vitest run src/plugins/loader.test.ts src/plugin-sdk/index.test.ts`
+    - Result: passed (`2` test files, `26` tests).
+  - Command: `pnpm exec oxfmt --check src/plugins/loader.ts src/plugins/loader.test.ts docs/refactor/plugin-sdk.md HANDOFF.md`
+    - Result: passed (all matched files correctly formatted).
+
 ### Stage 6 - Realtor UX hardening and command simplification
 
 1. Simplify high-frequency realtor actions

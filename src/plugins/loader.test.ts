@@ -33,6 +33,29 @@ const BUNDLED_TELEGRAM_PLUGIN_BODY = `export default { id: "telegram", register(
   });
 } };`;
 
+function buildBundledChannelPluginBody(channelId: string): string {
+  return `export default { id: "${channelId}", register(api) {
+  api.registerChannel({
+    plugin: {
+      id: "${channelId}",
+      meta: {
+        id: "${channelId}",
+        label: "${channelId}",
+        selectionLabel: "${channelId}",
+        docsPath: "/channels/${channelId}",
+        blurb: "${channelId} channel"
+      },
+      capabilities: { chatTypes: ["direct"] },
+      config: {
+        listAccountIds: () => [],
+        resolveAccount: () => ({ accountId: "default" })
+      },
+      outbound: { deliveryMode: "direct" }
+    }
+  });
+} };`;
+}
+
 function makeTempDir() {
   const dir = path.join(fixtureRoot, `case-${tempDirIndex++}`);
   fs.mkdirSync(dir, { recursive: true });
@@ -115,20 +138,31 @@ function loadBundledMemoryPluginRegistry(options?: {
 }
 
 function setupBundledTelegramPlugin() {
+  setupBundledChannelPlugin("telegram");
+}
+
+function setupBundledChannelPlugin(channelId: string) {
   const bundledDir = makeTempDir();
   writePlugin({
-    id: "telegram",
-    body: BUNDLED_TELEGRAM_PLUGIN_BODY,
+    id: channelId,
+    body:
+      channelId === "telegram"
+        ? BUNDLED_TELEGRAM_PLUGIN_BODY
+        : buildBundledChannelPluginBody(channelId),
     dir: bundledDir,
-    filename: "telegram.js",
+    filename: `${channelId}.js`,
   });
   process.env.OPENCLAW_BUNDLED_PLUGINS_DIR = bundledDir;
 }
 
+function expectChannelLoaded(registry: ReturnType<typeof loadOpenClawPlugins>, channelId: string) {
+  const channelPlugin = registry.plugins.find((entry) => entry.id === channelId);
+  expect(channelPlugin?.status).toBe("loaded");
+  expect(registry.channels.some((entry) => entry.plugin.id === channelId)).toBe(true);
+}
+
 function expectTelegramLoaded(registry: ReturnType<typeof loadOpenClawPlugins>) {
-  const telegram = registry.plugins.find((entry) => entry.id === "telegram");
-  expect(telegram?.status).toBe("loaded");
-  expect(registry.channels.some((entry) => entry.plugin.id === "telegram")).toBe(true);
+  expectChannelLoaded(registry, "telegram");
 }
 
 afterEach(() => {
@@ -205,13 +239,13 @@ describe("loadOpenClawPlugins", () => {
   });
 
   it("loads bundled channel plugins when channels.<id>.enabled=true", () => {
-    setupBundledTelegramPlugin();
+    setupBundledChannelPlugin("whatsapp");
 
     const registry = loadOpenClawPlugins({
       cache: false,
       config: {
         channels: {
-          telegram: {
+          whatsapp: {
             enabled: true,
           },
         },
@@ -221,31 +255,31 @@ describe("loadOpenClawPlugins", () => {
       },
     });
 
-    expectTelegramLoaded(registry);
+    expectChannelLoaded(registry, "whatsapp");
   });
 
   it("still respects explicit disable via plugins.entries for bundled channels", () => {
-    setupBundledTelegramPlugin();
+    setupBundledChannelPlugin("whatsapp");
 
     const registry = loadOpenClawPlugins({
       cache: false,
       config: {
         channels: {
-          telegram: {
+          whatsapp: {
             enabled: true,
           },
         },
         plugins: {
           entries: {
-            telegram: { enabled: false },
+            whatsapp: { enabled: false },
           },
         },
       },
     });
 
-    const telegram = registry.plugins.find((entry) => entry.id === "telegram");
-    expect(telegram?.status).toBe("disabled");
-    expect(telegram?.error).toBe("disabled in config");
+    const whatsapp = registry.plugins.find((entry) => entry.id === "whatsapp");
+    expect(whatsapp?.status).toBe("disabled");
+    expect(whatsapp?.error).toBe("disabled in config");
   });
 
   it("enables bundled memory plugin when selected by slot", () => {
@@ -761,5 +795,56 @@ describe("loadOpenClawPlugins", () => {
       }),
     );
     expect(resolved).toBe(srcFile);
+  });
+
+  it("builds plugin-sdk aliases for legacy and propaiclaw namespaces", () => {
+    const aliases = __testing.buildPluginSdkAliases({
+      pluginSdkAlias: "/tmp/plugin-sdk/index.js",
+      pluginSdkAccountIdAlias: "/tmp/plugin-sdk/account-id.js",
+    });
+    expect(aliases).toEqual({
+      "openclaw/plugin-sdk": "/tmp/plugin-sdk/index.js",
+      "propaiclaw/plugin-sdk": "/tmp/plugin-sdk/index.js",
+      "openclaw/plugin-sdk/account-id": "/tmp/plugin-sdk/account-id.js",
+      "propaiclaw/plugin-sdk/account-id": "/tmp/plugin-sdk/account-id.js",
+    });
+  });
+
+  it("loads plugins importing SDK via both legacy and propaiclaw namespaces", () => {
+    process.env.OPENCLAW_BUNDLED_PLUGINS_DIR = "/nonexistent/bundled/plugins";
+    for (const sdkNamespace of ["openclaw", "propaiclaw"] as const) {
+      const pluginId = `sdk-alias-${sdkNamespace}`;
+      const gatewayMethod = `${pluginId}.ping`;
+      const plugin = writePlugin({
+        id: pluginId,
+        filename: `${pluginId}.ts`,
+        body: `import { normalizeAccountId } from "${sdkNamespace}/plugin-sdk/account-id";
+export default {
+  id: "${pluginId}",
+  register(api) {
+    api.registerGatewayMethod("${gatewayMethod}", ({ respond }) => {
+      respond(true, {
+        normalized: normalizeAccountId("default"),
+      });
+    });
+  },
+};`,
+      });
+
+      const registry = loadOpenClawPlugins({
+        cache: false,
+        workspaceDir: plugin.dir,
+        config: {
+          plugins: {
+            load: { paths: [plugin.file] },
+            allow: [pluginId],
+          },
+        },
+      });
+
+      const loaded = registry.plugins.find((entry) => entry.id === pluginId);
+      expect(loaded?.status).toBe("loaded");
+      expect(Object.keys(registry.gatewayHandlers)).toContain(gatewayMethod);
+    }
   });
 });
