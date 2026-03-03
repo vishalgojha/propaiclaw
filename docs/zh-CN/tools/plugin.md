@@ -290,6 +290,24 @@ openclaw plugins doctor
 - 函数：`(api) => { ... }`
 - 对象：`{ id, name, configSchema, register(api) { ... } }`
 
+### SDK 导入命名空间（Stage 5 过渡）
+
+新插件建议优先使用：
+
+- `propaiclaw/plugin-sdk`
+- `propaiclaw/plugin-sdk/account-id`
+
+过渡期间仍兼容旧导入：
+
+- `openclaw/plugin-sdk`
+- `openclaw/plugin-sdk/account-id`
+
+兼容时间线：
+
+- Stage 5：插件加载器同时接受两个命名空间。
+- Stage 8 弃用窗口：`openclaw/*` 导入仍可用，并配套迁移提示。
+- 最终清理：Stage 8 完成并稳定后移除仅遗留命名空间支持。
+
 ## 插件钩子
 
 插件可以附带钩子并在运行时注册它们。这让插件可以捆绑事件驱动的自动化，而无需单独安装钩子包。
@@ -297,7 +315,7 @@ openclaw plugins doctor
 ### 示例
 
 ```
-import { registerPluginHooksFromDir } from "openclaw/plugin-sdk";
+import { registerPluginHooksFromDir } from "propaiclaw/plugin-sdk";
 
 export default function register(api) {
   registerPluginHooksFromDir(api, "./hooks");

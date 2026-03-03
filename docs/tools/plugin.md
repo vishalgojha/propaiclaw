@@ -328,6 +328,24 @@ Plugins export either:
 - A function: `(api) => { ... }`
 - An object: `{ id, name, configSchema, register(api) { ... } }`
 
+### SDK import namespace (Stage 5 bridge)
+
+For new plugins, prefer:
+
+- `propaiclaw/plugin-sdk`
+- `propaiclaw/plugin-sdk/account-id`
+
+Legacy imports remain supported during transition:
+
+- `openclaw/plugin-sdk`
+- `openclaw/plugin-sdk/account-id`
+
+Compatibility timeline:
+
+- Stage 5: both namespaces are accepted by plugin loader aliasing.
+- Stage 8 deprecation window: `openclaw/*` imports remain accepted with migration guidance.
+- Final cleanup: legacy-only namespace support is removed after Stage 8 cutover and stability window.
+
 ## Plugin hooks
 
 Plugins can register hooks at runtime. This lets a plugin bundle event-driven

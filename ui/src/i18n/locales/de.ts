@@ -29,7 +29,7 @@ export const de: TranslationMap = {
     instances: "Instanzen",
     sessions: "Sitzungen",
     usage: "Nutzung",
-    cron: "Cron-Aufgaben",
+    cron: "Agent-Aufgaben",
     skills: "Fähigkeiten",
     nodes: "Geräte",
     chat: "Chat",
@@ -44,7 +44,7 @@ export const de: TranslationMap = {
     instances: "Präsenzsignale von verbundenen Clients und Geräten.",
     sessions: "Aktive Sitzungen inspizieren und Standardeinstellungen pro Sitzung anpassen.",
     usage: "API-Nutzung und Kosten überwachen.",
-    cron: "Aufweckzeiten und wiederkehrende Agent-Läufe planen.",
+    cron: "Aufweckzeiten und wiederkehrende Agent-Aufgaben planen.",
     skills: "Skill-Verfügbarkeit und API-Schlüsselinjektion verwalten.",
     nodes: "Gekoppelte Geräte, Fähigkeiten und Befehlsfreigabe.",
     chat: "Direkte Gateway-Chat-Sitzung für schnelle Eingriffe.",
@@ -79,7 +79,7 @@ export const de: TranslationMap = {
       instancesHint: "Präsenzsignale in den letzten 5 Minuten.",
       sessions: "Sitzungen",
       sessionsHint: "Letzte vom Gateway verfolgte Sitzungsschlüssel.",
-      cron: "Cron",
+      cron: "Agent-Aufgaben",
       cronNext: "Nächste Ausführung {time}",
     },
     notes: {
@@ -90,7 +90,7 @@ export const de: TranslationMap = {
         "Bevorzugen Sie den Serve-Modus, um das Gateway auf Loopback mit Tailnet-Auth zu halten.",
       sessionTitle: "Sitzungshygiene",
       sessionText: "Verwenden Sie /new oder sessions.patch, um den Kontext zurückzusetzen.",
-      cronTitle: "Cron-Erinnerungen",
+      cronTitle: "Agent-Aufgaben-Erinnerungen",
       cronText: "Verwenden Sie isolierte Sitzungen für wiederkehrende Läufe.",
     },
     auth: {
@@ -114,9 +114,9 @@ export const de: TranslationMap = {
     refreshTitle: "Chat-Daten aktualisieren",
     thinkingToggle: "Ausgabe des Assistenten ein-/ausblenden",
     focusToggle: "Fokusmodus ein-/ausschalten (Seitenleiste + Kopfzeile ausblenden)",
-    hideCronSessions: "Cron-Sitzungen ausblenden",
-    showCronSessions: "Cron-Sitzungen anzeigen",
-    showCronSessionsHidden: "Cron-Sitzungen anzeigen ({count} ausgeblendet)",
+    hideCronSessions: "Agent-Aufgaben-Sitzungen ausblenden",
+    showCronSessions: "Agent-Aufgaben-Sitzungen anzeigen",
+    showCronSessionsHidden: "Agent-Aufgaben-Sitzungen anzeigen ({count} ausgeblendet)",
     onboardingDisabled: "Während der Einrichtung deaktiviert",
   },
   languages: {
@@ -125,5 +125,68 @@ export const de: TranslationMap = {
     zhTW: "繁體中文 (Traditionelles Chinesisch)",
     ptBR: "Português (Brasilianisches Portugiesisch)",
     de: "Deutsch",
+  },
+  cron: {
+    templates: {
+      title: "Schnellvorlagen",
+      subtitle: "Wählen Sie eine fertige Aufgabe und passen Sie Details in Sekunden an.",
+      apply: "Vorlage verwenden",
+      schedule: {
+        every15Minutes: "Alle 15 Min.",
+        every30Minutes: "Alle 30 Min.",
+        every2Hours: "Alle 2 Std.",
+        every6Hours: "Alle 6 Std.",
+        daily10am: "Täglich 10:00",
+        monday8am: "Mo 08:00",
+      },
+      listingBroadcast: {
+        title: "Listing Broadcast",
+        subtitle: "Neueste Listings in freigegebenen WhatsApp-Gruppen veröffentlichen.",
+        name: "Listing Broadcast",
+        description: "Neue Objekte in sauberem, maklerfreundlichem Format teilen.",
+        prompt:
+          "Sammle die neuesten Listings und erstelle ein kurzes WhatsApp-Update mit Preis, Fläche und wichtigsten Highlights.",
+      },
+      buyerMatchAlerts: {
+        title: "Buyer Match Alerts",
+        subtitle: "Passende Käuferanforderungen finden und Makler schnell informieren.",
+        name: "Buyer Match Alerts",
+        description: "Neue Anforderungen laufend mit aktivem Bestand abgleichen.",
+        prompt:
+          "Prüfe neue Käuferanforderungen, gleiche sie mit aktiven Listings ab und sende Treffer mit kurzer Begründung.",
+      },
+      leadFollowup: {
+        title: "Lead Follow-up Plan",
+        subtitle: "Die heutige Follow-up-Warteschlange aus heißen/warmen Leads aufbauen.",
+        name: "Lead Follow-up Plan",
+        description: "Rückrufe und WhatsApp-Follow-ups nach Dringlichkeit priorisieren.",
+        prompt:
+          "Analysiere Lead-Konversationen, priorisiere nach Dringlichkeit und erstelle eine klare Follow-up-Liste für heute.",
+      },
+      groupEngagement: {
+        title: "Group Engagement Pulse",
+        subtitle: "Nützliche Gruppeninhalte aus aktiven Listings vorschlagen.",
+        name: "Group Engagement Pulse",
+        description: "Maklergruppen aktiv halten, ohne zu spammen.",
+        prompt:
+          "Entwirf ein wertorientiertes Gruppen-Update aus aktivem Bestand mit kurzem Call-to-Action.",
+      },
+      staleLeadRescue: {
+        title: "Stale Lead Rescue",
+        subtitle: "Inaktive Leads erkennen und Reaktivierungsnachricht vorschlagen.",
+        name: "Stale Lead Rescue",
+        description: "Leads zurückholen, die nach Erstinteresse verstummt sind.",
+        prompt:
+          "Finde Leads ohne aktuelle Antwort, schlage eine personalisierte Reaktivierungsnachricht vor und priorisiere nach Potenzial.",
+      },
+      weeklyDigest: {
+        title: "Weekly Broker Digest",
+        subtitle: "Wöchentliche Zusammenfassung von Listings, Leads und Matches senden.",
+        name: "Weekly Broker Digest",
+        description: "Management-Zusammenfassung für einen oder mehrere Makler.",
+        prompt:
+          "Fasse die Woche zusammen: neue Listings, Leads mit hoher Absicht, Match-Ergebnisse und empfohlene nächste Schritte.",
+      },
+    },
   },
 };

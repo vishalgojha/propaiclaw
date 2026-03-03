@@ -29,7 +29,7 @@ export const pt_BR: TranslationMap = {
     instances: "Instâncias",
     sessions: "Sessões",
     usage: "Uso",
-    cron: "Tarefas Cron",
+    cron: "Tarefas do Agente",
     skills: "Habilidades",
     nodes: "Nós",
     chat: "Chat",
@@ -78,7 +78,7 @@ export const pt_BR: TranslationMap = {
       instancesHint: "Beacons de presença nos últimos 5 minutos.",
       sessions: "Sessões",
       sessionsHint: "Chaves de sessão recentes rastreadas pelo gateway.",
-      cron: "Cron",
+      cron: "Tarefas do Agente",
       cronNext: "Próximo despertar {time}",
     },
     notes: {
@@ -89,7 +89,7 @@ export const pt_BR: TranslationMap = {
         "Prefira o modo serve para manter o gateway em loopback com autenticação tailnet.",
       sessionTitle: "Higiene de sessão",
       sessionText: "Use /new ou sessions.patch para redefinir o contexto.",
-      cronTitle: "Lembretes de Cron",
+      cronTitle: "Lembretes de tarefas do agente",
       cronText: "Use sessões isoladas para execuções recorrentes.",
     },
     auth: {
@@ -113,9 +113,9 @@ export const pt_BR: TranslationMap = {
     refreshTitle: "Atualizar dados do chat",
     thinkingToggle: "Alternar saída de pensamento/trabalho do assistente",
     focusToggle: "Alternar modo de foco (ocultar barra lateral + cabeçalho da página)",
-    hideCronSessions: "Ocultar sessões de cron",
-    showCronSessions: "Mostrar sessões de cron",
-    showCronSessionsHidden: "Mostrar sessões de cron ({count} ocultas)",
+    hideCronSessions: "Ocultar sessões de tarefas do agente",
+    showCronSessions: "Mostrar sessões de tarefas do agente",
+    showCronSessionsHidden: "Mostrar sessões de tarefas do agente ({count} ocultas)",
     onboardingDisabled: "Desativado durante a integração",
   },
   languages: {
@@ -124,5 +124,68 @@ export const pt_BR: TranslationMap = {
     zhTW: "繁體中文 (Chinês Tradicional)",
     ptBR: "Português (Português Brasileiro)",
     de: "Deutsch (Alemão)",
+  },
+  cron: {
+    templates: {
+      title: "Modelos rápidos",
+      subtitle: "Escolha uma tarefa pronta e personalize os detalhes em segundos.",
+      apply: "Usar modelo",
+      schedule: {
+        every15Minutes: "A cada 15 min",
+        every30Minutes: "A cada 30 min",
+        every2Hours: "A cada 2 h",
+        every6Hours: "A cada 6 h",
+        daily10am: "Diário 10:00",
+        monday8am: "Seg 08:00",
+      },
+      listingBroadcast: {
+        title: "Listing Broadcast",
+        subtitle: "Publicar os últimos imóveis em grupos de WhatsApp aprovados.",
+        name: "Listing Broadcast",
+        description: "Compartilhe inventário novo com formato limpo para corretores.",
+        prompt:
+          "Reúna os anúncios mais recentes e prepare uma atualização curta para WhatsApp com preço, área e principais destaques.",
+      },
+      buyerMatchAlerts: {
+        title: "Buyer Match Alerts",
+        subtitle: "Encontrar correspondências de compradores e avisar rapidamente o corretor.",
+        name: "Buyer Match Alerts",
+        description: "Cruzar continuamente novos requisitos com inventário ativo.",
+        prompt:
+          "Analise novos requisitos de compradores, compare com anúncios ativos e envie correspondências com alta confiança e justificativa.",
+      },
+      leadFollowup: {
+        title: "Lead Follow-up Plan",
+        subtitle: "Montar a fila de follow-up do dia com leads quentes e mornos.",
+        name: "Lead Follow-up Plan",
+        description: "Priorizar retornos e follow-ups no WhatsApp por urgência.",
+        prompt:
+          "Revise conversas de leads, classifique por urgência e crie uma lista clara de ações de follow-up para hoje.",
+      },
+      groupEngagement: {
+        title: "Group Engagement Pulse",
+        subtitle: "Sugerir conteúdo útil para grupos com base no inventário ativo.",
+        name: "Group Engagement Pulse",
+        description: "Manter grupos da imobiliária ativos sem spam.",
+        prompt:
+          "Crie uma atualização de grupo orientada a valor com inventário ativo e inclua um CTA curto para interessados.",
+      },
+      staleLeadRescue: {
+        title: "Stale Lead Rescue",
+        subtitle: "Detectar leads inativos e sugerir mensagem de reengajamento.",
+        name: "Stale Lead Rescue",
+        description: "Recuperar leads que ficaram em silêncio após interesse inicial.",
+        prompt:
+          "Identifique leads sem resposta recente, proponha mensagem personalizada de reengajamento e priorize os de maior potencial.",
+      },
+      weeklyDigest: {
+        title: "Weekly Broker Digest",
+        subtitle: "Enviar resumo semanal de anúncios, leads e correspondências.",
+        name: "Weekly Broker Digest",
+        description: "Resumo gerencial para um ou vários corretores.",
+        prompt:
+          "Resuma a semana: novos anúncios, leads de alta intenção, resultados de correspondência e próximos passos recomendados.",
+      },
+    },
   },
 };

@@ -478,6 +478,61 @@ Stage 5 progress update (2026-03-03, pass 1)
   - Command: `pnpm exec oxfmt --check src/plugins/loader.ts src/plugins/loader.test.ts docs/refactor/plugin-sdk.md HANDOFF.md`
     - Result: passed (all matched files correctly formatted).
 
+Stage 5 progress update (2026-03-03, pass 2)
+
+- done
+  - Mirrored Stage 5 import-namespace migration guidance into plugin author docs:
+    - `docs/tools/plugin.md`
+    - `docs/zh-CN/tools/plugin.md`
+  - Updated Chinese plugin hook example import to preferred `propaiclaw/plugin-sdk` while documenting legacy compatibility aliases.
+
+- pending
+  - Optional mirror of Stage 5 migration timeline in `docs/zh-CN/refactor/plugin-sdk.md`.
+  - Stage 6+ work remains pending by plan.
+
+- verification
+  - Command: `pnpm exec oxfmt --check docs/tools/plugin.md docs/zh-CN/tools/plugin.md`
+    - Result: passed (all matched files correctly formatted).
+
+Stage 6 progress update (2026-03-03, pass 1)
+
+- done
+  - Completed Stage 6.1 command-path audit for high-frequency realtor commands in Propaiclaw mapper/help surfaces:
+    - `start`
+    - `sync`
+    - `groups allow`
+    - `lead follow-up`
+    - `schedule daily`
+  - Confirmed these remain minimal-path wrappers (defaults injected where expected, no extra required flags beyond command intent).
+
+- pending
+  - Stage 6.2 Agent Tasks polish (tenant presets + safer defaults + i18n coverage).
+  - Stage 6.3 UI stability validation under high event throughput.
+
+- verification
+  - Command: `pnpm exec vitest run src/propai/mapper.test.ts`
+    - Result: passed (`1` test file, `44` tests).
+
+Stage 6 progress update (2026-03-03, pass 2)
+
+- done
+  - Completed Stage 6.2 i18n coverage for newly added Agent Task templates/labels in non-English UI locales:
+    - `ui/src/i18n/locales/de.ts`
+    - `ui/src/i18n/locales/pt-BR.ts`
+    - `ui/src/i18n/locales/zh-CN.ts`
+    - `ui/src/i18n/locales/zh-TW.ts`
+  - Added `cron.templates.*` translation keys for locales that previously fell back to English.
+  - Updated core "Agent Tasks" label strings in those locales for tabs/overview/chat session toggles.
+
+- pending
+  - Stage 6.3 UI stability validation under high event throughput.
+
+- verification
+  - Command: `pnpm --dir ui test -- src/ui/views/cron.test.ts`
+    - Result: passed (`1` test file, `28` tests).
+  - Command: `pnpm exec oxfmt --check ui/src/i18n/locales/de.ts ui/src/i18n/locales/pt-BR.ts ui/src/i18n/locales/zh-CN.ts ui/src/i18n/locales/zh-TW.ts HANDOFF.md docs/tools/plugin.md docs/zh-CN/tools/plugin.md`
+    - Result: passed (all matched files correctly formatted).
+
 ### Stage 6 - Realtor UX hardening and command simplification
 
 1. Simplify high-frequency realtor actions
