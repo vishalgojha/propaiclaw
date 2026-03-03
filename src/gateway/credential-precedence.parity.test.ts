@@ -114,25 +114,6 @@ describe("gateway credential precedence parity", () => {
         auth: { token: "local-token", password: "local-password" },
       },
     },
-    {
-      name: "legacy env vars are ignored by call/probe/status/auth",
-      cfg: {
-        gateway: {
-          mode: "local",
-          auth: {},
-        },
-      } as OpenClawConfig,
-      env: {
-        CLAWDBOT_GATEWAY_TOKEN: "legacy-token",
-        CLAWDBOT_GATEWAY_PASSWORD: "legacy-password",
-      } as NodeJS.ProcessEnv,
-      expected: {
-        call: { token: undefined, password: undefined },
-        probe: { token: undefined, password: undefined },
-        status: { token: undefined, password: undefined },
-        auth: { token: undefined, password: undefined },
-      },
-    },
   ];
 
   it.each(cases)("$name", ({ cfg, env, expected }) => {

@@ -766,6 +766,27 @@ Stage 8 progress update (2026-03-03, pass 5)
   - Command: `pnpm exec oxfmt --check src/agents/shell-utils.ts src/agents/shell-utils.test.ts src/infra/bonjour.ts src/commands/status.scan.ts src/test-helpers/state-dir-env.ts src/test-helpers/state-dir-env.test.ts src/commands/doctor-platform-notes.ts src/commands/doctor-platform-notes.launchctl-env-overrides.test.ts`
     - Result: passed (all matched files correctly formatted).
 
+Stage 8 progress update (2026-03-03, pass 6)
+
+- done
+  - Completed Stage 8.3 follow-up to normalize/reduce legacy-only `CLAWDBOT_*` test fixtures:
+    - removed redundant legacy-parity matrix case from `src/gateway/credential-precedence.parity.test.ts` (legacy ignore coverage remains in focused gateway tests).
+    - removed stale `CLAWDBOT_STATE_DIR` undefined fixture setup from:
+      - `src/plugins/discovery.test.ts`
+      - `src/plugins/loader.test.ts`
+  - Remaining `CLAWDBOT_*` references are now constrained to focused legacy-ignore regression tests (config and gateway auth/credentials).
+
+- pending
+  - Eventual staged retirement plan for `OPENCLAW_*` compatibility aliases.
+
+- verification
+  - Command: `pnpm exec vitest run src/gateway/credentials.test.ts src/gateway/credential-precedence.parity.test.ts src/gateway/auth.test.ts src/plugins/discovery.test.ts src/plugins/loader.test.ts src/config/paths.test.ts src/config/io.compat.test.ts`
+    - Result: passed (`7` test files, `107` tests, `2` skipped).
+  - Command: `pnpm exec oxfmt --check src/gateway/credential-precedence.parity.test.ts src/plugins/discovery.test.ts src/plugins/loader.test.ts`
+    - Result: passed (all matched files correctly formatted).
+  - Command: `rg -n "CLAWDBOT_" src --glob "**/*.test.ts"`
+    - Result: narrowed to `4` focused test files (`src/config/paths.test.ts`, `src/config/io.compat.test.ts`, `src/gateway/auth.test.ts`, `src/gateway/credentials.test.ts`).
+
 ## Verification run
 
 - `pnpm --dir ui test -- src/ui/views/cron.test.ts src/ui/app-gateway.node.test.ts`
