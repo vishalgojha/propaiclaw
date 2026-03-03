@@ -651,6 +651,27 @@ Stage 7 progress update (2026-03-03, pass 3)
 
 - Remove legacy-only code after deprecation window and stability period.
 
+Stage 8 progress update (2026-03-03, pass 1)
+
+- done
+  - Implemented Propaiclaw-first runtime identity bootstrap in wrapper entrypoint:
+    - `src/propaiclaw-entry.ts` now applies canonical Propaiclaw env aliases to the current process at startup (not only child runtime spawn).
+    - Local Propaiclaw commands now resolve config/state with Propaiclaw mode defaults for new installs while preserving legacy read compatibility.
+  - Added legacy env deprecation messaging for Propaiclaw flows:
+    - warns when `OPENCLAW_*` env aliases are used without corresponding `PROPAICLAW_*` canonical vars.
+  - Added focused tests for runtime env bootstrap and deprecation warning behavior:
+    - `src/propaiclaw-entry.env.test.ts`
+
+- pending
+  - Stage 8.2 broader deprecation warnings for legacy path/flag surfaces outside Propaiclaw entry wrapper.
+  - Stage 8.3 final legacy-only cleanup after deprecation window.
+
+- verification
+  - Command: `pnpm exec vitest run src/propaiclaw-entry.env.test.ts src/propaiclaw-entry.messages.test.ts src/propai/mapper.test.ts`
+    - Result: passed (`3` test files, `54` tests).
+  - Command: `pnpm exec oxfmt --check src/propaiclaw-entry.ts src/propaiclaw-entry.env.ts src/propaiclaw-entry.env.test.ts src/propaiclaw-entry.messages.ts src/propaiclaw-entry.messages.test.ts src/propai/mapper.ts src/propai/mapper.test.ts`
+    - Result: passed (all matched files correctly formatted).
+
 ## Verification run
 
 - `pnpm --dir ui test -- src/ui/views/cron.test.ts src/ui/app-gateway.node.test.ts`
