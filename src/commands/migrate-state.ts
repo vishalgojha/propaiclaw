@@ -17,6 +17,7 @@ export type MigrateStateOptions = {
   json?: boolean;
   auditLogPath?: string;
   rolloutTag?: string;
+  failOnWarnings?: boolean;
 };
 
 type StateDirPlan = {
@@ -249,5 +250,10 @@ export async function migrateStateCommand(
   }
   if (opts.json) {
     emitJsonReport(runtime, record);
+  }
+  if (opts.failOnWarnings && warnings.length > 0) {
+    throw new Error(
+      `Migration produced ${warnings.length} warning(s). Re-run after resolving warnings or omit --fail-on-warnings.`,
+    );
   }
 }

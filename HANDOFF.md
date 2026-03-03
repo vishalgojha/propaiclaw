@@ -601,6 +601,26 @@ Stage 7 progress update (2026-03-03, pass 1)
   - Command: `pnpm exec oxfmt --check src/commands/migrate-state.ts src/commands/migrate-state.test.ts src/cli/program/register.maintenance.ts src/cli/program/register.maintenance.test.ts`
     - Result: passed (all matched files correctly formatted).
 
+Stage 7 progress update (2026-03-03, pass 2)
+
+- done
+  - Added strict rollout gate support for full-batch migration:
+    - `openclaw migrate-state --fail-on-warnings` now exits non-zero when apply produces warnings.
+  - Added Stage 7.2 operator runbook and batching policy:
+    - `docs/refactor/state-migration-rollout.md`
+  - Added regression coverage for:
+    - strict warning gate behavior in migrate-state apply mode,
+    - maintenance CLI passthrough for `--fail-on-warnings`.
+
+- pending
+  - Stage 7.3 explicit rollback runbook with documented validation checkpoints.
+
+- verification
+  - Command: `pnpm exec vitest run src/commands/migrate-state.test.ts src/cli/program/register.maintenance.test.ts`
+    - Result: passed (`2` test files, `16` tests).
+  - Command: `pnpm exec oxfmt --check src/commands/migrate-state.ts src/commands/migrate-state.test.ts src/cli/program/register.maintenance.ts src/cli/program/register.maintenance.test.ts docs/refactor/state-migration-rollout.md HANDOFF.md`
+    - Result: passed (all matched files correctly formatted).
+
 ### Stage 8 - Cutover and deprecation
 
 1. Default to Propaiclaw runtime identity for new installs

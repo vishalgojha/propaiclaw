@@ -49,6 +49,11 @@ export function registerMaintenanceCommands(program: Command) {
     .option("--json", "Emit machine-readable migration report", false)
     .option("--audit-log <path>", "Append JSONL audit records to file path")
     .option("--rollout-tag <tag>", "Attach rollout label (for pilot/batch tracking)")
+    .option(
+      "--fail-on-warnings",
+      "Exit non-zero when apply emits migration warnings (for rollout gating)",
+      false,
+    )
     .action(async (opts) => {
       await runCommandWithRuntime(defaultRuntime, async () => {
         await migrateStateCommand(defaultRuntime, {
@@ -57,6 +62,7 @@ export function registerMaintenanceCommands(program: Command) {
           json: Boolean(opts.json),
           auditLogPath: typeof opts.auditLog === "string" ? opts.auditLog : undefined,
           rolloutTag: typeof opts.rolloutTag === "string" ? opts.rolloutTag : undefined,
+          failOnWarnings: Boolean(opts.failOnWarnings),
         });
         defaultRuntime.exit(0);
       });

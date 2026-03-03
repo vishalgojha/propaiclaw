@@ -141,6 +141,7 @@ describe("registerMaintenanceCommands doctor action", () => {
       "./migration-audit.jsonl",
       "--rollout-tag",
       "pilot-tenant-a",
+      "--fail-on-warnings",
     ]);
 
     expect(migrateStateCommand).toHaveBeenCalledWith(
@@ -151,6 +152,7 @@ describe("registerMaintenanceCommands doctor action", () => {
         json: true,
         auditLogPath: "./migration-audit.jsonl",
         rolloutTag: "pilot-tenant-a",
+        failOnWarnings: true,
       }),
     );
   });

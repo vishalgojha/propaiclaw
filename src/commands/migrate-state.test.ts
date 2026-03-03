@@ -175,6 +175,27 @@ describe("migrateStateCommand", () => {
     }
   });
 
+  it("fails apply in strict rollout mode when warnings are present", async () => {
+    const runtime = createRuntime();
+    autoMigrateLegacyStateDir.mockResolvedValue({
+      migrated: false,
+      skipped: false,
+      changes: [],
+      warnings: [],
+    });
+    runLegacyStateMigrations.mockResolvedValue({
+      changes: [],
+      warnings: ["Left legacy sessions at /tmp/state/sessions.legacy-123"],
+    });
+
+    await expect(
+      migrateStateCommand(runtime, {
+        apply: true,
+        failOnWarnings: true,
+      }),
+    ).rejects.toThrow("Migration produced 1 warning(s).");
+  });
+
   it("rejects conflicting --dry-run and --apply flags", async () => {
     const runtime = createRuntime();
     await expect(migrateStateCommand(runtime, { dryRun: true, apply: true })).rejects.toThrow(
