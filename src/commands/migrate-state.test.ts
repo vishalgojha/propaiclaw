@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const loadConfig = vi.fn(() => ({}));
 const autoMigrateLegacyStateDir = vi.fn();
@@ -66,6 +66,10 @@ function createDetection() {
 }
 
 describe("migrateStateCommand", () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
   beforeEach(() => {
     vi.clearAllMocks();
     loadConfig.mockReturnValue({});
@@ -111,6 +115,36 @@ describe("migrateStateCommand", () => {
     expect(parsed.previewActions.length).toBeGreaterThan(0);
     expect(parsed.applyChanges).toEqual([]);
     expect(parsed.applyWarnings).toEqual([]);
+  });
+
+  it("includes legacy env deprecation warnings in json mode", async () => {
+    vi.stubEnv("OPENCLAW_STATE_DIR", "/tmp/legacy-state");
+    vi.stubEnv("PROPAICLAW_STATE_DIR", "");
+
+    const runtime = createRuntime();
+    await migrateStateCommand(runtime, { json: true });
+
+    const payload = String(runtime.log.mock.calls[0]?.[0] ?? "");
+    const parsed = JSON.parse(payload) as {
+      deprecationWarnings?: string[];
+    };
+    expect(parsed.deprecationWarnings).toContain(
+      "OPENCLAW_STATE_DIR is a legacy compatibility env for migrate-state. Prefer PROPAICLAW_STATE_DIR.",
+    );
+  });
+
+  it("prints legacy env deprecation warnings in text mode", async () => {
+    vi.stubEnv("OPENCLAW_CONFIG_PATH", "/tmp/openclaw.json");
+    vi.stubEnv("PROPAICLAW_CONFIG_PATH", "");
+
+    const runtime = createRuntime();
+    await migrateStateCommand(runtime);
+
+    const output = runtime.log.mock.calls.map((call) => String(call[0])).join("\n");
+    expect(output).toContain("Deprecation warnings:");
+    expect(output).toContain(
+      "OPENCLAW_CONFIG_PATH is a legacy compatibility env for migrate-state. Prefer PROPAICLAW_CONFIG_PATH.",
+    );
   });
 
   it("applies migration when --apply is set", async () => {

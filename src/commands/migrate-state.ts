@@ -27,10 +27,20 @@ type StateDirPlan = {
   reason?: string;
 };
 
+type EnvKey = keyof NodeJS.ProcessEnv;
+
+type StateDirOverrideSource = "PROPAICLAW_STATE_DIR" | "OPENCLAW_STATE_DIR" | "CLAWDBOT_STATE_DIR";
+
+type ResolvedStateDirOverride = {
+  source: StateDirOverrideSource;
+  value: string;
+};
+
 type MigrateStateAuditRecord = {
   timestamp: string;
   mode: "dry-run" | "apply";
   rolloutTag: string | null;
+  deprecationWarnings: string[];
   targetAgentId: string;
   targetMainKey: string;
   sessionScope: string;
@@ -41,6 +51,63 @@ type MigrateStateAuditRecord = {
   applyChanges: string[];
   applyWarnings: string[];
 };
+
+function readTrimmed(env: NodeJS.ProcessEnv, key: EnvKey): string | undefined {
+  const raw = env[key];
+  if (typeof raw !== "string") {
+    return undefined;
+  }
+  const trimmed = raw.trim();
+  return trimmed || undefined;
+}
+
+function resolveStateDirOverride(env: NodeJS.ProcessEnv): ResolvedStateDirOverride | null {
+  const candidates: StateDirOverrideSource[] = [
+    "PROPAICLAW_STATE_DIR",
+    "OPENCLAW_STATE_DIR",
+    "CLAWDBOT_STATE_DIR",
+  ];
+  for (const source of candidates) {
+    const value = readTrimmed(env, source);
+    if (value) {
+      return { source, value };
+    }
+  }
+  return null;
+}
+
+function formatStateDirOverrideReason(override: ResolvedStateDirOverride): string {
+  if (override.source === "OPENCLAW_STATE_DIR" || override.source === "CLAWDBOT_STATE_DIR") {
+    return `${override.source} is set to ${override.value} (legacy alias; prefer PROPAICLAW_STATE_DIR).`;
+  }
+  return `${override.source} is set to ${override.value}.`;
+}
+
+function resolveLegacyPathEnvDeprecationWarnings(env: NodeJS.ProcessEnv = process.env): string[] {
+  const aliases: Array<{ legacy: EnvKey; canonical: EnvKey }> = [
+    { legacy: "OPENCLAW_HOME", canonical: "PROPAICLAW_HOME" },
+    { legacy: "OPENCLAW_STATE_DIR", canonical: "PROPAICLAW_STATE_DIR" },
+    { legacy: "OPENCLAW_CONFIG_PATH", canonical: "PROPAICLAW_CONFIG_PATH" },
+    { legacy: "OPENCLAW_PROFILE", canonical: "PROPAICLAW_PROFILE" },
+    { legacy: "OPENCLAW_GATEWAY_PORT", canonical: "PROPAICLAW_GATEWAY_PORT" },
+    { legacy: "OPENCLAW_OAUTH_DIR", canonical: "PROPAICLAW_OAUTH_DIR" },
+    { legacy: "OPENCLAW_CHANNELS_ONLY", canonical: "PROPAICLAW_CHANNELS_ONLY" },
+  ];
+
+  const warnings: string[] = [];
+  for (const alias of aliases) {
+    if (!readTrimmed(env, alias.legacy)) {
+      continue;
+    }
+    if (readTrimmed(env, alias.canonical)) {
+      continue;
+    }
+    warnings.push(
+      `${alias.legacy} is a legacy compatibility env for migrate-state. Prefer ${alias.canonical}.`,
+    );
+  }
+  return warnings;
+}
 
 function resolveDryRun(opts: MigrateStateOptions): boolean {
   if (opts.apply && opts.dryRun) {
@@ -56,10 +123,7 @@ function resolveStateDirPlan(
   env: NodeJS.ProcessEnv = process.env,
   homedir: () => string = os.homedir,
 ): StateDirPlan | null {
-  const stateOverride =
-    env.PROPAICLAW_STATE_DIR?.trim() ??
-    env.OPENCLAW_STATE_DIR?.trim() ??
-    env.CLAWDBOT_STATE_DIR?.trim();
+  const stateOverride = resolveStateDirOverride(env);
   const targetDir = resolveNewStateDir(homedir, env);
   const legacyDir = resolveLegacyStateDirs(homedir, env).find((dir) => {
     try {
@@ -77,7 +141,7 @@ function resolveStateDirPlan(
       legacyDir,
       targetDir,
       status: "skipped-env-override",
-      reason: `OPENCLAW_STATE_DIR is set to ${stateOverride}`,
+      reason: formatStateDirOverrideReason(stateOverride),
     };
   }
   if (path.resolve(legacyDir) === path.resolve(targetDir)) {
@@ -128,6 +192,7 @@ function reportDetectionSummary(params: {
 function createAuditRecord(params: {
   mode: "dry-run" | "apply";
   rolloutTag?: string;
+  deprecationWarnings?: string[];
   cfg: OpenClawConfig;
   stateDirPlan: StateDirPlan | null;
   detection: Awaited<ReturnType<typeof detectLegacyStateMigrations>>;
@@ -139,6 +204,7 @@ function createAuditRecord(params: {
     timestamp: new Date().toISOString(),
     mode: params.mode,
     rolloutTag: params.rolloutTag?.trim() ? params.rolloutTag.trim() : null,
+    deprecationWarnings: params.deprecationWarnings ?? [],
     targetAgentId: params.detection.targetAgentId,
     targetMainKey: params.detection.targetMainKey,
     sessionScope: params.cfg.session?.scope ?? "dm",
@@ -170,9 +236,16 @@ export async function migrateStateCommand(
   opts: MigrateStateOptions = {},
 ): Promise<void> {
   const dryRun = resolveDryRun(opts);
+  const deprecationWarnings = resolveLegacyPathEnvDeprecationWarnings(process.env);
   const cfg = loadConfig();
   const stateDirPlan = resolveStateDirPlan();
   const detected = await detectLegacyStateMigrations({ cfg });
+  if (!opts.json && deprecationWarnings.length > 0) {
+    runtime.log("Deprecation warnings:");
+    for (const entry of deprecationWarnings) {
+      runtime.log(`- ${entry}`);
+    }
+  }
   if (!opts.json) {
     reportDetectionSummary({ runtime, cfg, stateDirPlan, detection: detected });
   }
@@ -196,6 +269,7 @@ export async function migrateStateCommand(
     const record = createAuditRecord({
       mode: "dry-run",
       rolloutTag: opts.rolloutTag,
+      deprecationWarnings,
       cfg,
       stateDirPlan,
       detection: detected,
@@ -238,6 +312,7 @@ export async function migrateStateCommand(
   const record = createAuditRecord({
     mode: "apply",
     rolloutTag: opts.rolloutTag,
+    deprecationWarnings,
     cfg,
     stateDirPlan,
     detection: applyDetection,

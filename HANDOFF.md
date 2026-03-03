@@ -672,6 +672,25 @@ Stage 8 progress update (2026-03-03, pass 1)
   - Command: `pnpm exec oxfmt --check src/propaiclaw-entry.ts src/propaiclaw-entry.env.ts src/propaiclaw-entry.env.test.ts src/propaiclaw-entry.messages.ts src/propaiclaw-entry.messages.test.ts src/propai/mapper.ts src/propai/mapper.test.ts`
     - Result: passed (all matched files correctly formatted).
 
+Stage 8 progress update (2026-03-03, pass 2)
+
+- done
+  - Added broader Stage 8.2 deprecation messaging outside the Propaiclaw wrapper entrypoint:
+    - `src/commands/migrate-state.ts` now emits explicit deprecation warnings when legacy `OPENCLAW_*` path/profile env aliases are used without canonical `PROPAICLAW_*` counterparts.
+    - `migrate-state --json` now includes these deprecation warnings in the machine-readable audit payload (`deprecationWarnings`).
+    - State-dir override skip reason now distinguishes canonical vs legacy aliases and guides users to prefer `PROPAICLAW_STATE_DIR`.
+  - Added regression tests for legacy-env warning behavior:
+    - `src/commands/migrate-state.test.ts`
+
+- pending
+  - Stage 8.3 final legacy-only cleanup after deprecation window.
+
+- verification
+  - Command: `pnpm exec vitest run src/commands/migrate-state.test.ts src/propaiclaw-entry.env.test.ts src/propaiclaw-entry.messages.test.ts src/propai/mapper.test.ts`
+    - Result: passed (`4` test files, `62` tests).
+  - Command: `pnpm exec oxfmt --check src/commands/migrate-state.ts src/commands/migrate-state.test.ts`
+    - Result: passed (all matched files correctly formatted).
+
 ## Verification run
 
 - `pnpm --dir ui test -- src/ui/views/cron.test.ts src/ui/app-gateway.node.test.ts`
