@@ -691,6 +691,28 @@ Stage 8 progress update (2026-03-03, pass 2)
   - Command: `pnpm exec oxfmt --check src/commands/migrate-state.ts src/commands/migrate-state.test.ts`
     - Result: passed (all matched files correctly formatted).
 
+Stage 8 progress update (2026-03-03, pass 3)
+
+- done
+  - Completed first Stage 8.3 legacy-only cleanup slice for path/env compatibility:
+    - Removed `CLAWDBOT_*` path env aliases from core config path resolution in `src/config/paths.ts`:
+      - `CLAWDBOT_STATE_DIR`
+      - `CLAWDBOT_CONFIG_PATH`
+      - `CLAWDBOT_GATEWAY_PORT`
+    - Removed `CLAWDBOT_STATE_DIR` handling from `migrate-state` state-dir override planning in `src/commands/migrate-state.ts`.
+  - Updated regression coverage for removed aliases:
+    - `src/config/io.compat.test.ts` now asserts `CLAWDBOT_CONFIG_PATH` is ignored.
+    - `src/config/paths.test.ts` now asserts `CLAWDBOT_STATE_DIR` and `CLAWDBOT_GATEWAY_PORT` are ignored.
+
+- pending
+  - Remaining Stage 8.3 cleanup slices for non-path legacy aliases/usages (`CLAWDBOT_*` outside path resolution and eventual `OPENCLAW_*` retirement plan).
+
+- verification
+  - Command: `pnpm exec vitest run src/config/paths.test.ts src/config/io.compat.test.ts src/commands/migrate-state.test.ts src/propaiclaw-entry.env.test.ts src/propaiclaw-entry.messages.test.ts src/propai/mapper.test.ts`
+    - Result: passed (`6` test files, `87` tests).
+  - Command: `pnpm exec oxfmt --check src/config/paths.ts src/config/paths.test.ts src/config/io.compat.test.ts src/commands/migrate-state.ts`
+    - Result: passed (all matched files correctly formatted).
+
 ## Verification run
 
 - `pnpm --dir ui test -- src/ui/views/cron.test.ts src/ui/app-gateway.node.test.ts`

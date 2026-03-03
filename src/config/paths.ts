@@ -52,19 +52,15 @@ function resolveCanonicalConfigFilename(env: NodeJS.ProcessEnv): string {
 }
 
 function resolveStateDirOverride(env: NodeJS.ProcessEnv): string | undefined {
-  return envFirst(env.PROPAICLAW_STATE_DIR, env.OPENCLAW_STATE_DIR, env.CLAWDBOT_STATE_DIR);
+  return envFirst(env.PROPAICLAW_STATE_DIR, env.OPENCLAW_STATE_DIR);
 }
 
 function resolveConfigPathOverride(env: NodeJS.ProcessEnv): string | undefined {
-  return envFirst(env.PROPAICLAW_CONFIG_PATH, env.OPENCLAW_CONFIG_PATH, env.CLAWDBOT_CONFIG_PATH);
+  return envFirst(env.PROPAICLAW_CONFIG_PATH, env.OPENCLAW_CONFIG_PATH);
 }
 
 function resolveGatewayPortOverride(env: NodeJS.ProcessEnv): string | undefined {
-  return envFirst(
-    env.PROPAICLAW_GATEWAY_PORT,
-    env.OPENCLAW_GATEWAY_PORT,
-    env.CLAWDBOT_GATEWAY_PORT,
-  );
+  return envFirst(env.PROPAICLAW_GATEWAY_PORT, env.OPENCLAW_GATEWAY_PORT);
 }
 
 function resolveConfigCandidateFilenames(env: NodeJS.ProcessEnv): string[] {

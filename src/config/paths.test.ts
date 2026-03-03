@@ -3,9 +3,11 @@ import os from "node:os";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 import {
+  DEFAULT_GATEWAY_PORT,
   resolveDefaultConfigCandidates,
   resolveConfigPathCandidate,
   resolveConfigPath,
+  resolveGatewayPort,
   resolveOAuthDir,
   resolveOAuthPath,
   resolveStateDir,
@@ -97,6 +99,13 @@ describe("state + config path candidates", () => {
     } as NodeJS.ProcessEnv;
 
     expect(resolveStateDir(env, () => "/home/test")).toBe(path.resolve("/new/propaiclaw-state"));
+  });
+
+  it("ignores removed CLAWDBOT_STATE_DIR override", () => {
+    const env = {
+      CLAWDBOT_STATE_DIR: "/legacy/state",
+    } as NodeJS.ProcessEnv;
+    expect(resolveStateDir(env, () => "/home/test")).toBe(path.resolve("/home/test", ".openclaw"));
   });
 
   it("uses OPENCLAW_HOME for default state/config locations", () => {
@@ -226,5 +235,12 @@ describe("state + config path candidates", () => {
       );
       expect(resolved).toBe(legacyConfig);
     });
+  });
+
+  it("ignores removed CLAWDBOT_GATEWAY_PORT override", () => {
+    const env = {
+      CLAWDBOT_GATEWAY_PORT: "19001",
+    } as NodeJS.ProcessEnv;
+    expect(resolveGatewayPort({}, env)).toBe(DEFAULT_GATEWAY_PORT);
   });
 });

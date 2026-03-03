@@ -29,7 +29,7 @@ type StateDirPlan = {
 
 type EnvKey = keyof NodeJS.ProcessEnv;
 
-type StateDirOverrideSource = "PROPAICLAW_STATE_DIR" | "OPENCLAW_STATE_DIR" | "CLAWDBOT_STATE_DIR";
+type StateDirOverrideSource = "PROPAICLAW_STATE_DIR" | "OPENCLAW_STATE_DIR";
 
 type ResolvedStateDirOverride = {
   source: StateDirOverrideSource;
@@ -62,11 +62,7 @@ function readTrimmed(env: NodeJS.ProcessEnv, key: EnvKey): string | undefined {
 }
 
 function resolveStateDirOverride(env: NodeJS.ProcessEnv): ResolvedStateDirOverride | null {
-  const candidates: StateDirOverrideSource[] = [
-    "PROPAICLAW_STATE_DIR",
-    "OPENCLAW_STATE_DIR",
-    "CLAWDBOT_STATE_DIR",
-  ];
+  const candidates: StateDirOverrideSource[] = ["PROPAICLAW_STATE_DIR", "OPENCLAW_STATE_DIR"];
   for (const source of candidates) {
     const value = readTrimmed(env, source);
     if (value) {
@@ -77,7 +73,7 @@ function resolveStateDirOverride(env: NodeJS.ProcessEnv): ResolvedStateDirOverri
 }
 
 function formatStateDirOverrideReason(override: ResolvedStateDirOverride): string {
-  if (override.source === "OPENCLAW_STATE_DIR" || override.source === "CLAWDBOT_STATE_DIR") {
+  if (override.source === "OPENCLAW_STATE_DIR") {
     return `${override.source} is set to ${override.value} (legacy alias; prefer PROPAICLAW_STATE_DIR).`;
   }
   return `${override.source} is set to ${override.value}.`;
