@@ -741,6 +741,31 @@ Stage 8 progress update (2026-03-03, pass 4)
   - Command: `pnpm exec oxfmt --check src/gateway/credentials.ts src/browser/extension-relay-auth.ts src/pairing/setup-code.ts src/cli/daemon-cli/install.ts src/commands/doctor-gateway-services.ts src/gateway/credentials.test.ts src/gateway/credential-precedence.parity.test.ts src/agents/tools/gateway.test.ts src/pairing/setup-code.test.ts src/cli/qr-cli.test.ts src/cli/daemon-cli/lifecycle-core.test.ts`
     - Result: passed (all matched files correctly formatted).
 
+Stage 8 progress update (2026-03-03, pass 5)
+
+- done
+  - Completed third Stage 8.3 cleanup slice for remaining non-gateway and helper-only `CLAWDBOT_*` references:
+    - `src/agents/shell-utils.ts`: switched shell override from `CLAWDBOT_SHELL` to `OPENCLAW_SHELL`.
+    - `src/infra/bonjour.ts`: removed `CLAWDBOT_MDNS_HOSTNAME` fallback.
+    - `src/commands/status.scan.ts`: replaced `CLAWDBOT_SHOW_SECRETS` with `OPENCLAW_SHOW_SECRETS`.
+    - `src/test-helpers/state-dir-env.ts`: removed `CLAWDBOT_STATE_DIR` snapshot/cleanup handling.
+    - `src/commands/doctor-platform-notes.ts`: removed legacy `CLAWDBOT_GATEWAY_*` launchctl checks and retired legacy env scan behavior.
+  - Added/updated regression tests for this slice:
+    - new `src/agents/shell-utils.test.ts` for `OPENCLAW_SHELL` override behavior.
+    - updated:
+      - `src/test-helpers/state-dir-env.test.ts`
+      - `src/commands/doctor-platform-notes.launchctl-env-overrides.test.ts`
+
+- pending
+  - Stage 8.3 follow-up: normalize/reduce legacy-focused test fixtures that still reference `CLAWDBOT_*` only to assert ignored behavior.
+  - Eventual staged retirement plan for `OPENCLAW_*` compatibility aliases.
+
+- verification
+  - Command: `pnpm exec vitest run src/agents/shell-utils.test.ts src/test-helpers/state-dir-env.test.ts src/commands/doctor-platform-notes.launchctl-env-overrides.test.ts src/commands/status.test.ts src/infra/bonjour.test.ts src/commands/migrate-state.test.ts src/config/paths.test.ts`
+    - Result: passed (`7` test files, `57` tests).
+  - Command: `pnpm exec oxfmt --check src/agents/shell-utils.ts src/agents/shell-utils.test.ts src/infra/bonjour.ts src/commands/status.scan.ts src/test-helpers/state-dir-env.ts src/test-helpers/state-dir-env.test.ts src/commands/doctor-platform-notes.ts src/commands/doctor-platform-notes.launchctl-env-overrides.test.ts`
+    - Result: passed (all matched files correctly formatted).
+
 ## Verification run
 
 - `pnpm --dir ui test -- src/ui/views/cron.test.ts src/ui/app-gateway.node.test.ts`

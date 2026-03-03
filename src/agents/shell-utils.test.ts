@@ -1,9 +1,14 @@
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { captureEnv } from "../test-utils/env.js";
-import { getShellConfig, resolvePowerShellPath, resolveShellFromPath } from "./shell-utils.js";
+import {
+  detectRuntimeShell,
+  getShellConfig,
+  resolvePowerShellPath,
+  resolveShellFromPath,
+} from "./shell-utils.js";
 
 const isWin = process.platform === "win32";
 
@@ -205,5 +210,17 @@ describe("resolvePowerShellPath", () => {
     delete process.env.WINDIR;
 
     expect(resolvePowerShellPath()).toBe(ps51Path);
+  });
+});
+
+describe("detectRuntimeShell", () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  it("uses OPENCLAW_SHELL override when set", () => {
+    vi.stubEnv("OPENCLAW_SHELL", "/usr/bin/fish");
+    vi.stubEnv("SHELL", "/bin/bash");
+    expect(detectRuntimeShell()).toBe("fish");
   });
 });
