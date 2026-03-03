@@ -37,8 +37,8 @@ describe("secrets apply", () => {
     authJsonPath = path.join(stateDir, "agents", "main", "agent", "auth.json");
     envPath = path.join(stateDir, ".env");
     env = {
-      OPENCLAW_STATE_DIR: stateDir,
-      OPENCLAW_CONFIG_PATH: configPath,
+      PROPAICLAW_STATE_DIR: stateDir,
+      PROPAICLAW_CONFIG_PATH: configPath,
       OPENAI_API_KEY: "sk-live-env",
     };
 

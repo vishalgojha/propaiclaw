@@ -154,7 +154,7 @@ Gatewayの起動後、ブラウザでControl UIを開きます。
   <Card title="リモートアクセス" href="/gateway/remote" icon="globe">
     SSHおよびtailnetアクセスパターン。
   </Card>
-  <Card title="チャネル" href="/channels/telegram" icon="message-square">
+  <Card title="チャネル" href="/channels/whatsapp" icon="message-square">
     WhatsApp、Telegram、Discordなどのチャネル固有のセットアップ。
   </Card>
   <Card title="ノード" href="/nodes" icon="smartphone">

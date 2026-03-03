@@ -1,5 +1,6 @@
 import { resolveGatewayPort } from "../../config/config.js";
 import type { OpenClawConfig, ConfigFileSnapshot } from "../../config/types.js";
+import { readGatewayPasswordEnv, readGatewayTokenEnv } from "../../gateway/credentials.js";
 import type { GatewayProbeResult } from "../../gateway/probe.js";
 import { pickPrimaryTailnetIPv4 } from "../../infra/tailnet.js";
 import { colorize, theme } from "../../terminal/theme.js";
@@ -166,8 +167,8 @@ export function resolveAuthForTarget(
     };
   }
 
-  const envToken = process.env.OPENCLAW_GATEWAY_TOKEN?.trim() || "";
-  const envPassword = process.env.OPENCLAW_GATEWAY_PASSWORD?.trim() || "";
+  const envToken = readGatewayTokenEnv(process.env) || "";
+  const envPassword = readGatewayPasswordEnv(process.env) || "";
   const cfgToken =
     typeof cfg.gateway?.auth?.token === "string" ? cfg.gateway.auth.token.trim() : "";
   const cfgPassword =

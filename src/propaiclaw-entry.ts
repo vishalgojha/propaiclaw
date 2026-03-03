@@ -24,11 +24,7 @@ import {
 } from "./propai/mapper.js";
 import { initializeRealtorWorkspaceProfile } from "./propai/realtor-workspace.js";
 import { maybeSeedRealtorWorkspaceBeforeSetup } from "./propai/setup-bootstrap.js";
-import {
-  applyProcessEnvValues,
-  resolveLegacyOpenClawEnvDeprecationWarnings,
-  resolvePropaiclawRuntimeEnv,
-} from "./propaiclaw-entry.env.js";
+import { applyProcessEnvValues, resolvePropaiclawRuntimeEnv } from "./propaiclaw-entry.env.js";
 import {
   formatConfigInvalidHint,
   formatRuntimeDebugLine,
@@ -55,13 +51,6 @@ const CLI_COMMAND_NAME = resolveCliCommandName();
 function bootstrapPropaiclawRuntimeIdentity(): void {
   const runtimeEnv = resolvePropaiclawRuntimeEnv(process.env);
   applyProcessEnvValues(runtimeEnv, process.env);
-  const deprecationWarnings = resolveLegacyOpenClawEnvDeprecationWarnings({
-    env: process.env,
-    commandName: CLI_COMMAND_NAME,
-  });
-  for (const warning of deprecationWarnings) {
-    process.stderr.write(`${warning}\n`);
-  }
 }
 
 function resolveOpenClawWrapperPath(): string {

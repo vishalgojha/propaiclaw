@@ -155,6 +155,25 @@ export function renderRestartDiagnostics(snapshot: GatewayRestartSnapshot): stri
   return lines;
 }
 
+export function collectGatewayProcessPids(snapshot: GatewayRestartSnapshot): number[] {
+  const listenerPids =
+    snapshot.portUsage.status === "busy"
+      ? snapshot.portUsage.listeners
+          .filter(
+            (listener) => classifyPortListener(listener, snapshot.portUsage.port) === "gateway",
+          )
+          .map((listener) => listener.pid)
+          .filter((pid): pid is number => Number.isFinite(pid) && pid > 1)
+      : [];
+  const runtimePid =
+    snapshot.runtime.status === "running" &&
+    Number.isFinite(snapshot.runtime.pid) &&
+    (snapshot.runtime.pid as number) > 1
+      ? [snapshot.runtime.pid as number]
+      : [];
+  return Array.from(new Set([...listenerPids, ...snapshot.staleGatewayPids, ...runtimePid]));
+}
+
 export async function terminateStaleGatewayPids(pids: number[]): Promise<number[]> {
   const killed: number[] = [];
   for (const pid of pids) {

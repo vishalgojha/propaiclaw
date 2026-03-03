@@ -1,6 +1,10 @@
 import os from "node:os";
 import type { OpenClawConfig } from "../config/types.js";
-import { readGatewayPasswordEnv, readGatewayTokenEnv } from "../gateway/credentials.js";
+import {
+  readGatewayPasswordEnv,
+  readGatewayPortEnv,
+  readGatewayTokenEnv,
+} from "../gateway/credentials.js";
 import { resolveGatewayBindUrl } from "../shared/gateway-bind-url.js";
 import { isCarrierGradeNatIpv4Address, isRfc1918Ipv4Address } from "../shared/net/ip.js";
 import { resolveTailnetHostWithRunner } from "../shared/tailscale-status.js";
@@ -91,7 +95,7 @@ function normalizeUrl(raw: string, schemeFallback: "ws" | "wss"): string | null 
 }
 
 function resolveGatewayPort(cfg: OpenClawConfig, env: NodeJS.ProcessEnv): number {
-  const envRaw = env.OPENCLAW_GATEWAY_PORT?.trim();
+  const envRaw = readGatewayPortEnv(env);
   if (envRaw) {
     const parsed = Number.parseInt(envRaw, 10);
     if (Number.isFinite(parsed) && parsed > 0) {

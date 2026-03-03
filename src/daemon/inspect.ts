@@ -7,6 +7,7 @@ import {
   resolveGatewaySystemdServiceName,
   resolveGatewayWindowsTaskName,
 } from "./constants.js";
+import { resolveDaemonProfileEnv } from "./env-aliases.js";
 import { execSchtasks } from "./schtasks-exec.js";
 
 export type ExtraGatewayService = {
@@ -27,7 +28,7 @@ const EXTRA_MARKERS = ["openclaw", "clawdbot", "moltbot"] as const;
 export function renderGatewayServiceCleanupHints(
   env: Record<string, string | undefined> = process.env as Record<string, string | undefined>,
 ): string[] {
-  const profile = env.OPENCLAW_PROFILE;
+  const profile = resolveDaemonProfileEnv(env);
   switch (process.platform) {
     case "darwin": {
       const label = resolveGatewayLaunchAgentLabel(profile);

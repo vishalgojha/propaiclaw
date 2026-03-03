@@ -33,17 +33,15 @@ function firstDefined(values: Array<string | undefined>): string | undefined {
 }
 
 export function readGatewayTokenEnv(env: NodeJS.ProcessEnv): string | undefined {
-  return firstDefined([
-    trimToUndefined(env.PROPAICLAW_GATEWAY_TOKEN),
-    trimToUndefined(env.OPENCLAW_GATEWAY_TOKEN),
-  ]);
+  return trimToUndefined(env.PROPAICLAW_GATEWAY_TOKEN);
 }
 
 export function readGatewayPasswordEnv(env: NodeJS.ProcessEnv): string | undefined {
-  return firstDefined([
-    trimToUndefined(env.PROPAICLAW_GATEWAY_PASSWORD),
-    trimToUndefined(env.OPENCLAW_GATEWAY_PASSWORD),
-  ]);
+  return trimToUndefined(env.PROPAICLAW_GATEWAY_PASSWORD);
+}
+
+export function readGatewayPortEnv(env: NodeJS.ProcessEnv): string | undefined {
+  return trimToUndefined(env.PROPAICLAW_GATEWAY_PORT);
 }
 
 export function resolveGatewayCredentialsFromValues(params: {

@@ -3,6 +3,11 @@ import {
   resolveGatewaySystemdServiceName,
   resolveGatewayWindowsTaskName,
 } from "../../daemon/constants.js";
+import {
+  resolveDaemonConfigPathEnv,
+  resolveDaemonProfileEnv,
+  resolveDaemonStateDirEnv,
+} from "../../daemon/env-aliases.js";
 import { resolveGatewayLogPaths } from "../../daemon/launchd.js";
 import { formatRuntimeStatus } from "../../daemon/runtime-format.js";
 import { getResolvedLoggerSettings } from "../../logging.js";
@@ -80,25 +85,41 @@ export function pickProbeHostForBind(
   return "127.0.0.1";
 }
 
-const SAFE_DAEMON_ENV_KEYS = [
-  "OPENCLAW_PROFILE",
-  "OPENCLAW_STATE_DIR",
-  "OPENCLAW_CONFIG_PATH",
-  "OPENCLAW_GATEWAY_PORT",
-  "OPENCLAW_NIX_MODE",
-];
+const SAFE_DAEMON_ENV_KEYS = ["OPENCLAW_NIX_MODE"];
+
+const GATEWAY_PORT_ENV_KEYS = ["PROPAICLAW_GATEWAY_PORT"] as const;
 
 export function filterDaemonEnv(env: Record<string, string> | undefined): Record<string, string> {
   if (!env) {
     return {};
   }
   const filtered: Record<string, string> = {};
+  const profile = resolveDaemonProfileEnv(env);
+  if (profile) {
+    filtered.PROPAICLAW_PROFILE = profile;
+  }
+  const stateDir = resolveDaemonStateDirEnv(env);
+  if (stateDir) {
+    filtered.PROPAICLAW_STATE_DIR = stateDir;
+  }
+  const configPath = resolveDaemonConfigPathEnv(env);
+  if (configPath) {
+    filtered.PROPAICLAW_CONFIG_PATH = configPath;
+  }
   for (const key of SAFE_DAEMON_ENV_KEYS) {
     const value = env[key];
     if (!value?.trim()) {
       continue;
     }
     filtered[key] = value.trim();
+  }
+  for (const key of GATEWAY_PORT_ENV_KEYS) {
+    const value = env[key];
+    if (!value?.trim()) {
+      continue;
+    }
+    filtered.PROPAICLAW_GATEWAY_PORT = value.trim();
+    break;
   }
   return filtered;
 }
@@ -149,10 +170,10 @@ export function renderRuntimeHints(
       hints.push(`Launchd stdout (if installed): ${logs.stdoutPath}`);
       hints.push(`Launchd stderr (if installed): ${logs.stderrPath}`);
     } else if (process.platform === "linux") {
-      const unit = resolveGatewaySystemdServiceName(env.OPENCLAW_PROFILE);
+      const unit = resolveGatewaySystemdServiceName(resolveDaemonProfileEnv(env));
       hints.push(`Logs: journalctl --user -u ${unit}.service -n 200 --no-pager`);
     } else if (process.platform === "win32") {
-      const task = resolveGatewayWindowsTaskName(env.OPENCLAW_PROFILE);
+      const task = resolveGatewayWindowsTaskName(resolveDaemonProfileEnv(env));
       hints.push(`Logs: schtasks /Query /TN "${task}" /V /FO LIST`);
     }
   }
@@ -164,7 +185,7 @@ export function renderGatewayServiceStartHints(env: NodeJS.ProcessEnv = process.
     formatCliCommand("openclaw gateway install", env),
     formatCliCommand("openclaw gateway", env),
   ];
-  const profile = env.OPENCLAW_PROFILE;
+  const profile = resolveDaemonProfileEnv(env);
   switch (process.platform) {
     case "darwin": {
       const label = resolveGatewayLaunchAgentLabel(profile);

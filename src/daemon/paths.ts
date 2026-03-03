@@ -1,11 +1,12 @@
 import path from "node:path";
 import { resolveGatewayProfileSuffix } from "./constants.js";
+import { resolveDaemonProfileEnv, resolveDaemonStateDirEnv } from "./env-aliases.js";
 
 const windowsAbsolutePath = /^[a-zA-Z]:[\\/]/;
 const windowsUncPath = /^\\\\/;
 
 export function resolveHomeDir(env: Record<string, string | undefined>): string {
-  const home = env.HOME?.trim() || env.USERPROFILE?.trim();
+  const home = env.PROPAICLAW_HOME?.trim() || env.HOME?.trim() || env.USERPROFILE?.trim();
   if (!home) {
     throw new Error("Missing HOME");
   }
@@ -31,12 +32,12 @@ export function resolveUserPathWithHome(input: string, home?: string): string {
 }
 
 export function resolveGatewayStateDir(env: Record<string, string | undefined>): string {
-  const override = env.OPENCLAW_STATE_DIR?.trim();
+  const override = resolveDaemonStateDirEnv(env);
   if (override) {
     const home = override.startsWith("~") ? resolveHomeDir(env) : undefined;
     return resolveUserPathWithHome(override, home);
   }
   const home = resolveHomeDir(env);
-  const suffix = resolveGatewayProfileSuffix(env.OPENCLAW_PROFILE);
+  const suffix = resolveGatewayProfileSuffix(resolveDaemonProfileEnv(env));
   return path.join(home, `.openclaw${suffix}`);
 }

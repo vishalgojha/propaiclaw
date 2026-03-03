@@ -94,7 +94,7 @@ function setupGatewayTokenRepairScenario(expectedToken: string) {
   mocks.readCommand.mockResolvedValue({
     programArguments: gatewayProgramArguments,
     environment: {
-      OPENCLAW_GATEWAY_TOKEN: "stale-token",
+      PROPAICLAW_GATEWAY_TOKEN: "stale-token",
     },
   });
   mocks.auditGatewayServiceConfig.mockResolvedValue({
@@ -102,7 +102,7 @@ function setupGatewayTokenRepairScenario(expectedToken: string) {
     issues: [
       {
         code: "gateway-token-mismatch",
-        message: "Gateway service OPENCLAW_GATEWAY_TOKEN does not match gateway.auth.token",
+        message: "Gateway service PROPAICLAW_GATEWAY_TOKEN does not match gateway.auth.token",
         level: "recommended",
       },
     ],
@@ -111,7 +111,7 @@ function setupGatewayTokenRepairScenario(expectedToken: string) {
     programArguments: gatewayProgramArguments,
     workingDirectory: "/tmp",
     environment: {
-      OPENCLAW_GATEWAY_TOKEN: expectedToken,
+      PROPAICLAW_GATEWAY_TOKEN: expectedToken,
     },
   });
   mocks.install.mockResolvedValue(undefined);
@@ -149,8 +149,8 @@ describe("maybeRepairGatewayServiceConfig", () => {
     expect(mocks.install).toHaveBeenCalledTimes(1);
   });
 
-  it("uses OPENCLAW_GATEWAY_TOKEN when config token is missing", async () => {
-    await withEnvAsync({ OPENCLAW_GATEWAY_TOKEN: "env-token" }, async () => {
+  it("uses PROPAICLAW_GATEWAY_TOKEN when config token is missing", async () => {
+    await withEnvAsync({ PROPAICLAW_GATEWAY_TOKEN: "env-token" }, async () => {
       setupGatewayTokenRepairScenario("env-token");
 
       const cfg: OpenClawConfig = {
@@ -171,6 +171,34 @@ describe("maybeRepairGatewayServiceConfig", () => {
       );
       expect(mocks.install).toHaveBeenCalledTimes(1);
     });
+  });
+
+  it("uses PROPAICLAW_GATEWAY_TOKEN from env when config token is missing", async () => {
+    await withEnvAsync(
+      {
+        PROPAICLAW_GATEWAY_TOKEN: "canonical-token",
+      },
+      async () => {
+        setupGatewayTokenRepairScenario("canonical-token");
+
+        const cfg: OpenClawConfig = {
+          gateway: {},
+        };
+
+        await runRepair(cfg);
+
+        expect(mocks.auditGatewayServiceConfig).toHaveBeenCalledWith(
+          expect.objectContaining({
+            expectedGatewayToken: "canonical-token",
+          }),
+        );
+        expect(mocks.buildGatewayInstallPlan).toHaveBeenCalledWith(
+          expect.objectContaining({
+            token: "canonical-token",
+          }),
+        );
+      },
+    );
   });
 });
 

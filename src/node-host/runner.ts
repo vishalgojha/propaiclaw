@@ -3,6 +3,7 @@ import path from "node:path";
 import { resolveBrowserConfig } from "../browser/config.js";
 import { loadConfig } from "../config/config.js";
 import { GatewayClient } from "../gateway/client.js";
+import { readGatewayPasswordEnv, readGatewayTokenEnv } from "../gateway/credentials.js";
 import { loadOrCreateDeviceIdentity } from "../infra/device-identity.js";
 import type { SkillBinTrustEntry } from "../infra/exec-approvals.js";
 import { getMachineDisplayName } from "../infra/machine-name.js";
@@ -166,10 +167,10 @@ export async function runNodeHost(opts: NodeHostRunOptions): Promise<void> {
     cfg.nodeHost?.browserProxy?.enabled !== false && resolvedBrowser.enabled;
   const isRemoteMode = cfg.gateway?.mode === "remote";
   const token =
-    process.env.OPENCLAW_GATEWAY_TOKEN?.trim() ||
+    readGatewayTokenEnv(process.env) ||
     (isRemoteMode ? cfg.gateway?.remote?.token : cfg.gateway?.auth?.token);
   const password =
-    process.env.OPENCLAW_GATEWAY_PASSWORD?.trim() ||
+    readGatewayPasswordEnv(process.env) ||
     (isRemoteMode ? cfg.gateway?.remote?.password : cfg.gateway?.auth?.password);
 
   const host = gateway.host ?? "127.0.0.1";

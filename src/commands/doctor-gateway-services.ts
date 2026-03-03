@@ -18,6 +18,7 @@ import {
 } from "../daemon/service-audit.js";
 import { resolveGatewayService } from "../daemon/service.js";
 import { uninstallLegacySystemdUnits } from "../daemon/systemd.js";
+import { readGatewayTokenEnv } from "../gateway/credentials.js";
 import type { RuntimeEnv } from "../runtime.js";
 import { note } from "../terminal/note.js";
 import { buildGatewayInstallPlan } from "./daemon-install-helpers.js";
@@ -60,9 +61,7 @@ function resolveGatewayAuthToken(cfg: OpenClawConfig, env: NodeJS.ProcessEnv): s
   if (configToken) {
     return configToken;
   }
-  const envToken = env.OPENCLAW_GATEWAY_TOKEN;
-  const trimmedEnvToken = envToken?.trim();
-  return trimmedEnvToken || undefined;
+  return readGatewayTokenEnv(env);
 }
 
 function extractDetailPath(detail: string, prefix: string): string | null {

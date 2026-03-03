@@ -1,4 +1,5 @@
 import { formatNodeServiceDescription } from "../daemon/constants.js";
+import { resolveDaemonServiceVersionEnv } from "../daemon/env-aliases.js";
 import { resolveNodeProgramArguments } from "../daemon/program-args.js";
 import { resolvePreferredNodePath } from "../daemon/runtime-paths.js";
 import { buildNodeServiceEnvironment } from "../daemon/service-env.js";
@@ -58,7 +59,7 @@ export async function buildNodeInstallPlan(params: {
 
   const environment = buildNodeServiceEnvironment({ env: params.env });
   const description = formatNodeServiceDescription({
-    version: environment.OPENCLAW_SERVICE_VERSION,
+    version: resolveDaemonServiceVersionEnv(environment),
   });
 
   return { programArguments, workingDirectory, environment, description };

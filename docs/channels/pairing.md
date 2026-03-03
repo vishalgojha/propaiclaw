@@ -32,11 +32,11 @@ Pairing codes:
 ### Approve a sender
 
 ```bash
-openclaw pairing list telegram
-openclaw pairing approve telegram <CODE>
+openclaw pairing list whatsapp
+openclaw pairing approve whatsapp <CODE>
 ```
 
-Supported channels: `telegram`, `whatsapp`, `signal`, `imessage`, `discord`, `slack`, `feishu`.
+Supported channel: `whatsapp`.
 
 ### Where the state lives
 
@@ -59,15 +59,15 @@ Treat these as sensitive (they gate access to your assistant).
 Nodes connect to the Gateway as **devices** with `role: node`. The Gateway
 creates a device pairing request that must be approved.
 
-### Pair via Telegram (recommended for iOS)
+### Pair via WhatsApp
 
-If you use the `device-pair` plugin, you can do first-time device pairing entirely from Telegram:
+If you use the `device-pair` plugin, you can do first-time device pairing from WhatsApp:
 
-1. In Telegram, message your bot: `/pair`
-2. The bot replies with two messages: an instruction message and a separate **setup code** message (easy to copy/paste in Telegram).
+1. In WhatsApp, message your bot: `/pair`
+2. The bot replies with two messages: an instruction message and a separate **setup code** message (easy to copy/paste).
 3. On your phone, open the OpenClaw iOS app → Settings → Gateway.
 4. Paste the setup code and connect.
-5. Back in Telegram: `/pair approve`
+5. Back in WhatsApp: `/pair approve`
 
 The setup code is a base64-encoded JSON payload that contains:
 
@@ -100,11 +100,4 @@ Stored under `~/.openclaw/devices/`:
 
 - Security model + prompt injection: [Security](/gateway/security)
 - Updating safely (run doctor): [Updating](/install/updating)
-- Channel configs:
-  - Telegram: [Telegram](/channels/telegram)
-  - WhatsApp: [WhatsApp](/channels/whatsapp)
-  - Signal: [Signal](/channels/signal)
-  - BlueBubbles (iMessage): [BlueBubbles](/channels/bluebubbles)
-  - iMessage (legacy): [iMessage](/channels/imessage)
-  - Discord: [Discord](/channels/discord)
-  - Slack: [Slack](/channels/slack)
+- Channel config: [WhatsApp](/channels/whatsapp)

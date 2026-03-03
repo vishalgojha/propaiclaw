@@ -5,8 +5,6 @@ describe("pairing setup code", () => {
   beforeEach(() => {
     vi.stubEnv("PROPAICLAW_GATEWAY_TOKEN", "");
     vi.stubEnv("PROPAICLAW_GATEWAY_PASSWORD", "");
-    vi.stubEnv("OPENCLAW_GATEWAY_TOKEN", "");
-    vi.stubEnv("OPENCLAW_GATEWAY_PASSWORD", "");
   });
 
   afterEach(() => {
@@ -55,7 +53,7 @@ describe("pairing setup code", () => {
       },
       {
         env: {
-          OPENCLAW_GATEWAY_TOKEN: "new-token",
+          PROPAICLAW_GATEWAY_TOKEN: "new-token",
         },
       },
     );
@@ -67,7 +65,7 @@ describe("pairing setup code", () => {
     expect(resolved.payload.token).toBe("new-token");
   });
 
-  it("prefers PROPAICLAW env token over OPENCLAW env token", async () => {
+  it("ignores unrelated env token when PROPAICLAW env token is unset", async () => {
     const resolved = await resolvePairingSetupFromConfig(
       {
         gateway: {
@@ -78,8 +76,7 @@ describe("pairing setup code", () => {
       },
       {
         env: {
-          PROPAICLAW_GATEWAY_TOKEN: "propai-token",
-          OPENCLAW_GATEWAY_TOKEN: "openclaw-token",
+          LEGACY_GATEWAY_TOKEN: "openclaw-token",
         },
       },
     );
@@ -88,7 +85,35 @@ describe("pairing setup code", () => {
     if (!resolved.ok) {
       throw new Error("expected setup resolution to succeed");
     }
-    expect(resolved.payload.token).toBe("propai-token");
+    expect(resolved.payload.token).toBe("old");
+  });
+
+  it("uses PROPAICLAW gateway port override", async () => {
+    const resolved = await resolvePairingSetupFromConfig(
+      {
+        gateway: {
+          bind: "custom",
+          customBindHost: "gateway.local",
+          auth: { mode: "token", token: "tok_123" },
+        },
+      },
+      {
+        env: {
+          PROPAICLAW_GATEWAY_PORT: "19002",
+        },
+      },
+    );
+
+    expect(resolved).toEqual({
+      ok: true,
+      payload: {
+        url: "ws://gateway.local:19002",
+        token: "tok_123",
+        password: undefined,
+      },
+      authLabel: "token",
+      urlSource: "gateway.bind=custom",
+    });
   });
 
   it("errors when gateway is loopback only", async () => {

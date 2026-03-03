@@ -1,4 +1,5 @@
 import { spawn } from "node:child_process";
+import { resolveDaemonLaunchdLabelEnv } from "../daemon/env-aliases.js";
 import { triggerOpenClawRestart } from "./restart.js";
 import { hasSupervisorHint } from "./supervisor-markers.js";
 
@@ -35,7 +36,7 @@ export function restartGatewayProcessWithFreshPid(): GatewayRespawnResult {
   if (isLikelySupervisedProcess(process.env)) {
     // On macOS under launchd, actively kickstart the supervised service to
     // bypass ThrottleInterval delays for intentional restarts.
-    if (process.platform === "darwin" && process.env.OPENCLAW_LAUNCHD_LABEL?.trim()) {
+    if (process.platform === "darwin" && resolveDaemonLaunchdLabelEnv(process.env)) {
       const restart = triggerOpenClawRestart();
       if (!restart.ok) {
         return {

@@ -83,14 +83,14 @@ async function withOnboardEnv(
     await withEnvAsync(
       {
         HOME: tempHome,
-        OPENCLAW_STATE_DIR: tempHome,
-        OPENCLAW_CONFIG_PATH: configPath,
+        PROPAICLAW_STATE_DIR: tempHome,
+        PROPAICLAW_CONFIG_PATH: configPath,
         OPENCLAW_SKIP_CHANNELS: "1",
         OPENCLAW_SKIP_GMAIL_WATCHER: "1",
         OPENCLAW_SKIP_CRON: "1",
         OPENCLAW_SKIP_CANVAS_HOST: "1",
-        OPENCLAW_GATEWAY_TOKEN: undefined,
-        OPENCLAW_GATEWAY_PASSWORD: undefined,
+        PROPAICLAW_GATEWAY_TOKEN: undefined,
+        PROPAICLAW_GATEWAY_PASSWORD: undefined,
         CUSTOM_API_KEY: undefined,
         OPENCLAW_DISABLE_CONFIG_CACHE: "1",
       },

@@ -10,19 +10,21 @@ import {
   runServiceUninstall,
 } from "./lifecycle-core.js";
 import {
+  collectGatewayProcessPids,
   DEFAULT_RESTART_HEALTH_ATTEMPTS,
   DEFAULT_RESTART_HEALTH_DELAY_MS,
+  inspectGatewayRestart,
   renderRestartDiagnostics,
   terminateStaleGatewayPids,
   waitForGatewayHealthyRestart,
 } from "./restart-health.js";
 import { parsePortFromArgs, renderGatewayServiceStartHints } from "./shared.js";
-import type { DaemonLifecycleOptions } from "./types.js";
+import type { DaemonLifecycleOptions, DaemonStopOptions } from "./types.js";
 
 const POST_RESTART_HEALTH_ATTEMPTS = DEFAULT_RESTART_HEALTH_ATTEMPTS;
 const POST_RESTART_HEALTH_DELAY_MS = DEFAULT_RESTART_HEALTH_DELAY_MS;
 
-async function resolveGatewayRestartPort() {
+async function resolveGatewayServicePort() {
   const service = resolveGatewayService();
   const command = await service.readCommand(process.env).catch(() => null);
   const serviceEnv = command?.environment ?? undefined;
@@ -54,11 +56,61 @@ export async function runDaemonStart(opts: DaemonLifecycleOptions = {}) {
   });
 }
 
-export async function runDaemonStop(opts: DaemonLifecycleOptions = {}) {
+export async function runDaemonStop(opts: DaemonStopOptions = {}) {
+  const json = Boolean(opts.json);
+  const service = resolveGatewayService();
+  const stopPort = opts.force
+    ? await resolveGatewayServicePort().catch(() => resolveGatewayPort(loadConfig(), process.env))
+    : null;
   return await runServiceStop({
     serviceNoun: "Gateway",
-    service: resolveGatewayService(),
+    service,
     opts,
+    postStopCheck: stopPort
+      ? async ({ warnings, fail }) => {
+          let snapshot = await inspectGatewayRestart({
+            service,
+            port: stopPort,
+          });
+          let stalePids = collectGatewayProcessPids(snapshot);
+          if (stalePids.length === 0) {
+            return;
+          }
+
+          const staleMsg = `Found lingering gateway process(es): ${stalePids.join(", ")}.`;
+          warnings.push(staleMsg);
+          if (!json) {
+            defaultRuntime.log(theme.warn(staleMsg));
+            defaultRuntime.log(theme.muted("Stopping lingering process(es)..."));
+          }
+          await terminateStaleGatewayPids(stalePids);
+
+          snapshot = await inspectGatewayRestart({
+            service,
+            port: stopPort,
+          });
+          stalePids = collectGatewayProcessPids(snapshot);
+          if (stalePids.length === 0) {
+            return;
+          }
+
+          const timeoutLine = `Gateway stop --force could not terminate lingering process(es): ${stalePids.join(", ")}.`;
+          const diagnostics = renderRestartDiagnostics(snapshot);
+          if (!json) {
+            defaultRuntime.log(theme.warn(timeoutLine));
+            for (const line of diagnostics) {
+              defaultRuntime.log(theme.muted(line));
+            }
+          } else {
+            warnings.push(timeoutLine);
+            warnings.push(...diagnostics);
+          }
+          fail("Gateway stop --force failed to terminate lingering processes.", [
+            formatCliCommand("openclaw gateway status --deep"),
+            formatCliCommand("openclaw doctor"),
+          ]);
+        }
+      : undefined,
   });
 }
 
@@ -70,7 +122,7 @@ export async function runDaemonStop(opts: DaemonLifecycleOptions = {}) {
 export async function runDaemonRestart(opts: DaemonLifecycleOptions = {}): Promise<boolean> {
   const json = Boolean(opts.json);
   const service = resolveGatewayService();
-  const restartPort = await resolveGatewayRestartPort().catch(() =>
+  const restartPort = await resolveGatewayServicePort().catch(() =>
     resolveGatewayPort(loadConfig(), process.env),
   );
   const restartWaitMs = POST_RESTART_HEALTH_ATTEMPTS * POST_RESTART_HEALTH_DELAY_MS;

@@ -5,7 +5,10 @@ import { checkTokenDrift } from "../../daemon/service-audit.js";
 import type { GatewayService } from "../../daemon/service.js";
 import { renderSystemdUnavailableHints } from "../../daemon/systemd-hints.js";
 import { isSystemdUserServiceAvailable } from "../../daemon/systemd.js";
-import { resolveGatewayCredentialsFromConfig } from "../../gateway/credentials.js";
+import {
+  readGatewayTokenEnv,
+  resolveGatewayCredentialsFromConfig,
+} from "../../gateway/credentials.js";
 import { isWSL } from "../../infra/wsl.js";
 import { defaultRuntime } from "../../runtime.js";
 import {
@@ -21,6 +24,13 @@ type DaemonLifecycleOptions = {
 };
 
 type RestartPostCheckContext = {
+  json: boolean;
+  stdout: Writable;
+  warnings: string[];
+  fail: (message: string, hints?: string[]) => void;
+};
+
+type StopPostCheckContext = {
   json: boolean;
   stdout: Writable;
   warnings: string[];
@@ -199,6 +209,7 @@ export async function runServiceStop(params: {
   serviceNoun: string;
   service: GatewayService;
   opts?: DaemonLifecycleOptions;
+  postStopCheck?: (ctx: StopPostCheckContext) => Promise<void>;
 }) {
   const json = Boolean(params.opts?.json);
   const { stdout, emit, fail } = createActionIO({ action: "stop", json });
@@ -229,6 +240,10 @@ export async function runServiceStop(params: {
     fail(`${params.serviceNoun} stop failed: ${String(err)}`);
     return;
   }
+  const warnings: string[] = [];
+  if (params.postStopCheck) {
+    await params.postStopCheck({ json, stdout, warnings, fail });
+  }
 
   let stopped = false;
   try {
@@ -240,6 +255,7 @@ export async function runServiceStop(params: {
     ok: true,
     result: "stopped",
     service: buildDaemonServiceSnapshot(params.service, stopped),
+    warnings: warnings.length ? warnings : undefined,
   });
 }
 
@@ -279,7 +295,7 @@ export async function runServiceRestart(params: {
     // Check for token drift before restart (service token vs config token)
     try {
       const command = await params.service.readCommand(process.env);
-      const serviceToken = command?.environment?.OPENCLAW_GATEWAY_TOKEN;
+      const serviceToken = readGatewayTokenEnv((command?.environment ?? {}) as NodeJS.ProcessEnv);
       const cfg = loadConfig();
       const configToken = resolveGatewayCredentialsFromConfig({
         cfg,

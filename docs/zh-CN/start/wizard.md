@@ -122,12 +122,12 @@ openclaw agents add <name>
 
 5. **渠道**
    - [WhatsApp](/channels/whatsapp)：可选的二维码登录。
-   - [Telegram](/channels/telegram)：机器人令牌。
-   - [Discord](/channels/discord)：机器人令牌。
-   - [Google Chat](/channels/googlechat)：服务账户 JSON + webhook 受众。
-   - [Mattermost](/channels/mattermost)（插件）：机器人令牌 + 基础 URL。
-   - [Signal](/channels/signal)：可选的 `signal-cli` 安装 + 账户配置。
-   - [iMessage](/channels/imessage)：本地 `imsg` CLI 路径 + 数据库访问。
+   - [Telegram](/channels/whatsapp)：机器人令牌。
+   - [Discord](/channels/whatsapp)：机器人令牌。
+   - [Google Chat](/channels/whatsapp)：服务账户 JSON + webhook 受众。
+   - [Mattermost](/channels/whatsapp)（插件）：机器人令牌 + 基础 URL。
+   - [Signal](/channels/whatsapp)：可选的 `signal-cli` 安装 + 账户配置。
+   - [iMessage](/channels/whatsapp)：本地 `imsg` CLI 路径 + 数据库访问。
    - 私信安全：默认为配对。第一条私信发送验证码；通过 `openclaw pairing approve <channel> <code>` 批准或使用允许列表。
 
 6. **守护进程安装**
@@ -327,5 +327,5 @@ WhatsApp 凭证存储在 `~/.openclaw/credentials/whatsapp/<accountId>/` 下。
 
 - macOS 应用新手引导：[新手引导](/start/onboarding)
 - 配置参考：[Gateway 网关配置](/gateway/configuration)
-- 提供商：[WhatsApp](/channels/whatsapp)、[Telegram](/channels/telegram)、[Discord](/channels/discord)、[Google Chat](/channels/googlechat)、[Signal](/channels/signal)、[iMessage](/channels/imessage)
+- 提供商：[WhatsApp](/channels/whatsapp)、[Telegram](/channels/whatsapp)、[Discord](/channels/whatsapp)、[Google Chat](/channels/whatsapp)、[Signal](/channels/whatsapp)、[iMessage](/channels/whatsapp)
 - Skills：[Skills](/tools/skills)、[Skills 配置](/tools/skills-config)

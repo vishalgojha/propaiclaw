@@ -272,15 +272,35 @@ describe("buildServiceEnvironment", () => {
     } else {
       expect(env.PATH).toContain("/usr/bin");
     }
-    expect(env.OPENCLAW_GATEWAY_PORT).toBe("18789");
-    expect(env.OPENCLAW_GATEWAY_TOKEN).toBe("secret");
-    expect(env.OPENCLAW_SERVICE_MARKER).toBe("openclaw");
-    expect(env.OPENCLAW_SERVICE_KIND).toBe("gateway");
-    expect(typeof env.OPENCLAW_SERVICE_VERSION).toBe("string");
-    expect(env.OPENCLAW_SYSTEMD_UNIT).toBe("openclaw-gateway.service");
+    expect(env.PROPAICLAW_GATEWAY_PORT).toBe("18789");
+    expect(env.PROPAICLAW_GATEWAY_TOKEN).toBe("secret");
+    expect(env.PROPAICLAW_SERVICE_MARKER).toBe("openclaw");
+    expect(env.PROPAICLAW_SERVICE_KIND).toBe("gateway");
+    expect(typeof env.PROPAICLAW_SERVICE_VERSION).toBe("string");
+    expect(env.PROPAICLAW_SYSTEMD_UNIT).toBe("openclaw-gateway.service");
+    expect(env.OPENCLAW_SYSTEMD_UNIT).toBeUndefined();
+    expect(env.OPENCLAW_SERVICE_MARKER).toBeUndefined();
     if (process.platform === "darwin") {
-      expect(env.OPENCLAW_LAUNCHD_LABEL).toBe("ai.openclaw.gateway");
+      expect(env.PROPAICLAW_LAUNCHD_LABEL).toBe("ai.openclaw.gateway");
+      expect(env.OPENCLAW_LAUNCHD_LABEL).toBeUndefined();
     }
+  });
+
+  it("uses canonical PROPAICLAW profile/state/config aliases", () => {
+    const env = buildServiceEnvironment({
+      env: {
+        HOME: "/home/user",
+        PROPAICLAW_PROFILE: "work",
+        PROPAICLAW_STATE_DIR: "/srv/propaiclaw-state",
+        PROPAICLAW_CONFIG_PATH: "/srv/propaiclaw-state/propaiclaw.json",
+      },
+      port: 18789,
+    });
+
+    expect(env.PROPAICLAW_PROFILE).toBe("work");
+    expect(env.PROPAICLAW_STATE_DIR).toBe("/srv/propaiclaw-state");
+    expect(env.PROPAICLAW_CONFIG_PATH).toBe("/srv/propaiclaw-state/propaiclaw.json");
+    expect(env.PROPAICLAW_SYSTEMD_UNIT).toBe("openclaw-gateway-work.service");
   });
 
   it("forwards TMPDIR from the host environment", () => {
@@ -301,12 +321,14 @@ describe("buildServiceEnvironment", () => {
 
   it("uses profile-specific unit and label", () => {
     const env = buildServiceEnvironment({
-      env: { HOME: "/home/user", OPENCLAW_PROFILE: "work" },
+      env: { HOME: "/home/user", PROPAICLAW_PROFILE: "work" },
       port: 18789,
     });
-    expect(env.OPENCLAW_SYSTEMD_UNIT).toBe("openclaw-gateway-work.service");
+    expect(env.PROPAICLAW_SYSTEMD_UNIT).toBe("openclaw-gateway-work.service");
+    expect(env.OPENCLAW_SYSTEMD_UNIT).toBeUndefined();
     if (process.platform === "darwin") {
-      expect(env.OPENCLAW_LAUNCHD_LABEL).toBe("ai.openclaw.work");
+      expect(env.PROPAICLAW_LAUNCHD_LABEL).toBe("ai.openclaw.work");
+      expect(env.OPENCLAW_LAUNCHD_LABEL).toBeUndefined();
     }
   });
 
@@ -413,6 +435,21 @@ describe("buildNodeServiceEnvironment", () => {
     });
     expect(env.NODE_EXTRA_CA_CERTS).toBe("/custom/certs/ca.pem");
   });
+
+  it("prefers canonical PROPAICLAW state/config aliases for node services", () => {
+    const env = buildNodeServiceEnvironment({
+      env: {
+        HOME: "/home/user",
+        PROPAICLAW_STATE_DIR: "/srv/propaiclaw-node",
+        PROPAICLAW_CONFIG_PATH: "/srv/propaiclaw-node/propaiclaw.json",
+      },
+    });
+
+    expect(env.PROPAICLAW_STATE_DIR).toBe("/srv/propaiclaw-node");
+    expect(env.PROPAICLAW_CONFIG_PATH).toBe("/srv/propaiclaw-node/propaiclaw.json");
+    expect(env.PROPAICLAW_STATE_DIR).toBeUndefined();
+    expect(env.PROPAICLAW_CONFIG_PATH).toBeUndefined();
+  });
 });
 
 describe("resolveGatewayStateDir", () => {
@@ -421,28 +458,33 @@ describe("resolveGatewayStateDir", () => {
     expect(resolveGatewayStateDir(env)).toBe(path.join("/Users/test", ".openclaw"));
   });
 
+  it("uses PROPAICLAW_HOME when HOME is unset", () => {
+    const env = { PROPAICLAW_HOME: "/Users/propaiclaw" };
+    expect(resolveGatewayStateDir(env)).toBe(path.join("/Users/propaiclaw", ".openclaw"));
+  });
+
   it("appends the profile suffix when set", () => {
-    const env = { HOME: "/Users/test", OPENCLAW_PROFILE: "rescue" };
+    const env = { HOME: "/Users/test", PROPAICLAW_PROFILE: "rescue" };
     expect(resolveGatewayStateDir(env)).toBe(path.join("/Users/test", ".openclaw-rescue"));
   });
 
   it("treats default profiles as the base state dir", () => {
-    const env = { HOME: "/Users/test", OPENCLAW_PROFILE: "Default" };
+    const env = { HOME: "/Users/test", PROPAICLAW_PROFILE: "Default" };
     expect(resolveGatewayStateDir(env)).toBe(path.join("/Users/test", ".openclaw"));
   });
 
-  it("uses OPENCLAW_STATE_DIR when provided", () => {
-    const env = { HOME: "/Users/test", OPENCLAW_STATE_DIR: "/var/lib/openclaw" };
+  it("uses PROPAICLAW_STATE_DIR when provided", () => {
+    const env = { HOME: "/Users/test", PROPAICLAW_STATE_DIR: "/var/lib/openclaw" };
     expect(resolveGatewayStateDir(env)).toBe(path.resolve("/var/lib/openclaw"));
   });
 
-  it("expands ~ in OPENCLAW_STATE_DIR", () => {
-    const env = { HOME: "/Users/test", OPENCLAW_STATE_DIR: "~/openclaw-state" };
+  it("expands ~ in PROPAICLAW_STATE_DIR", () => {
+    const env = { HOME: "/Users/test", PROPAICLAW_STATE_DIR: "~/openclaw-state" };
     expect(resolveGatewayStateDir(env)).toBe(path.resolve("/Users/test/openclaw-state"));
   });
 
   it("preserves Windows absolute paths without HOME", () => {
-    const env = { OPENCLAW_STATE_DIR: "C:\\State\\openclaw" };
+    const env = { PROPAICLAW_STATE_DIR: "C:\\State\\openclaw" };
     expect(resolveGatewayStateDir(env)).toBe("C:\\State\\openclaw");
   });
 });

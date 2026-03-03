@@ -94,29 +94,43 @@ describe("version resolution", () => {
     expect(resolveVersionFromModuleUrl("not-a-valid-url")).toBeNull();
   });
 
-  it("prefers OPENCLAW_VERSION over service and package versions", () => {
+  it("prefers PROPAICLAW_VERSION over service/package versions and ignores OPENCLAW_VERSION", () => {
     expect(
       resolveRuntimeServiceVersion({
+        PROPAICLAW_VERSION: "10.10.10",
         OPENCLAW_VERSION: "9.9.9",
+        PROPAICLAW_SERVICE_VERSION: "3.3.3",
         OPENCLAW_SERVICE_VERSION: "2.2.2",
         npm_package_version: "1.1.1",
       }),
-    ).toBe("9.9.9");
+    ).toBe("10.10.10");
   });
 
-  it("uses service and package fallbacks and ignores blank env values", () => {
+  it("uses PROPAICLAW_SERVICE_VERSION and ignores OPENCLAW_SERVICE_VERSION", () => {
     expect(
       resolveRuntimeServiceVersion({
-        OPENCLAW_VERSION: "   ",
-        OPENCLAW_SERVICE_VERSION: "  2.0.0  ",
+        PROPAICLAW_SERVICE_VERSION: "3.0.0",
+        OPENCLAW_SERVICE_VERSION: "2.0.0",
         npm_package_version: "1.0.0",
       }),
-    ).toBe("2.0.0");
+    ).toBe("3.0.0");
+  });
+
+  it("uses npm_package_version when canonical version keys are blank", () => {
+    expect(
+      resolveRuntimeServiceVersion({
+        PROPAICLAW_VERSION: "   ",
+        PROPAICLAW_SERVICE_VERSION: "\t",
+        OPENCLAW_VERSION: "9.9.9",
+        OPENCLAW_SERVICE_VERSION: "2.0.0",
+        npm_package_version: "1.0.0",
+      }),
+    ).toBe("1.0.0");
 
     expect(
       resolveRuntimeServiceVersion({
-        OPENCLAW_VERSION: " ",
-        OPENCLAW_SERVICE_VERSION: "\t",
+        PROPAICLAW_VERSION: " ",
+        PROPAICLAW_SERVICE_VERSION: "\t",
         npm_package_version: " 1.0.0-package ",
       }),
     ).toBe("1.0.0-package");
@@ -124,8 +138,10 @@ describe("version resolution", () => {
     expect(
       resolveRuntimeServiceVersion(
         {
-          OPENCLAW_VERSION: "",
-          OPENCLAW_SERVICE_VERSION: " ",
+          PROPAICLAW_VERSION: "",
+          PROPAICLAW_SERVICE_VERSION: " ",
+          OPENCLAW_VERSION: "9.9.9",
+          OPENCLAW_SERVICE_VERSION: "2.0.0",
           npm_package_version: "",
         },
         "fallback",

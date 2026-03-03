@@ -60,11 +60,11 @@ describe("runServiceRestart token drift", () => {
     service.restart.mockClear();
     service.isLoaded.mockResolvedValue(true);
     service.readCommand.mockResolvedValue({
-      environment: { OPENCLAW_GATEWAY_TOKEN: "service-token" },
+      environment: { PROPAICLAW_GATEWAY_TOKEN: "service-token" },
     });
     service.restart.mockResolvedValue(undefined);
     vi.unstubAllEnvs();
-    vi.stubEnv("OPENCLAW_GATEWAY_TOKEN", "");
+    vi.stubEnv("PROPAICLAW_GATEWAY_TOKEN", "");
   });
 
   it("emits drift warning when enabled", async () => {
@@ -91,9 +91,30 @@ describe("runServiceRestart token drift", () => {
       },
     });
     service.readCommand.mockResolvedValue({
-      environment: { OPENCLAW_GATEWAY_TOKEN: "env-token" },
+      environment: { PROPAICLAW_GATEWAY_TOKEN: "env-token" },
     });
-    vi.stubEnv("OPENCLAW_GATEWAY_TOKEN", "env-token");
+    vi.stubEnv("PROPAICLAW_GATEWAY_TOKEN", "env-token");
+
+    await runServiceRestart({
+      serviceNoun: "Gateway",
+      service,
+      renderStartHints: () => [],
+      opts: { json: true },
+      checkTokenDrift: true,
+    });
+
+    const jsonLine = runtimeLogs.find((line) => line.trim().startsWith("{"));
+    const payload = JSON.parse(jsonLine ?? "{}") as { warnings?: string[] };
+    expect(payload.warnings).toBeUndefined();
+  });
+
+  it("uses PROPAICLAW gateway token env when set", async () => {
+    service.readCommand.mockResolvedValue({
+      environment: {
+        PROPAICLAW_GATEWAY_TOKEN: "canonical-token",
+      },
+    });
+    vi.stubEnv("PROPAICLAW_GATEWAY_TOKEN", "canonical-token");
 
     await runServiceRestart({
       serviceNoun: "Gateway",

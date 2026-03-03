@@ -110,17 +110,25 @@ describe("resolveGatewayRuntimeConfig", () => {
 
   describe("token/password auth modes", () => {
     let originalToken: string | undefined;
+    let originalPropaiclawToken: string | undefined;
 
     beforeEach(() => {
-      originalToken = process.env.OPENCLAW_GATEWAY_TOKEN;
-      delete process.env.OPENCLAW_GATEWAY_TOKEN;
+      originalToken = process.env.PROPAICLAW_GATEWAY_TOKEN;
+      originalPropaiclawToken = process.env.PROPAICLAW_GATEWAY_TOKEN;
+      delete process.env.PROPAICLAW_GATEWAY_TOKEN;
+      delete process.env.PROPAICLAW_GATEWAY_TOKEN;
     });
 
     afterEach(() => {
       if (originalToken !== undefined) {
-        process.env.OPENCLAW_GATEWAY_TOKEN = originalToken;
+        process.env.PROPAICLAW_GATEWAY_TOKEN = originalToken;
       } else {
-        delete process.env.OPENCLAW_GATEWAY_TOKEN;
+        delete process.env.PROPAICLAW_GATEWAY_TOKEN;
+      }
+      if (originalPropaiclawToken !== undefined) {
+        process.env.PROPAICLAW_GATEWAY_TOKEN = originalPropaiclawToken;
+      } else {
+        delete process.env.PROPAICLAW_GATEWAY_TOKEN;
       }
     });
 
@@ -154,7 +162,7 @@ describe("resolveGatewayRuntimeConfig", () => {
         name: "token mode without token",
         cfg: { gateway: { bind: "lan" as const, auth: { mode: "token" as const } } },
         expectedMessage:
-          "gateway auth mode is token, but no token was configured (set gateway.auth.token or OPENCLAW_GATEWAY_TOKEN)",
+          "gateway auth mode is token, but no token was configured (set gateway.auth.token or PROPAICLAW_GATEWAY_TOKEN)",
       },
       {
         name: "lan binding with explicit none auth",

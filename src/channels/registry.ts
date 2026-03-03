@@ -148,7 +148,7 @@ function restrictToHardAllowlist(input: Set<string> | null): Set<string> {
 }
 
 export function resolveRuntimeChannelAllowlist(): Set<string> {
-  const explicit = process.env.PROPAICLAW_CHANNELS_ONLY ?? process.env.OPENCLAW_CHANNELS_ONLY;
+  const explicit = process.env.PROPAICLAW_CHANNELS_ONLY;
   if (typeof explicit === "string" && explicit.trim().length > 0) {
     return restrictToHardAllowlist(parseChannelAllowlist(explicit));
   }

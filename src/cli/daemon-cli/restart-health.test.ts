@@ -63,4 +63,23 @@ describe("inspectGatewayRestart", () => {
     expect(snapshot.healthy).toBe(false);
     expect(snapshot.staleGatewayPids).toEqual([9000]);
   });
+
+  it("collects runtime + gateway listener pids for forced cleanup", async () => {
+    classifyPortListener.mockImplementation((listener: unknown) =>
+      (listener as { pid?: number }).pid === 9000 ? "gateway" : "unknown",
+    );
+    const { collectGatewayProcessPids } = await import("./restart-health.js");
+    const pids = collectGatewayProcessPids({
+      healthy: false,
+      staleGatewayPids: [9000],
+      runtime: { status: "running", pid: 8000 },
+      portUsage: {
+        port: 18789,
+        status: "busy",
+        listeners: [{ pid: 9000 }, { pid: 7000 }],
+        hints: [],
+      },
+    });
+    expect(pids).toEqual([9000, 8000]);
+  });
 });

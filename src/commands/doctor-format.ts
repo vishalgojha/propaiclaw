@@ -4,6 +4,7 @@ import {
   resolveGatewaySystemdServiceName,
   resolveGatewayWindowsTaskName,
 } from "../daemon/constants.js";
+import { resolveDaemonProfileEnv } from "../daemon/env-aliases.js";
 import { resolveGatewayLogPaths } from "../daemon/launchd.js";
 import { formatRuntimeStatus } from "../daemon/runtime-format.js";
 import type { GatewayServiceRuntime } from "../daemon/service-runtime.js";
@@ -50,7 +51,7 @@ export function buildGatewayRuntimeHints(
     return hints;
   }
   if (runtime.cachedLabel && platform === "darwin") {
-    const label = resolveGatewayLaunchAgentLabel(env.OPENCLAW_PROFILE);
+    const label = resolveGatewayLaunchAgentLabel(resolveDaemonProfileEnv(env));
     hints.push(
       `LaunchAgent label cached but plist missing. Clear with: launchctl bootout gui/$UID/${label}`,
     );
@@ -73,10 +74,10 @@ export function buildGatewayRuntimeHints(
       hints.push(`Launchd stdout (if installed): ${logs.stdoutPath}`);
       hints.push(`Launchd stderr (if installed): ${logs.stderrPath}`);
     } else if (platform === "linux") {
-      const unit = resolveGatewaySystemdServiceName(env.OPENCLAW_PROFILE);
+      const unit = resolveGatewaySystemdServiceName(resolveDaemonProfileEnv(env));
       hints.push(`Logs: journalctl --user -u ${unit}.service -n 200 --no-pager`);
     } else if (platform === "win32") {
-      const task = resolveGatewayWindowsTaskName(env.OPENCLAW_PROFILE);
+      const task = resolveGatewayWindowsTaskName(resolveDaemonProfileEnv(env));
       hints.push(`Logs: schtasks /Query /TN "${task}" /V /FO LIST`);
     }
   }

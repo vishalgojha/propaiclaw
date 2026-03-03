@@ -64,7 +64,7 @@ describe("restartGatewayProcessWithFreshPid", () => {
   it("runs launchd kickstart helper on macOS when launchd label is set", () => {
     setPlatform("darwin");
     process.env.LAUNCH_JOB_LABEL = "ai.openclaw.gateway";
-    process.env.OPENCLAW_LAUNCHD_LABEL = "ai.openclaw.gateway";
+    process.env.PROPAICLAW_LAUNCHD_LABEL = "ai.openclaw.gateway";
     triggerOpenClawRestartMock.mockReturnValue({ ok: true, method: "launchctl" });
 
     const result = restartGatewayProcessWithFreshPid();
@@ -77,7 +77,7 @@ describe("restartGatewayProcessWithFreshPid", () => {
   it("returns failed when launchd kickstart helper fails", () => {
     setPlatform("darwin");
     process.env.LAUNCH_JOB_LABEL = "ai.openclaw.gateway";
-    process.env.OPENCLAW_LAUNCHD_LABEL = "ai.openclaw.gateway";
+    process.env.PROPAICLAW_LAUNCHD_LABEL = "ai.openclaw.gateway";
     triggerOpenClawRestartMock.mockReturnValue({
       ok: false,
       method: "launchctl",
@@ -93,7 +93,7 @@ describe("restartGatewayProcessWithFreshPid", () => {
   it("does not schedule kickstart on non-darwin platforms", () => {
     setPlatform("linux");
     process.env.INVOCATION_ID = "abc123";
-    process.env.OPENCLAW_LAUNCHD_LABEL = "ai.openclaw.gateway";
+    process.env.PROPAICLAW_LAUNCHD_LABEL = "ai.openclaw.gateway";
 
     const result = restartGatewayProcessWithFreshPid();
 
@@ -122,10 +122,10 @@ describe("restartGatewayProcessWithFreshPid", () => {
     );
   });
 
-  it("returns supervised when OPENCLAW_LAUNCHD_LABEL is set (stock launchd plist)", () => {
+  it("returns supervised when PROPAICLAW_LAUNCHD_LABEL is set (stock launchd plist)", () => {
     clearSupervisorHints();
     setPlatform("darwin");
-    process.env.OPENCLAW_LAUNCHD_LABEL = "ai.openclaw.gateway";
+    process.env.PROPAICLAW_LAUNCHD_LABEL = "ai.openclaw.gateway";
     triggerOpenClawRestartMock.mockReturnValue({ ok: true, method: "launchctl" });
     const result = restartGatewayProcessWithFreshPid();
     expect(result.mode).toBe("supervised");
@@ -133,20 +133,40 @@ describe("restartGatewayProcessWithFreshPid", () => {
     expect(spawnMock).not.toHaveBeenCalled();
   });
 
-  it("returns supervised when OPENCLAW_SYSTEMD_UNIT is set", () => {
+  it("returns supervised when PROPAICLAW_LAUNCHD_LABEL is set", () => {
     clearSupervisorHints();
-    process.env.OPENCLAW_SYSTEMD_UNIT = "openclaw-gateway.service";
+    setPlatform("darwin");
+    process.env.PROPAICLAW_LAUNCHD_LABEL = "ai.propaiclaw.gateway";
+    triggerOpenClawRestartMock.mockReturnValue({ ok: true, method: "launchctl" });
+    const result = restartGatewayProcessWithFreshPid();
+    expect(result.mode).toBe("supervised");
+    expect(triggerOpenClawRestartMock).toHaveBeenCalledOnce();
+    expect(spawnMock).not.toHaveBeenCalled();
+  });
+
+  it("returns supervised when PROPAICLAW_SYSTEMD_UNIT is set", () => {
+    clearSupervisorHints();
+    process.env.PROPAICLAW_SYSTEMD_UNIT = "propaiclaw-gateway.service";
     const result = restartGatewayProcessWithFreshPid();
     expect(result.mode).toBe("supervised");
     expect(spawnMock).not.toHaveBeenCalled();
   });
 
-  it("returns supervised when OPENCLAW_SERVICE_MARKER is set", () => {
+  it("returns supervised when PROPAICLAW_SERVICE_MARKER is set", () => {
     clearSupervisorHints();
-    process.env.OPENCLAW_SERVICE_MARKER = "gateway";
+    process.env.PROPAICLAW_SERVICE_MARKER = "gateway";
     const result = restartGatewayProcessWithFreshPid();
     expect(result.mode).toBe("supervised");
     expect(spawnMock).not.toHaveBeenCalled();
+  });
+
+  it("does not treat OPENCLAW_SERVICE_MARKER alone as a supervisor hint", () => {
+    clearSupervisorHints();
+    process.env.OPENCLAW_SERVICE_MARKER = "gateway";
+    spawnMock.mockReturnValue({ pid: 7777, unref: vi.fn() });
+    const result = restartGatewayProcessWithFreshPid();
+    expect(result.mode).toBe("spawned");
+    expect(spawnMock).toHaveBeenCalledOnce();
   });
 
   it("returns failed when spawn throws", () => {

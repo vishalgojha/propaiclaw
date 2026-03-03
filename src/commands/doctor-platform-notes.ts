@@ -73,10 +73,10 @@ export async function noteMacLaunchctlGatewayEnvOverrides(
 
   const getenv = deps?.getenv ?? launchctlGetenv;
   const tokenEntries = [
-    ["OPENCLAW_GATEWAY_TOKEN", await getenv("OPENCLAW_GATEWAY_TOKEN")],
+    ["PROPAICLAW_GATEWAY_TOKEN", await getenv("PROPAICLAW_GATEWAY_TOKEN")],
   ] as const;
   const passwordEntries = [
-    ["OPENCLAW_GATEWAY_PASSWORD", await getenv("OPENCLAW_GATEWAY_PASSWORD")],
+    ["PROPAICLAW_GATEWAY_PASSWORD", await getenv("PROPAICLAW_GATEWAY_PASSWORD")],
   ] as const;
   const tokenEntry = tokenEntries.find(([, value]) => value?.trim());
   const passwordEntry = passwordEntries.find(([, value]) => value?.trim());
@@ -94,7 +94,7 @@ export async function noteMacLaunchctlGatewayEnvOverrides(
       ? `- \`${envTokenKey}\` is set; it overrides config tokens.`
       : undefined,
     envPassword
-      ? `- \`${envPasswordKey ?? "OPENCLAW_GATEWAY_PASSWORD"}\` is set; it overrides config passwords.`
+      ? `- \`${envPasswordKey ?? "PROPAICLAW_GATEWAY_PASSWORD"}\` is set; it overrides config passwords.`
       : undefined,
     "- Clear overrides and restart the app/gateway:",
     envTokenKey ? `  launchctl unsetenv ${envTokenKey}` : undefined,
@@ -103,8 +103,3 @@ export async function noteMacLaunchctlGatewayEnvOverrides(
 
   (deps?.noteFn ?? note)(lines.join("\n"), "Gateway (macOS)");
 }
-
-export function noteDeprecatedLegacyEnvVars(
-  _env: NodeJS.ProcessEnv = process.env,
-  _deps?: { noteFn?: typeof note },
-) {}

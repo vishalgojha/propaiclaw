@@ -321,10 +321,6 @@ function resolveHomeDisplayPrefix(): { home: string; prefix: string } | undefine
   if (explicitPropaiclawHome) {
     return { home, prefix: "$PROPAICLAW_HOME" };
   }
-  const explicitHome = process.env.OPENCLAW_HOME?.trim();
-  if (explicitHome) {
-    return { home, prefix: "$OPENCLAW_HOME" };
-  }
   return { home, prefix: "~" };
 }
 
@@ -381,5 +377,5 @@ export function formatTerminalLink(
   return `\u001b]8;;${safeUrl}\u0007${safeLabel}\u001b]8;;\u0007`;
 }
 
-// Configuration root; can be overridden via PROPAICLAW_STATE_DIR / OPENCLAW_STATE_DIR.
+// Configuration root; can be overridden via PROPAICLAW_STATE_DIR.
 export const CONFIG_DIR = resolveConfigDir();

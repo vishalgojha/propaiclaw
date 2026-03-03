@@ -3,6 +3,12 @@ import path from "node:path";
 import { parseCmdScriptCommandLine, quoteCmdScriptArg } from "./cmd-argv.js";
 import { assertNoCmdLineBreak, parseCmdSetAssignment, renderCmdSetAssignment } from "./cmd-set.js";
 import { resolveGatewayServiceDescription, resolveGatewayWindowsTaskName } from "./constants.js";
+import {
+  resolveDaemonProfileEnv,
+  resolveDaemonTaskScriptEnv,
+  resolveDaemonTaskScriptNameEnv,
+  resolveDaemonWindowsTaskNameEnv,
+} from "./env-aliases.js";
 import { formatLine, writeFormattedLines } from "./output.js";
 import { resolveGatewayStateDir } from "./paths.js";
 import { parseKeyValueOutput } from "./runtime-parse.js";
@@ -19,19 +25,19 @@ import type {
 } from "./service-types.js";
 
 function resolveTaskName(env: GatewayServiceEnv): string {
-  const override = env.OPENCLAW_WINDOWS_TASK_NAME?.trim();
+  const override = resolveDaemonWindowsTaskNameEnv(env);
   if (override) {
     return override;
   }
-  return resolveGatewayWindowsTaskName(env.OPENCLAW_PROFILE);
+  return resolveGatewayWindowsTaskName(resolveDaemonProfileEnv(env));
 }
 
 export function resolveTaskScriptPath(env: GatewayServiceEnv): string {
-  const override = env.OPENCLAW_TASK_SCRIPT?.trim();
+  const override = resolveDaemonTaskScriptEnv(env);
   if (override) {
     return override;
   }
-  const scriptName = env.OPENCLAW_TASK_SCRIPT_NAME?.trim() || "gateway.cmd";
+  const scriptName = resolveDaemonTaskScriptNameEnv(env) || "gateway.cmd";
   const stateDir = resolveGatewayStateDir(env);
   return path.join(stateDir, scriptName);
 }

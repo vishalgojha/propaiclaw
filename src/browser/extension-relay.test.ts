@@ -149,11 +149,11 @@ describe("chrome extension relay server", () => {
 
   beforeEach(() => {
     envSnapshot = captureEnv([
-      "OPENCLAW_GATEWAY_TOKEN",
+      "PROPAICLAW_GATEWAY_TOKEN",
       "OPENCLAW_EXTENSION_RELAY_RECONNECT_GRACE_MS",
       "OPENCLAW_EXTENSION_RELAY_COMMAND_RECONNECT_WAIT_MS",
     ]);
-    process.env.OPENCLAW_GATEWAY_TOKEN = TEST_GATEWAY_TOKEN;
+    process.env.PROPAICLAW_GATEWAY_TOKEN = TEST_GATEWAY_TOKEN;
     delete process.env.OPENCLAW_EXTENSION_RELAY_RECONNECT_GRACE_MS;
     delete process.env.OPENCLAW_EXTENSION_RELAY_COMMAND_RECONNECT_WAIT_MS;
   });

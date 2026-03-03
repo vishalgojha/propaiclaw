@@ -3,6 +3,11 @@ import {
   resolveGatewayLaunchAgentLabel,
   resolveGatewaySystemdServiceName,
 } from "../daemon/constants.js";
+import {
+  resolveDaemonLaunchdLabelEnv,
+  resolveDaemonProfileEnv,
+  resolveDaemonSystemdUnitEnv,
+} from "../daemon/env-aliases.js";
 import { createSubsystemLogger } from "../logging/subsystem.js";
 import { cleanStaleGatewayProcessesSync, findGatewayPidsOnPortSync } from "./restart-stale-pids.js";
 
@@ -296,10 +301,8 @@ export function triggerOpenClawRestart(): RestartAttempt {
   const tried: string[] = [];
   if (process.platform !== "darwin") {
     if (process.platform === "linux") {
-      const unit = normalizeSystemdUnit(
-        process.env.OPENCLAW_SYSTEMD_UNIT,
-        process.env.OPENCLAW_PROFILE,
-      );
+      const profile = resolveDaemonProfileEnv(process.env);
+      const unit = normalizeSystemdUnit(resolveDaemonSystemdUnitEnv(process.env), profile);
       const userArgs = ["--user", "restart", unit];
       tried.push(`systemctl ${userArgs.join(" ")}`);
       const userRestart = spawnSync("systemctl", userArgs, {
@@ -331,9 +334,9 @@ export function triggerOpenClawRestart(): RestartAttempt {
     };
   }
 
+  const profile = resolveDaemonProfileEnv(process.env);
   const label =
-    process.env.OPENCLAW_LAUNCHD_LABEL ||
-    resolveGatewayLaunchAgentLabel(process.env.OPENCLAW_PROFILE);
+    resolveDaemonLaunchdLabelEnv(process.env) || resolveGatewayLaunchAgentLabel(profile);
   const uid = typeof process.getuid === "function" ? process.getuid() : undefined;
   const target = uid !== undefined ? `gui/${uid}/${label}` : label;
   const args = ["kickstart", "-k", target];

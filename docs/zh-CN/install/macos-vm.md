@@ -230,7 +230,7 @@ ssh youruser@192.168.64.X "openclaw status"
 
 重启 Gateway 网关。现在你的智能体可以发送和接收 iMessage 了。
 
-完整设置详情：[BlueBubbles 渠道](/channels/bluebubbles)
+完整设置详情：[BlueBubbles 渠道](/channels/whatsapp)
 
 ---
 
@@ -281,7 +281,7 @@ lume run openclaw --no-display
 - [VPS 托管](/vps)
 - [节点](/nodes)
 - [Gateway 网关远程](/gateway/remote)
-- [BlueBubbles 渠道](/channels/bluebubbles)
+- [BlueBubbles 渠道](/channels/whatsapp)
 - [Lume 快速入门](https://cua.ai/docs/lume/guide/getting-started/quickstart)
 - [Lume CLI 参考](https://cua.ai/docs/lume/reference/cli-reference)
 - [无人值守 VM 设置](https://cua.ai/docs/lume/guide/fundamentals/unattended-setup)（高级）

@@ -11,6 +11,7 @@ import { findExtraGatewayServices } from "../../daemon/inspect.js";
 import type { ServiceConfigAudit } from "../../daemon/service-audit.js";
 import { auditGatewayServiceConfig } from "../../daemon/service-audit.js";
 import { resolveGatewayService } from "../../daemon/service.js";
+import { readGatewayPasswordEnv, readGatewayTokenEnv } from "../../gateway/credentials.js";
 import { resolveGatewayBindHost } from "../../gateway/net.js";
 import {
   formatPortDiagnostics,
@@ -233,11 +234,11 @@ export async function gatherDaemonStatus(
         url: probeUrl,
         token:
           opts.rpc.token ||
-          mergedDaemonEnv.OPENCLAW_GATEWAY_TOKEN ||
+          readGatewayTokenEnv(mergedDaemonEnv as NodeJS.ProcessEnv) ||
           daemonCfg.gateway?.auth?.token,
         password:
           opts.rpc.password ||
-          mergedDaemonEnv.OPENCLAW_GATEWAY_PASSWORD ||
+          readGatewayPasswordEnv(mergedDaemonEnv as NodeJS.ProcessEnv) ||
           daemonCfg.gateway?.auth?.password,
         tlsFingerprint:
           shouldUseLocalTlsRuntime && tlsRuntime?.enabled

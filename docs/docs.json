@@ -109,11 +109,11 @@
     },
     {
       "source": "/mattermost",
-      "destination": "/channels/mattermost"
+      "destination": "/channels/whatsapp"
     },
     {
       "source": "/line",
-      "destination": "/channels/line"
+      "destination": "/channels/whatsapp"
     },
     {
       "source": "/glm",
@@ -129,19 +129,19 @@
     },
     {
       "source": "/providers/discord",
-      "destination": "/channels/discord"
+      "destination": "/channels/whatsapp"
     },
     {
       "source": "/providers/googlechat",
-      "destination": "/channels/googlechat"
+      "destination": "/channels/whatsapp"
     },
     {
       "source": "/providers/grammy",
-      "destination": "/channels/telegram"
+      "destination": "/channels/whatsapp"
     },
     {
       "source": "/providers/imessage",
-      "destination": "/channels/imessage"
+      "destination": "/channels/whatsapp"
     },
     {
       "source": "/providers/location",
@@ -149,27 +149,27 @@
     },
     {
       "source": "/providers/mattermost",
-      "destination": "/channels/mattermost"
+      "destination": "/channels/whatsapp"
     },
     {
       "source": "/providers/msteams",
-      "destination": "/channels/msteams"
+      "destination": "/channels/whatsapp"
     },
     {
       "source": "/providers/line",
-      "destination": "/channels/line"
+      "destination": "/channels/whatsapp"
     },
     {
       "source": "/providers/signal",
-      "destination": "/channels/signal"
+      "destination": "/channels/whatsapp"
     },
     {
       "source": "/providers/slack",
-      "destination": "/channels/slack"
+      "destination": "/channels/whatsapp"
     },
     {
       "source": "/providers/telegram",
-      "destination": "/channels/telegram"
+      "destination": "/channels/whatsapp"
     },
     {
       "source": "/providers/troubleshooting",
@@ -177,7 +177,7 @@
     },
     {
       "source": "/providers/zalo",
-      "destination": "/channels/zalo"
+      "destination": "/channels/whatsapp"
     },
     {
       "source": "/providers/whatsapp",
@@ -317,7 +317,7 @@
     },
     {
       "source": "/discord",
-      "destination": "/channels/discord"
+      "destination": "/channels/whatsapp"
     },
     {
       "source": "/discovery",
@@ -365,11 +365,11 @@
     },
     {
       "source": "/grammy",
-      "destination": "/channels/telegram"
+      "destination": "/channels/whatsapp"
     },
     {
       "source": "/channels/grammy",
-      "destination": "/channels/telegram"
+      "destination": "/channels/whatsapp"
     },
     {
       "source": "/group-messages",
@@ -397,7 +397,7 @@
     },
     {
       "source": "/imessage",
-      "destination": "/channels/imessage"
+      "destination": "/channels/whatsapp"
     },
     {
       "source": "/ios",
@@ -609,7 +609,7 @@
     },
     {
       "source": "/signal",
-      "destination": "/channels/signal"
+      "destination": "/channels/whatsapp"
     },
     {
       "source": "/skills",
@@ -621,7 +621,7 @@
     },
     {
       "source": "/slack",
-      "destination": "/channels/slack"
+      "destination": "/channels/whatsapp"
     },
     {
       "source": "/slash-commands",
@@ -641,7 +641,7 @@
     },
     {
       "source": "/telegram",
-      "destination": "/channels/telegram"
+      "destination": "/channels/whatsapp"
     },
     {
       "source": "/templates/AGENTS",
@@ -894,26 +894,26 @@
                 "group": "Messaging platforms",
                 "pages": [
                   "channels/whatsapp",
-                  "channels/telegram",
-                  "channels/discord",
-                  "channels/irc",
-                  "channels/slack",
-                  "channels/feishu",
-                  "channels/googlechat",
-                  "channels/mattermost",
-                  "channels/signal",
-                  "channels/imessage",
-                  "channels/bluebubbles",
-                  "channels/msteams",
-                  "channels/synology-chat",
-                  "channels/line",
-                  "channels/matrix",
-                  "channels/nextcloud-talk",
-                  "channels/nostr",
-                  "channels/tlon",
-                  "channels/twitch",
-                  "channels/zalo",
-                  "channels/zalouser"
+                  "channels/whatsapp",
+                  "channels/whatsapp",
+                  "channels/whatsapp",
+                  "channels/whatsapp",
+                  "channels/whatsapp",
+                  "channels/whatsapp",
+                  "channels/whatsapp",
+                  "channels/whatsapp",
+                  "channels/whatsapp",
+                  "channels/whatsapp",
+                  "channels/whatsapp",
+                  "channels/whatsapp",
+                  "channels/whatsapp",
+                  "channels/whatsapp",
+                  "channels/whatsapp",
+                  "channels/whatsapp",
+                  "channels/whatsapp",
+                  "channels/whatsapp",
+                  "channels/whatsapp",
+                  "channels/whatsappuser"
                 ]
               },
               {
@@ -1431,19 +1431,19 @@
                 "group": "消息平台",
                 "pages": [
                   "zh-CN/channels/whatsapp",
-                  "zh-CN/channels/telegram",
-                  "zh-CN/channels/discord",
-                  "zh-CN/channels/slack",
-                  "zh-CN/channels/feishu",
-                  "zh-CN/channels/googlechat",
-                  "zh-CN/channels/mattermost",
-                  "zh-CN/channels/signal",
-                  "zh-CN/channels/imessage",
-                  "zh-CN/channels/msteams",
-                  "zh-CN/channels/line",
-                  "zh-CN/channels/matrix",
-                  "zh-CN/channels/zalo",
-                  "zh-CN/channels/zalouser"
+                  "zh-CN/channels/whatsapp",
+                  "zh-CN/channels/whatsapp",
+                  "zh-CN/channels/whatsapp",
+                  "zh-CN/channels/whatsapp",
+                  "zh-CN/channels/whatsapp",
+                  "zh-CN/channels/whatsapp",
+                  "zh-CN/channels/whatsapp",
+                  "zh-CN/channels/whatsapp",
+                  "zh-CN/channels/whatsapp",
+                  "zh-CN/channels/whatsapp",
+                  "zh-CN/channels/whatsapp",
+                  "zh-CN/channels/whatsapp",
+                  "zh-CN/channels/whatsappuser"
                 ]
               },
               {

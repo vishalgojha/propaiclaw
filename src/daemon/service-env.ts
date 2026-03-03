@@ -13,6 +13,11 @@ import {
   resolveNodeSystemdServiceName,
   resolveNodeWindowsTaskName,
 } from "./constants.js";
+import {
+  resolveDaemonConfigPathEnv,
+  resolveDaemonProfileEnv,
+  resolveDaemonStateDirEnv,
+} from "./env-aliases.js";
 
 export type MinimalServicePathOptions = {
   platform?: NodeJS.Platform;
@@ -240,12 +245,12 @@ export function buildServiceEnvironment(params: {
 }): Record<string, string | undefined> {
   const { env, port, token, launchdLabel } = params;
   const platform = params.platform ?? process.platform;
-  const profile = env.OPENCLAW_PROFILE;
+  const profile = resolveDaemonProfileEnv(env);
   const resolvedLaunchdLabel =
     launchdLabel || (platform === "darwin" ? resolveGatewayLaunchAgentLabel(profile) : undefined);
   const systemdUnit = `${resolveGatewaySystemdServiceName(profile)}.service`;
-  const stateDir = env.OPENCLAW_STATE_DIR;
-  const configPath = env.OPENCLAW_CONFIG_PATH;
+  const stateDir = resolveDaemonStateDirEnv(env);
+  const configPath = resolveDaemonConfigPathEnv(env);
   // Keep a usable temp directory for supervised services even when the host env omits TMPDIR.
   const tmpDir = env.TMPDIR?.trim() || os.tmpdir();
   const proxyEnv = readServiceProxyEnvironment(env);
@@ -260,16 +265,16 @@ export function buildServiceEnvironment(params: {
     PATH: buildMinimalServicePath({ env }),
     ...proxyEnv,
     NODE_EXTRA_CA_CERTS: nodeCaCerts,
-    OPENCLAW_PROFILE: profile,
-    OPENCLAW_STATE_DIR: stateDir,
-    OPENCLAW_CONFIG_PATH: configPath,
-    OPENCLAW_GATEWAY_PORT: String(port),
-    OPENCLAW_GATEWAY_TOKEN: token,
-    OPENCLAW_LAUNCHD_LABEL: resolvedLaunchdLabel,
-    OPENCLAW_SYSTEMD_UNIT: systemdUnit,
-    OPENCLAW_SERVICE_MARKER: GATEWAY_SERVICE_MARKER,
-    OPENCLAW_SERVICE_KIND: GATEWAY_SERVICE_KIND,
-    OPENCLAW_SERVICE_VERSION: VERSION,
+    PROPAICLAW_PROFILE: profile,
+    PROPAICLAW_STATE_DIR: stateDir,
+    PROPAICLAW_CONFIG_PATH: configPath,
+    PROPAICLAW_GATEWAY_PORT: String(port),
+    PROPAICLAW_GATEWAY_TOKEN: token,
+    PROPAICLAW_LAUNCHD_LABEL: resolvedLaunchdLabel,
+    PROPAICLAW_SYSTEMD_UNIT: systemdUnit,
+    PROPAICLAW_SERVICE_MARKER: GATEWAY_SERVICE_MARKER,
+    PROPAICLAW_SERVICE_KIND: GATEWAY_SERVICE_KIND,
+    PROPAICLAW_SERVICE_VERSION: VERSION,
   };
 }
 
@@ -279,8 +284,8 @@ export function buildNodeServiceEnvironment(params: {
 }): Record<string, string | undefined> {
   const { env } = params;
   const platform = params.platform ?? process.platform;
-  const stateDir = env.OPENCLAW_STATE_DIR;
-  const configPath = env.OPENCLAW_CONFIG_PATH;
+  const stateDir = resolveDaemonStateDirEnv(env);
+  const configPath = resolveDaemonConfigPathEnv(env);
   const tmpDir = env.TMPDIR?.trim() || os.tmpdir();
   const proxyEnv = readServiceProxyEnvironment(env);
   // On macOS, launchd services don't inherit the shell environment, so Node's undici/fetch
@@ -294,15 +299,15 @@ export function buildNodeServiceEnvironment(params: {
     PATH: buildMinimalServicePath({ env }),
     ...proxyEnv,
     NODE_EXTRA_CA_CERTS: nodeCaCerts,
-    OPENCLAW_STATE_DIR: stateDir,
-    OPENCLAW_CONFIG_PATH: configPath,
-    OPENCLAW_LAUNCHD_LABEL: resolveNodeLaunchAgentLabel(),
-    OPENCLAW_SYSTEMD_UNIT: resolveNodeSystemdServiceName(),
-    OPENCLAW_WINDOWS_TASK_NAME: resolveNodeWindowsTaskName(),
-    OPENCLAW_TASK_SCRIPT_NAME: NODE_WINDOWS_TASK_SCRIPT_NAME,
-    OPENCLAW_LOG_PREFIX: "node",
-    OPENCLAW_SERVICE_MARKER: NODE_SERVICE_MARKER,
-    OPENCLAW_SERVICE_KIND: NODE_SERVICE_KIND,
-    OPENCLAW_SERVICE_VERSION: VERSION,
+    PROPAICLAW_STATE_DIR: stateDir,
+    PROPAICLAW_CONFIG_PATH: configPath,
+    PROPAICLAW_LAUNCHD_LABEL: resolveNodeLaunchAgentLabel(),
+    PROPAICLAW_SYSTEMD_UNIT: resolveNodeSystemdServiceName(),
+    PROPAICLAW_WINDOWS_TASK_NAME: resolveNodeWindowsTaskName(),
+    PROPAICLAW_TASK_SCRIPT_NAME: NODE_WINDOWS_TASK_SCRIPT_NAME,
+    PROPAICLAW_LOG_PREFIX: "node",
+    PROPAICLAW_SERVICE_MARKER: NODE_SERVICE_MARKER,
+    PROPAICLAW_SERVICE_KIND: NODE_SERVICE_KIND,
+    PROPAICLAW_SERVICE_VERSION: VERSION,
   };
 }

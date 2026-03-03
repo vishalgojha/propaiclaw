@@ -74,7 +74,7 @@ describe("auditGatewayServiceConfig", () => {
         programArguments: ["/usr/bin/node", "gateway"],
         environment: {
           PATH: "/usr/local/bin:/usr/bin:/bin",
-          OPENCLAW_GATEWAY_TOKEN: "old-token",
+          PROPAICLAW_GATEWAY_TOKEN: "old-token",
         },
       },
     });
@@ -92,7 +92,25 @@ describe("auditGatewayServiceConfig", () => {
         programArguments: ["/usr/bin/node", "gateway"],
         environment: {
           PATH: "/usr/local/bin:/usr/bin:/bin",
-          OPENCLAW_GATEWAY_TOKEN: "new-token",
+          PROPAICLAW_GATEWAY_TOKEN: "new-token",
+        },
+      },
+    });
+    expect(
+      audit.issues.some((issue) => issue.code === SERVICE_AUDIT_CODES.gatewayTokenMismatch),
+    ).toBe(false);
+  });
+
+  it("accepts PROPAICLAW_GATEWAY_TOKEN as the service token alias", async () => {
+    const audit = await auditGatewayServiceConfig({
+      env: { HOME: "/tmp" },
+      platform: "linux",
+      expectedGatewayToken: "new-token",
+      command: {
+        programArguments: ["/usr/bin/node", "gateway"],
+        environment: {
+          PATH: "/usr/local/bin:/usr/bin:/bin",
+          PROPAICLAW_GATEWAY_TOKEN: "new-token",
         },
       },
     });

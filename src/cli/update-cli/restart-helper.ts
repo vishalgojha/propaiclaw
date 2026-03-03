@@ -7,6 +7,12 @@ import {
   resolveGatewaySystemdServiceName,
   resolveGatewayWindowsTaskName,
 } from "../../daemon/constants.js";
+import {
+  resolveDaemonLaunchdLabelEnv,
+  resolveDaemonProfileEnv,
+  resolveDaemonSystemdUnitEnv,
+  resolveDaemonWindowsTaskNameEnv,
+} from "../../daemon/env-aliases.js";
 
 /**
  * Shell-escape a string for embedding in single-quoted shell arguments.
@@ -24,27 +30,27 @@ function isBatchSafe(value: string): boolean {
 }
 
 function resolveSystemdUnit(env: NodeJS.ProcessEnv): string {
-  const override = env.OPENCLAW_SYSTEMD_UNIT?.trim();
+  const override = resolveDaemonSystemdUnitEnv(env);
   if (override) {
     return override.endsWith(".service") ? override : `${override}.service`;
   }
-  return `${resolveGatewaySystemdServiceName(env.OPENCLAW_PROFILE)}.service`;
+  return `${resolveGatewaySystemdServiceName(resolveDaemonProfileEnv(env))}.service`;
 }
 
 function resolveLaunchdLabel(env: NodeJS.ProcessEnv): string {
-  const override = env.OPENCLAW_LAUNCHD_LABEL?.trim();
+  const override = resolveDaemonLaunchdLabelEnv(env);
   if (override) {
     return override;
   }
-  return resolveGatewayLaunchAgentLabel(env.OPENCLAW_PROFILE);
+  return resolveGatewayLaunchAgentLabel(resolveDaemonProfileEnv(env));
 }
 
 function resolveWindowsTaskName(env: NodeJS.ProcessEnv): string {
-  const override = env.OPENCLAW_WINDOWS_TASK_NAME?.trim();
+  const override = resolveDaemonWindowsTaskNameEnv(env);
   if (override) {
     return override;
   }
-  return resolveGatewayWindowsTaskName(env.OPENCLAW_PROFILE);
+  return resolveGatewayWindowsTaskName(resolveDaemonProfileEnv(env));
 }
 
 /**

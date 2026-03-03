@@ -39,7 +39,6 @@ import { noteMemorySearchHealth } from "./doctor-memory-search.js";
 import {
   noteMacLaunchAgentOverrides,
   noteMacLaunchctlGatewayEnvOverrides,
-  noteDeprecatedLegacyEnvVars,
 } from "./doctor-platform-notes.js";
 import { createDoctorPrompter, type DoctorOptions } from "./doctor-prompter.js";
 import { maybeRepairSandboxImages, noteSandboxScopeWarnings } from "./doctor-sandbox.js";
@@ -91,7 +90,6 @@ export async function doctorCommand(
 
   await maybeRepairUiProtocolFreshness(runtime, prompter);
   noteSourceInstallIssues(root);
-  noteDeprecatedLegacyEnvVars();
 
   const configResult = await loadAndMaybeMigrateDoctorConfig({
     options,

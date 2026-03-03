@@ -706,7 +706,7 @@ Gemini CLI 使用**插件认证流程**，而不是 `openclaw.json` 中的 clien
 
 你只有在使用 **macOS 专用工具**时才需要 Mac。对于 iMessage，你可以将 Gateway 网关保持在 Linux 上，通过将 `channels.imessage.cliPath` 指向 SSH 包装器在任何 Mac 上运行 `imsg`。如果你需要其他 macOS 专用工具，在 Mac 上运行 Gateway 网关或配对一个 macOS 节点。
 
-文档：[iMessage](/channels/imessage)、[节点](/nodes)、[Mac 远程模式](/platforms/mac/remote)。
+文档：[iMessage](/channels/whatsapp)、[节点](/nodes)、[Mac 远程模式](/platforms/mac/remote)。
 
 ### iMessage 支持需要 Mac mini 吗
 
@@ -717,7 +717,7 @@ Gemini CLI 使用**插件认证流程**，而不是 `openclaw.json` 中的 clien
 - 在 Linux/VPS 上运行 Gateway 网关，将 `channels.imessage.cliPath` 指向在 Mac 上运行 `imsg` 的 SSH 包装器。
 - 如果你想要最简单的单机设置，在 Mac 上运行所有组件。
 
-文档：[iMessage](/channels/imessage)、[BlueBubbles](/channels/bluebubbles)、
+文档：[iMessage](/channels/whatsapp)、[BlueBubbles](/channels/whatsapp)、
 [Mac 远程模式](/platforms/mac/remote)。
 
 ### 如果我买了 Mac mini 运行 OpenClaw，能连接到我的 MacBook Pro 吗
@@ -755,7 +755,7 @@ Bun **不推荐**。我们观察到运行时 bug，特别是在 WhatsApp 和 Tel
 
 - 给 `@userinfobot` 或 `@getidsbot` 发私信。
 
-参阅 [/channels/telegram](/channels/telegram#access-control-dms--groups)。
+参阅 [/channels/whatsapp](/channels/whatsapp#access-control-dms--groups)。
 
 ### 多人能否使用同一个 WhatsApp 号码配合不同的 OpenClaw 实例
 
@@ -1038,7 +1038,7 @@ pnpm add -g clawhub
    ```
 4. 开始新会话以刷新 Skills 快照。
 
-对于 iMessage，你也可以将 `channels.imessage.cliPath` 指向 SSH 包装器（OpenClaw 只需要 stdio）。参阅 [iMessage](/channels/imessage)。
+对于 iMessage，你也可以将 `channels.imessage.cliPath` 指向 SSH 包装器（OpenClaw 只需要 stdio）。参阅 [iMessage](/channels/whatsapp)。
 
 ### 有 Notion 或 HeyGen 集成吗
 
@@ -1764,7 +1764,7 @@ openclaw directory groups list --channel whatsapp
 - Slack 渠道绑定到这些智能体。
 - 需要时通过扩展中继（或节点）使用本地浏览器。
 
-文档：[多智能体路由](/concepts/multi-agent)、[Slack](/channels/slack)、
+文档：[多智能体路由](/concepts/multi-agent)、[Slack](/channels/whatsapp)、
 [浏览器](/tools/browser)、[Chrome 扩展](/tools/chrome-extension)、[节点](/nodes)。
 
 ## 模型：默认值、选择、别名、切换
@@ -2396,7 +2396,7 @@ openclaw channels logs --channel telegram
 如果你在 VPS 上或代理后面，确认出站 HTTPS 被允许且 DNS 正常工作。
 如果 Gateway 网关在远程，确保你在 Gateway 网关主机上查看日志。
 
-文档：[Telegram](/channels/telegram)、[渠道故障排除](/channels/troubleshooting)。
+文档：[Telegram](/channels/whatsapp)、[渠道故障排除](/channels/troubleshooting)。
 
 ### TUI 没有输出，应该检查什么
 

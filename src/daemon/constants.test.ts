@@ -114,7 +114,7 @@ describe("resolveGatewayServiceDescription", () => {
   it("prefers explicit description override", () => {
     expect(
       resolveGatewayServiceDescription({
-        env: { OPENCLAW_PROFILE: "work", OPENCLAW_SERVICE_VERSION: "1.0.0" },
+        env: { PROPAICLAW_PROFILE: "work", PROPAICLAW_SERVICE_VERSION: "1.0.0" },
         description: "Custom",
       }),
     ).toBe("Custom");
@@ -123,10 +123,21 @@ describe("resolveGatewayServiceDescription", () => {
   it("resolves version from explicit environment map", () => {
     expect(
       resolveGatewayServiceDescription({
-        env: { OPENCLAW_PROFILE: "work", OPENCLAW_SERVICE_VERSION: "local" },
-        environment: { OPENCLAW_SERVICE_VERSION: "remote" },
+        env: { PROPAICLAW_PROFILE: "work", PROPAICLAW_SERVICE_VERSION: "local" },
+        environment: { PROPAICLAW_SERVICE_VERSION: "remote" },
       }),
     ).toBe("OpenClaw Gateway (profile: work, vremote)");
+  });
+
+  it("uses PROPAICLAW_PROFILE when set", () => {
+    expect(
+      resolveGatewayServiceDescription({
+        env: {
+          PROPAICLAW_PROFILE: "pro",
+          PROPAICLAW_SERVICE_VERSION: "1.0.0",
+        },
+      }),
+    ).toBe("OpenClaw Gateway (profile: pro, v1.0.0)");
   });
 });
 

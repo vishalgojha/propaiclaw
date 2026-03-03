@@ -4,7 +4,7 @@ import path from "node:path";
 import { captureEnv } from "../test-utils/env.js";
 
 export function snapshotStateDirEnv() {
-  return captureEnv(["OPENCLAW_STATE_DIR"]);
+  return captureEnv(["PROPAICLAW_STATE_DIR"]);
 }
 
 export function restoreStateDirEnv(snapshot: ReturnType<typeof snapshotStateDirEnv>): void {
@@ -12,7 +12,7 @@ export function restoreStateDirEnv(snapshot: ReturnType<typeof snapshotStateDirE
 }
 
 export function setStateDirEnv(stateDir: string): void {
-  process.env.OPENCLAW_STATE_DIR = stateDir;
+  process.env.PROPAICLAW_STATE_DIR = stateDir;
 }
 
 export async function withStateDirEnv<T>(

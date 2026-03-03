@@ -69,4 +69,11 @@ describe("addGatewayServiceCommands", () => {
       }),
     );
   });
+
+  it("forwards stop --force to daemon stop runner", async () => {
+    const gateway = createGatewayParentLikeCommand();
+    await gateway.parseAsync(["stop", "--force"], { from: "user" });
+
+    expect(runDaemonStop).toHaveBeenCalledWith(expect.objectContaining({ force: true }));
+  });
 });

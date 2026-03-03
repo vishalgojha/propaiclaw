@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { OpenClawConfig } from "../config/config.js";
 import {
+  readGatewayPortEnv,
   resolveGatewayCredentialsFromConfig,
   resolveGatewayCredentialsFromValues,
 } from "./credentials.js";
@@ -15,8 +16,8 @@ type GatewayConfig = NonNullable<OpenClawConfig["gateway"]>;
 const DEFAULT_GATEWAY_AUTH = { token: "config-token", password: "config-password" };
 const DEFAULT_REMOTE_AUTH = { token: "remote-token", password: "remote-password" };
 const DEFAULT_GATEWAY_ENV = {
-  OPENCLAW_GATEWAY_TOKEN: "env-token",
-  OPENCLAW_GATEWAY_PASSWORD: "env-password",
+  PROPAICLAW_GATEWAY_TOKEN: "env-token",
+  PROPAICLAW_GATEWAY_PASSWORD: "env-password",
 } as NodeJS.ProcessEnv;
 
 function resolveGatewayCredentialsFor(
@@ -187,14 +188,14 @@ describe("resolveGatewayCredentialsFromConfig", () => {
         },
       }),
       env: {
-        OPENCLAW_GATEWAY_TOKEN: "env-token",
+        PROPAICLAW_GATEWAY_TOKEN: "env-token",
       } as NodeJS.ProcessEnv,
       remoteTokenFallback: "remote-only",
     });
     expect(resolved.token).toBeUndefined();
   });
 
-  it("prefers PROPAICLAW gateway env values over OPENCLAW values", () => {
+  it("uses PROPAICLAW gateway env values", () => {
     const resolved = resolveGatewayCredentialsFromConfig({
       cfg: cfg({
         gateway: {
@@ -205,8 +206,6 @@ describe("resolveGatewayCredentialsFromConfig", () => {
       env: {
         PROPAICLAW_GATEWAY_TOKEN: "propaiclaw-token",
         PROPAICLAW_GATEWAY_PASSWORD: "propaiclaw-password",
-        OPENCLAW_GATEWAY_TOKEN: "openclaw-token",
-        OPENCLAW_GATEWAY_PASSWORD: "openclaw-password",
       } as NodeJS.ProcessEnv,
     });
     expect(resolved).toEqual({
@@ -237,8 +236,8 @@ describe("resolveGatewayCredentialsFromValues", () => {
       configToken: "config-token",
       configPassword: "config-password",
       env: {
-        OPENCLAW_GATEWAY_TOKEN: "env-token",
-        OPENCLAW_GATEWAY_PASSWORD: "env-password",
+        PROPAICLAW_GATEWAY_TOKEN: "env-token",
+        PROPAICLAW_GATEWAY_PASSWORD: "env-password",
       } as NodeJS.ProcessEnv,
       includeLegacyEnv: false,
       tokenPrecedence: "config-first",
@@ -255,8 +254,8 @@ describe("resolveGatewayCredentialsFromValues", () => {
       configToken: "config-token",
       configPassword: "config-password",
       env: {
-        OPENCLAW_GATEWAY_TOKEN: "env-token",
-        OPENCLAW_GATEWAY_PASSWORD: "env-password",
+        PROPAICLAW_GATEWAY_TOKEN: "env-token",
+        PROPAICLAW_GATEWAY_PASSWORD: "env-password",
       } as NodeJS.ProcessEnv,
     });
     expect(resolved).toEqual({
@@ -265,20 +264,39 @@ describe("resolveGatewayCredentialsFromValues", () => {
     });
   });
 
-  it("prefers PROPAICLAW env aliases when both env namespaces are set", () => {
+  it("uses PROPAICLAW env aliases", () => {
     const resolved = resolveGatewayCredentialsFromValues({
       configToken: "config-token",
       configPassword: "config-password",
       env: {
         PROPAICLAW_GATEWAY_TOKEN: "propaiclaw-token",
         PROPAICLAW_GATEWAY_PASSWORD: "propaiclaw-password",
-        OPENCLAW_GATEWAY_TOKEN: "openclaw-token",
-        OPENCLAW_GATEWAY_PASSWORD: "openclaw-password",
       } as NodeJS.ProcessEnv,
     });
     expect(resolved).toEqual({
       token: "propaiclaw-token",
       password: "propaiclaw-password",
     });
+  });
+});
+
+describe("readGatewayPortEnv", () => {
+  it("returns PROPAICLAW_GATEWAY_PORT when set", () => {
+    const value = readGatewayPortEnv({
+      PROPAICLAW_GATEWAY_PORT: "19001",
+    } as NodeJS.ProcessEnv);
+    expect(value).toBe("19001");
+  });
+
+  it("returns undefined when PROPAICLAW_GATEWAY_PORT is unset", () => {
+    const value = readGatewayPortEnv({} as NodeJS.ProcessEnv);
+    expect(value).toBeUndefined();
+  });
+
+  it("returns undefined when env key is empty", () => {
+    const value = readGatewayPortEnv({
+      PROPAICLAW_GATEWAY_PORT: "   ",
+    } as NodeJS.ProcessEnv);
+    expect(value).toBeUndefined();
   });
 });

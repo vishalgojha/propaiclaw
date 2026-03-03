@@ -33,7 +33,7 @@ function resolveDefaultTimezone(): string {
 }
 
 function resolveDefaultWorkspaceDir(env: EnvLike = process.env): string {
-  const profile = env.PROPAICLAW_PROFILE?.trim() || env.OPENCLAW_PROFILE?.trim();
+  const profile = env.PROPAICLAW_PROFILE?.trim();
   const stateDir = resolveStateDir(env as NodeJS.ProcessEnv, os.homedir);
   if (profile && profile.toLowerCase() !== "default") {
     return path.join(stateDir, `workspace-${profile}`);

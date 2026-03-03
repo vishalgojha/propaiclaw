@@ -21,8 +21,8 @@ describe("secrets audit", () => {
     authJsonPath = path.join(stateDir, "agents", "main", "agent", "auth.json");
     envPath = path.join(stateDir, ".env");
     env = {
-      OPENCLAW_STATE_DIR: stateDir,
-      OPENCLAW_CONFIG_PATH: configPath,
+      PROPAICLAW_STATE_DIR: stateDir,
+      PROPAICLAW_CONFIG_PATH: configPath,
       OPENAI_API_KEY: "env-openai-key",
       ...(typeof process.env.PATH === "string" && process.env.PATH.trim().length > 0
         ? { PATH: process.env.PATH }

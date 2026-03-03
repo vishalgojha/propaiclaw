@@ -42,28 +42,28 @@ describe("channel registry helpers", () => {
 
   it("enforces whatsapp-only list without mode flags", () => {
     const channels = withEnv(
-      { OPENCLAW_PROPAICLAW_MODE: undefined, OPENCLAW_CHANNELS_ONLY: undefined },
+      { PROPAICLAW_MODE: undefined, PROPAICLAW_CHANNELS_ONLY: undefined },
       () => listChatChannels().map((channel) => channel.id),
     );
     expect(channels).toEqual(["whatsapp"]);
 
     const normalizedTelegram = withEnv(
-      { OPENCLAW_PROPAICLAW_MODE: undefined, OPENCLAW_CHANNELS_ONLY: undefined },
+      { PROPAICLAW_MODE: undefined, PROPAICLAW_CHANNELS_ONLY: undefined },
       () => normalizeChatChannelId("telegram"),
     );
     expect(normalizedTelegram).toBeNull();
   });
 
   it("ignores explicit allowlist requests for non-whatsapp channels", () => {
-    const channels = withEnv({ OPENCLAW_CHANNELS_ONLY: "telegram, whatsapp" }, () =>
+    const channels = withEnv({ PROPAICLAW_CHANNELS_ONLY: "telegram, whatsapp" }, () =>
       listChatChannels().map((channel) => channel.id),
     );
     expect(channels).toEqual(["whatsapp"]);
   });
 
-  it("prefers PROPAICLAW_CHANNELS_ONLY over OPENCLAW_CHANNELS_ONLY", () => {
+  it("ignores unrelated allowlist env names", () => {
     const channels = withEnv(
-      { PROPAICLAW_CHANNELS_ONLY: "whatsapp", OPENCLAW_CHANNELS_ONLY: "telegram" },
+      { PROPAICLAW_CHANNELS_ONLY: undefined, LEGACY_CHANNELS_ONLY: "telegram" },
       () => listChatChannels().map((channel) => channel.id),
     );
     expect(channels).toEqual(["whatsapp"]);

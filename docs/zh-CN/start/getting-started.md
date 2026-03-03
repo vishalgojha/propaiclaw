@@ -147,9 +147,9 @@ WhatsApp 文档：[WhatsApp](/channels/whatsapp)
 
 向导可以为你写入令牌/配置。如果你更喜欢手动配置，从这里开始：
 
-- Telegram：[Telegram](/channels/telegram)
-- Discord：[Discord](/channels/discord)
-- Mattermost（插件）：[Mattermost](/channels/mattermost)
+- Telegram：[Telegram](/channels/whatsapp)
+- Discord：[Discord](/channels/whatsapp)
+- Mattermost（插件）：[Mattermost](/channels/whatsapp)
 
 **Telegram 私信提示：**你的第一条私信会返回配对码。批准它（见下一步），否则机器人不会响应。
 

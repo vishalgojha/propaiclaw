@@ -160,7 +160,7 @@ Example:
   <Card title="Remote access" href="/gateway/remote" icon="globe">
     SSH and tailnet access patterns.
   </Card>
-  <Card title="Channels" href="/channels/telegram" icon="message-square">
+  <Card title="Channels" href="/channels/whatsapp" icon="message-square">
     Channel-specific setup for WhatsApp, Telegram, Discord, and more.
   </Card>
   <Card title="Nodes" href="/nodes" icon="smartphone">

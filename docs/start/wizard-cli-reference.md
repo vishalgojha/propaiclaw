@@ -56,13 +56,13 @@ It does not install or modify anything on the remote host.
   </Step>
   <Step title="Channels">
     - [WhatsApp](/channels/whatsapp): optional QR login
-    - [Telegram](/channels/telegram): bot token
-    - [Discord](/channels/discord): bot token
-    - [Google Chat](/channels/googlechat): service account JSON + webhook audience
-    - [Mattermost](/channels/mattermost) plugin: bot token + base URL
-    - [Signal](/channels/signal): optional `signal-cli` install + account config
-    - [BlueBubbles](/channels/bluebubbles): recommended for iMessage; server URL + password + webhook
-    - [iMessage](/channels/imessage): legacy `imsg` CLI path + DB access
+    - [Telegram](/channels/whatsapp): bot token
+    - [Discord](/channels/whatsapp): bot token
+    - [Google Chat](/channels/whatsapp): service account JSON + webhook audience
+    - [Mattermost](/channels/whatsapp) plugin: bot token + base URL
+    - [Signal](/channels/whatsapp): optional `signal-cli` install + account config
+    - [BlueBubbles](/channels/whatsapp): recommended for iMessage; server URL + password + webhook
+    - [iMessage](/channels/whatsapp): legacy `imsg` CLI path + DB access
     - DM security: default is pairing. First DM sends a code; approve via
       `openclaw pairing approve <channel> <code>` or use allowlists.
   </Step>

@@ -51,7 +51,7 @@ export function applyWhatsAppGroupAllowlist(
   const currentAccount = accountId
     ? (accountEntries[resolvedAccountKey ?? accountId] ?? {})
     : currentWhatsApp;
-  const nextGroups = { ...(currentAccount.groups ?? {}) };
+  const nextGroups = { ...currentAccount.groups };
   const addedGroupIds: string[] = [];
   const existingGroupIds: string[] = [];
 

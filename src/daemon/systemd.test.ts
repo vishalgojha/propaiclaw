@@ -63,37 +63,42 @@ describe("systemd runtime parsing", () => {
 describe("resolveSystemdUserUnitPath", () => {
   it.each([
     {
-      name: "uses default service name when OPENCLAW_PROFILE is unset",
+      name: "uses default service name when PROPAICLAW_PROFILE is unset",
       env: { HOME: "/home/test" },
       expected: "/home/test/.config/systemd/user/openclaw-gateway.service",
     },
     {
-      name: "uses profile-specific service name when OPENCLAW_PROFILE is set to a custom value",
-      env: { HOME: "/home/test", OPENCLAW_PROFILE: "jbphoenix" },
+      name: "uses profile-specific service name when PROPAICLAW_PROFILE is set to a custom value",
+      env: { HOME: "/home/test", PROPAICLAW_PROFILE: "jbphoenix" },
       expected: "/home/test/.config/systemd/user/openclaw-gateway-jbphoenix.service",
     },
     {
-      name: "prefers OPENCLAW_SYSTEMD_UNIT over OPENCLAW_PROFILE",
+      name: "uses profile-specific service name when PROPAICLAW_PROFILE is set",
+      env: { HOME: "/home/test", PROPAICLAW_PROFILE: "pro" },
+      expected: "/home/test/.config/systemd/user/openclaw-gateway-pro.service",
+    },
+    {
+      name: "uses PROPAICLAW_SYSTEMD_UNIT override",
       env: {
         HOME: "/home/test",
-        OPENCLAW_PROFILE: "jbphoenix",
-        OPENCLAW_SYSTEMD_UNIT: "custom-unit",
+        PROPAICLAW_PROFILE: "jbphoenix",
+        PROPAICLAW_SYSTEMD_UNIT: "custom-unit",
       },
       expected: "/home/test/.config/systemd/user/custom-unit.service",
     },
     {
-      name: "handles OPENCLAW_SYSTEMD_UNIT with .service suffix",
+      name: "handles PROPAICLAW_SYSTEMD_UNIT with .service suffix",
       env: {
         HOME: "/home/test",
-        OPENCLAW_SYSTEMD_UNIT: "custom-unit.service",
+        PROPAICLAW_SYSTEMD_UNIT: "custom-unit.service",
       },
       expected: "/home/test/.config/systemd/user/custom-unit.service",
     },
     {
-      name: "trims whitespace from OPENCLAW_SYSTEMD_UNIT",
+      name: "trims whitespace from PROPAICLAW_SYSTEMD_UNIT",
       env: {
         HOME: "/home/test",
-        OPENCLAW_SYSTEMD_UNIT: "  custom-unit  ",
+        PROPAICLAW_SYSTEMD_UNIT: "  custom-unit  ",
       },
       expected: "/home/test/.config/systemd/user/custom-unit.service",
     },
@@ -180,7 +185,23 @@ describe("systemd service control", () => {
     const write = vi.fn();
     const stdout = { write } as unknown as NodeJS.WritableStream;
 
-    await restartSystemdService({ stdout, env: { OPENCLAW_PROFILE: "work" } });
+    await restartSystemdService({ stdout, env: { PROPAICLAW_PROFILE: "work" } });
+
+    expect(write).toHaveBeenCalledTimes(1);
+    expect(String(write.mock.calls[0]?.[0])).toContain("Restarted systemd service");
+  });
+
+  it("restarts a canonical-profile user unit", async () => {
+    execFileMock
+      .mockImplementationOnce((_cmd, _args, _opts, cb) => cb(null, "", ""))
+      .mockImplementationOnce((_cmd, args, _opts, cb) => {
+        expect(args).toEqual(["--user", "restart", "openclaw-gateway-pro.service"]);
+        cb(null, "", "");
+      });
+    const write = vi.fn();
+    const stdout = { write } as unknown as NodeJS.WritableStream;
+
+    await restartSystemdService({ stdout, env: { PROPAICLAW_PROFILE: "pro" } });
 
     expect(write).toHaveBeenCalledTimes(1);
     expect(String(write.mock.calls[0]?.[0])).toContain("Restarted systemd service");

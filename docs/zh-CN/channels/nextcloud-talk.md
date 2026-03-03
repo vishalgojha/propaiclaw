@@ -8,7 +8,7 @@ x-i18n:
   model: claude-opus-4-5
   provider: pi
   source_hash: 21b7b9756c4356a76dc0f14c10e44ed74a284cf3badf87e2df75eb88d8a90c31
-  source_path: channels/nextcloud-talk.md
+  source_path: channels/whatsapp.md
   workflow: 15
 ---
 

@@ -148,7 +148,7 @@ describe("security audit", () => {
     await fs.rm(credentialsDir, { recursive: true, force: true });
     await fs.mkdir(credentialsDir, { recursive: true, mode: 0o700 });
     await withEnvAsync(
-      { OPENCLAW_STATE_DIR: channelSecurityStateDir },
+      { PROPAICLAW_STATE_DIR: channelSecurityStateDir },
       async () => await fn(channelSecurityStateDir),
     );
   };
@@ -190,10 +190,10 @@ describe("security audit", () => {
 
   it("flags non-loopback bind without auth as critical", async () => {
     // Clear env tokens so resolveGatewayAuth defaults to mode=none
-    const prevToken = process.env.OPENCLAW_GATEWAY_TOKEN;
-    const prevPassword = process.env.OPENCLAW_GATEWAY_PASSWORD;
-    delete process.env.OPENCLAW_GATEWAY_TOKEN;
-    delete process.env.OPENCLAW_GATEWAY_PASSWORD;
+    const prevToken = process.env.PROPAICLAW_GATEWAY_TOKEN;
+    const prevPassword = process.env.PROPAICLAW_GATEWAY_PASSWORD;
+    delete process.env.PROPAICLAW_GATEWAY_TOKEN;
+    delete process.env.PROPAICLAW_GATEWAY_PASSWORD;
 
     try {
       const cfg: OpenClawConfig = {
@@ -209,14 +209,14 @@ describe("security audit", () => {
     } finally {
       // Restore env
       if (prevToken === undefined) {
-        delete process.env.OPENCLAW_GATEWAY_TOKEN;
+        delete process.env.PROPAICLAW_GATEWAY_TOKEN;
       } else {
-        process.env.OPENCLAW_GATEWAY_TOKEN = prevToken;
+        process.env.PROPAICLAW_GATEWAY_TOKEN = prevToken;
       }
       if (prevPassword === undefined) {
-        delete process.env.OPENCLAW_GATEWAY_PASSWORD;
+        delete process.env.PROPAICLAW_GATEWAY_PASSWORD;
       } else {
-        process.env.OPENCLAW_GATEWAY_PASSWORD = prevPassword;
+        process.env.PROPAICLAW_GATEWAY_PASSWORD = prevPassword;
       }
     }
   });
@@ -1518,6 +1518,7 @@ describe("security audit", () => {
   it("flags Discord native commands without a guild user allowlist", async () => {
     await withChannelSecurityStateDir(async () => {
       const cfg: OpenClawConfig = {
+        commands: { native: true },
         channels: {
           discord: {
             enabled: true,
@@ -1795,7 +1796,7 @@ describe("security audit", () => {
   it("flags Discord slash commands when access-group enforcement is disabled and no users allowlist exists", async () => {
     await withChannelSecurityStateDir(async () => {
       const cfg: OpenClawConfig = {
-        commands: { useAccessGroups: false },
+        commands: { native: true, useAccessGroups: false },
         channels: {
           discord: {
             enabled: true,
@@ -2053,8 +2054,8 @@ describe("security audit", () => {
   });
 
   it("flags hooks token reuse of the gateway env token as critical", async () => {
-    const prevToken = process.env.OPENCLAW_GATEWAY_TOKEN;
-    process.env.OPENCLAW_GATEWAY_TOKEN = "shared-gateway-token-1234567890";
+    const prevToken = process.env.PROPAICLAW_GATEWAY_TOKEN;
+    process.env.PROPAICLAW_GATEWAY_TOKEN = "shared-gateway-token-1234567890";
     const cfg: OpenClawConfig = {
       hooks: { enabled: true, token: "shared-gateway-token-1234567890" },
     };
@@ -2064,9 +2065,9 @@ describe("security audit", () => {
       expectFinding(res, "hooks.token_reuse_gateway_token", "critical");
     } finally {
       if (prevToken === undefined) {
-        delete process.env.OPENCLAW_GATEWAY_TOKEN;
+        delete process.env.PROPAICLAW_GATEWAY_TOKEN;
       } else {
-        process.env.OPENCLAW_GATEWAY_TOKEN = prevToken;
+        process.env.PROPAICLAW_GATEWAY_TOKEN = prevToken;
       }
     }
   });
@@ -2535,6 +2536,7 @@ describe("security audit", () => {
 
     try {
       const cfg: OpenClawConfig = {
+        commands: { nativeSkills: true },
         channels: {
           discord: { enabled: true, token: "t" },
         },
@@ -2834,10 +2836,10 @@ description: test skill
     const makeProbeEnv = (env?: { token?: string; password?: string }) => {
       const probeEnv: NodeJS.ProcessEnv = {};
       if (env?.token !== undefined) {
-        probeEnv.OPENCLAW_GATEWAY_TOKEN = env.token;
+        probeEnv.PROPAICLAW_GATEWAY_TOKEN = env.token;
       }
       if (env?.password !== undefined) {
-        probeEnv.OPENCLAW_GATEWAY_PASSWORD = env.password;
+        probeEnv.PROPAICLAW_GATEWAY_PASSWORD = env.password;
       }
       return probeEnv;
     };

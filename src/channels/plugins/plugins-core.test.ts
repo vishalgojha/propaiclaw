@@ -77,7 +77,7 @@ describe("channel plugin registry", () => {
     expect(pluginIds).toEqual(["whatsapp"]);
   });
 
-  it("keeps whatsapp when OPENCLAW_CHANNELS_ONLY includes non-whatsapp ids", () => {
+  it("keeps whatsapp when PROPAICLAW_CHANNELS_ONLY includes non-whatsapp ids", () => {
     const registry = createTestRegistry(
       ["slack", "telegram", "whatsapp"].map((id) => ({
         pluginId: id,
@@ -87,7 +87,7 @@ describe("channel plugin registry", () => {
     );
     setActivePluginRegistry(registry);
 
-    const pluginIds = withEnv({ OPENCLAW_CHANNELS_ONLY: "telegram,whatsapp" }, () =>
+    const pluginIds = withEnv({ PROPAICLAW_CHANNELS_ONLY: "telegram,whatsapp" }, () =>
       listChannelPlugins().map((plugin) => plugin.id),
     );
     expect(pluginIds).toEqual(["whatsapp"]);

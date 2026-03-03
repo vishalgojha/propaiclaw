@@ -15,31 +15,29 @@ import {
 } from "./paths.js";
 
 describe("oauth paths", () => {
-  it("prefers PROPAICLAW_OAUTH_DIR over OPENCLAW_OAUTH_DIR", () => {
+  it("uses PROPAICLAW_OAUTH_DIR when set", () => {
     const env = {
       PROPAICLAW_OAUTH_DIR: "/custom/propaiclaw-oauth",
-      OPENCLAW_OAUTH_DIR: "/custom/openclaw-oauth",
-      OPENCLAW_STATE_DIR: "/custom/state",
+      PROPAICLAW_STATE_DIR: "/custom/state",
     } as NodeJS.ProcessEnv;
 
     expect(resolveOAuthDir(env, "/custom/state")).toBe(path.resolve("/custom/propaiclaw-oauth"));
   });
 
-  it("prefers OPENCLAW_OAUTH_DIR over OPENCLAW_STATE_DIR", () => {
+  it("derives from state dir when PROPAICLAW_OAUTH_DIR is unset", () => {
     const env = {
-      OPENCLAW_OAUTH_DIR: "/custom/oauth",
-      OPENCLAW_STATE_DIR: "/custom/state",
+      PROPAICLAW_STATE_DIR: "/custom/state",
     } as NodeJS.ProcessEnv;
 
-    expect(resolveOAuthDir(env, "/custom/state")).toBe(path.resolve("/custom/oauth"));
+    expect(resolveOAuthDir(env, "/custom/state")).toBe(path.join("/custom/state", "credentials"));
     expect(resolveOAuthPath(env, "/custom/state")).toBe(
-      path.join(path.resolve("/custom/oauth"), "oauth.json"),
+      path.join("/custom/state", "credentials", "oauth.json"),
     );
   });
 
-  it("derives oauth path from OPENCLAW_STATE_DIR when unset", () => {
+  it("derives oauth path from PROPAICLAW_STATE_DIR when unset", () => {
     const env = {
-      OPENCLAW_STATE_DIR: "/custom/state",
+      PROPAICLAW_STATE_DIR: "/custom/state",
     } as NodeJS.ProcessEnv;
 
     expect(resolveOAuthDir(env, "/custom/state")).toBe(path.join("/custom/state", "credentials"));
@@ -59,10 +57,10 @@ describe("state + config path candidates", () => {
     }
   }
 
-  function expectOpenClawHomeDefaults(env: NodeJS.ProcessEnv): void {
-    const configuredHome = env.OPENCLAW_HOME;
+  function expectPropaiclawHomeDefaults(env: NodeJS.ProcessEnv): void {
+    const configuredHome = env.PROPAICLAW_HOME;
     if (!configuredHome) {
-      throw new Error("OPENCLAW_HOME must be set for this assertion helper");
+      throw new Error("PROPAICLAW_HOME must be set for this assertion helper");
     }
     const resolvedHome = path.resolve(configuredHome);
     expect(resolveStateDir(env)).toBe(path.join(resolvedHome, ".openclaw"));
@@ -71,7 +69,7 @@ describe("state + config path candidates", () => {
     expect(candidates[0]).toBe(path.join(resolvedHome, ".openclaw", "openclaw.json"));
   }
 
-  function expectPropaiclawHomeDefaults(env: NodeJS.ProcessEnv): void {
+  function expectPropaiclawModeHomeDefaults(env: NodeJS.ProcessEnv): void {
     const configuredHome = env.PROPAICLAW_HOME;
     if (!configuredHome) {
       throw new Error("PROPAICLAW_HOME must be set for this assertion helper");
@@ -84,21 +82,17 @@ describe("state + config path candidates", () => {
     expect(candidates[1]).toBe(path.join(resolvedHome, ".propaiclaw", "openclaw.json"));
   }
 
-  it("uses OPENCLAW_STATE_DIR when set", () => {
+  it("uses PROPAICLAW_STATE_DIR when set", () => {
     const env = {
-      OPENCLAW_STATE_DIR: "/new/state",
+      PROPAICLAW_STATE_DIR: "/new/state",
     } as NodeJS.ProcessEnv;
 
     expect(resolveStateDir(env, () => "/home/test")).toBe(path.resolve("/new/state"));
   });
 
-  it("prefers PROPAICLAW_STATE_DIR over OPENCLAW_STATE_DIR when both are set", () => {
-    const env = {
-      PROPAICLAW_STATE_DIR: "/new/propaiclaw-state",
-      OPENCLAW_STATE_DIR: "/new/openclaw-state",
-    } as NodeJS.ProcessEnv;
-
-    expect(resolveStateDir(env, () => "/home/test")).toBe(path.resolve("/new/propaiclaw-state"));
+  it("uses HOME defaults when state override is unset", () => {
+    const env = {} as NodeJS.ProcessEnv;
+    expect(resolveStateDir(env, () => "/home/test")).toBe(path.resolve("/home/test", ".openclaw"));
   });
 
   it("ignores removed CLAWDBOT_STATE_DIR override", () => {
@@ -108,28 +102,26 @@ describe("state + config path candidates", () => {
     expect(resolveStateDir(env, () => "/home/test")).toBe(path.resolve("/home/test", ".openclaw"));
   });
 
-  it("uses OPENCLAW_HOME for default state/config locations", () => {
+  it("uses PROPAICLAW_HOME for default state/config locations", () => {
     const env = {
-      OPENCLAW_HOME: "/srv/openclaw-home",
+      PROPAICLAW_HOME: "/srv/propaiclaw-home",
     } as NodeJS.ProcessEnv;
-    expectOpenClawHomeDefaults(env);
+    expectPropaiclawHomeDefaults(env);
   });
 
-  it("prefers OPENCLAW_HOME over HOME for default state/config locations", () => {
+  it("falls back to HOME when PROPAICLAW_HOME is unset", () => {
     const env = {
-      OPENCLAW_HOME: "/srv/openclaw-home",
       HOME: "/home/other",
     } as NodeJS.ProcessEnv;
-    expectOpenClawHomeDefaults(env);
+    expect(resolveStateDir(env)).toBe(path.join(path.resolve("/home/other"), ".openclaw"));
   });
 
   it("uses PROPAICLAW_HOME + PROPAICLAW_MODE for canonical propaiclaw defaults", () => {
     const env = {
       PROPAICLAW_HOME: "/srv/propaiclaw-home",
       PROPAICLAW_MODE: "1",
-      OPENCLAW_HOME: "/srv/openclaw-home",
     } as NodeJS.ProcessEnv;
-    expectPropaiclawHomeDefaults(env);
+    expectPropaiclawModeHomeDefaults(env);
   });
 
   it("orders default config candidates in a stable order", () => {
@@ -216,7 +208,7 @@ describe("state + config path candidates", () => {
       await fs.writeFile(legacyConfig, "{}", "utf-8");
 
       const overrideDir = path.join(root, "override");
-      const env = { OPENCLAW_STATE_DIR: overrideDir } as NodeJS.ProcessEnv;
+      const env = { PROPAICLAW_STATE_DIR: overrideDir } as NodeJS.ProcessEnv;
       const resolved = resolveConfigPath(env, overrideDir, () => root);
       expect(resolved).toBe(path.join(overrideDir, "openclaw.json"));
     });

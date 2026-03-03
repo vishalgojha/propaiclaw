@@ -59,37 +59,47 @@ describe("applyCliProfileEnv", () => {
       env,
       homedir: () => "/home/peter",
     });
-    const expectedStateDir = path.join(path.resolve("/home/peter"), ".openclaw-dev");
-    expect(env.OPENCLAW_PROFILE).toBe("dev");
+    const expectedStateDir = path.join(path.resolve("/home/peter"), ".propaiclaw-dev");
     expect(env.PROPAICLAW_PROFILE).toBe("dev");
-    expect(env.OPENCLAW_STATE_DIR).toBe(expectedStateDir);
     expect(env.PROPAICLAW_STATE_DIR).toBe(expectedStateDir);
-    expect(env.OPENCLAW_CONFIG_PATH).toBe(path.join(expectedStateDir, "openclaw.json"));
-    expect(env.PROPAICLAW_CONFIG_PATH).toBe(path.join(expectedStateDir, "openclaw.json"));
-    expect(env.OPENCLAW_GATEWAY_PORT).toBe("19001");
+    expect(env.PROPAICLAW_CONFIG_PATH).toBe(path.join(expectedStateDir, "propaiclaw.json"));
+    expect(env.PROPAICLAW_PROFILE).toBeUndefined();
+    expect(env.PROPAICLAW_STATE_DIR).toBeUndefined();
+    expect(env.PROPAICLAW_CONFIG_PATH).toBeUndefined();
     expect(env.PROPAICLAW_GATEWAY_PORT).toBe("19001");
   });
 
   it("does not override explicit env values", () => {
     const env: Record<string, string | undefined> = {
-      OPENCLAW_STATE_DIR: "/custom",
-      OPENCLAW_GATEWAY_PORT: "19099",
+      PROPAICLAW_STATE_DIR: "/custom",
+      PROPAICLAW_GATEWAY_PORT: "19099",
     };
     applyCliProfileEnv({
       profile: "dev",
       env,
       homedir: () => "/home/peter",
     });
-    expect(env.OPENCLAW_STATE_DIR).toBe("/custom");
     expect(env.PROPAICLAW_STATE_DIR).toBe("/custom");
-    expect(env.OPENCLAW_GATEWAY_PORT).toBe("19099");
-    expect(env.OPENCLAW_CONFIG_PATH).toBe(path.join("/custom", "openclaw.json"));
-    expect(env.PROPAICLAW_CONFIG_PATH).toBe(path.join("/custom", "openclaw.json"));
+    expect(env.PROPAICLAW_GATEWAY_PORT).toBe("19099");
+    expect(env.PROPAICLAW_CONFIG_PATH).toBe(path.join("/custom", "propaiclaw.json"));
   });
 
-  it("uses OPENCLAW_HOME when deriving profile state dir", () => {
+  it("does not backfill PROPAICLAW_GATEWAY_PORT from PROPAICLAW_GATEWAY_PORT in dev profile", () => {
     const env: Record<string, string | undefined> = {
-      OPENCLAW_HOME: "/srv/openclaw-home",
+      PROPAICLAW_GATEWAY_PORT: "19111",
+    };
+    applyCliProfileEnv({
+      profile: "dev",
+      env,
+      homedir: () => "/home/peter",
+    });
+    expect(env.PROPAICLAW_GATEWAY_PORT).toBe("19111");
+    expect(env.PROPAICLAW_GATEWAY_PORT).toBeUndefined();
+  });
+
+  it("uses PROPAICLAW_HOME when deriving profile state dir", () => {
+    const env: Record<string, string | undefined> = {
+      PROPAICLAW_HOME: "/srv/openclaw-home",
       HOME: "/home/other",
     };
     applyCliProfileEnv({
@@ -99,13 +109,13 @@ describe("applyCliProfileEnv", () => {
     });
 
     const resolvedHome = path.resolve("/srv/openclaw-home");
-    expect(env.OPENCLAW_STATE_DIR).toBe(path.join(resolvedHome, ".openclaw-work"));
-    expect(env.OPENCLAW_CONFIG_PATH).toBe(
-      path.join(resolvedHome, ".openclaw-work", "openclaw.json"),
+    expect(env.PROPAICLAW_STATE_DIR).toBe(path.join(resolvedHome, ".propaiclaw-work"));
+    expect(env.PROPAICLAW_CONFIG_PATH).toBe(
+      path.join(resolvedHome, ".propaiclaw-work", "propaiclaw.json"),
     );
   });
 
-  it("uses propaiclaw canonical dirs/files when PROPAICLAW_MODE is enabled", () => {
+  it("uses propaiclaw canonical dirs/files regardless of mode flag", () => {
     const env: Record<string, string | undefined> = {
       PROPAICLAW_MODE: "1",
       PROPAICLAW_HOME: "/srv/propaiclaw-home",
@@ -117,11 +127,8 @@ describe("applyCliProfileEnv", () => {
     });
 
     const resolvedHome = path.resolve("/srv/propaiclaw-home");
-    expect(env.OPENCLAW_STATE_DIR).toBe(path.join(resolvedHome, ".propaiclaw-work"));
+    expect(env.PROPAICLAW_PROFILE).toBe("work");
     expect(env.PROPAICLAW_STATE_DIR).toBe(path.join(resolvedHome, ".propaiclaw-work"));
-    expect(env.OPENCLAW_CONFIG_PATH).toBe(
-      path.join(resolvedHome, ".propaiclaw-work", "propaiclaw.json"),
-    );
     expect(env.PROPAICLAW_CONFIG_PATH).toBe(
       path.join(resolvedHome, ".propaiclaw-work", "propaiclaw.json"),
     );
@@ -139,31 +146,31 @@ describe("formatCliCommand", () => {
     {
       name: "profile is default",
       cmd: "openclaw doctor --fix",
-      env: { OPENCLAW_PROFILE: "default" },
+      env: { PROPAICLAW_PROFILE: "default" },
       expected: "openclaw doctor --fix",
     },
     {
       name: "profile is Default (case-insensitive)",
       cmd: "openclaw doctor --fix",
-      env: { OPENCLAW_PROFILE: "Default" },
+      env: { PROPAICLAW_PROFILE: "Default" },
       expected: "openclaw doctor --fix",
     },
     {
       name: "profile is invalid",
       cmd: "openclaw doctor --fix",
-      env: { OPENCLAW_PROFILE: "bad profile" },
+      env: { PROPAICLAW_PROFILE: "bad profile" },
       expected: "openclaw doctor --fix",
     },
     {
       name: "--profile is already present",
       cmd: "openclaw --profile work doctor --fix",
-      env: { OPENCLAW_PROFILE: "work" },
+      env: { PROPAICLAW_PROFILE: "work" },
       expected: "openclaw --profile work doctor --fix",
     },
     {
       name: "--dev is already present",
       cmd: "openclaw --dev doctor",
-      env: { OPENCLAW_PROFILE: "dev" },
+      env: { PROPAICLAW_PROFILE: "dev" },
       expected: "openclaw --dev doctor",
     },
   ])("returns command unchanged when $name", ({ cmd, env, expected }) => {
@@ -171,25 +178,25 @@ describe("formatCliCommand", () => {
   });
 
   it("inserts --profile flag when profile is set", () => {
-    expect(formatCliCommand("openclaw doctor --fix", { OPENCLAW_PROFILE: "work" })).toBe(
+    expect(formatCliCommand("openclaw doctor --fix", { PROPAICLAW_PROFILE: "work" })).toBe(
       "openclaw --profile work doctor --fix",
     );
   });
 
   it("trims whitespace from profile", () => {
-    expect(formatCliCommand("openclaw doctor --fix", { OPENCLAW_PROFILE: "  jbopenclaw  " })).toBe(
-      "openclaw --profile jbopenclaw doctor --fix",
-    );
+    expect(
+      formatCliCommand("openclaw doctor --fix", { PROPAICLAW_PROFILE: "  jbopenclaw  " }),
+    ).toBe("openclaw --profile jbopenclaw doctor --fix");
   });
 
   it("handles command with no args after openclaw", () => {
-    expect(formatCliCommand("openclaw", { OPENCLAW_PROFILE: "test" })).toBe(
+    expect(formatCliCommand("openclaw", { PROPAICLAW_PROFILE: "test" })).toBe(
       "openclaw --profile test",
     );
   });
 
   it("handles pnpm wrapper", () => {
-    expect(formatCliCommand("pnpm openclaw doctor", { OPENCLAW_PROFILE: "work" })).toBe(
+    expect(formatCliCommand("pnpm openclaw doctor", { PROPAICLAW_PROFILE: "work" })).toBe(
       "pnpm openclaw --profile work doctor",
     );
   });

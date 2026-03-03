@@ -13,6 +13,7 @@ import {
 import { resolveIsNixMode } from "../../config/paths.js";
 import { resolveGatewayService } from "../../daemon/service.js";
 import { resolveGatewayAuth } from "../../gateway/auth.js";
+import { readGatewayTokenEnv } from "../../gateway/credentials.js";
 import { defaultRuntime } from "../../runtime.js";
 import { formatCliCommand } from "../command-format.js";
 import {
@@ -85,7 +86,7 @@ export async function runDaemonInstall(opts: DaemonInstallOptions) {
     resolvedAuth.mode === "token" && !resolvedAuth.token && !resolvedAuth.allowTailscale;
 
   let token: string | undefined =
-    opts.token || cfg.gateway?.auth?.token || process.env.OPENCLAW_GATEWAY_TOKEN;
+    opts.token || cfg.gateway?.auth?.token || readGatewayTokenEnv(process.env);
 
   if (!token && needsToken) {
     token = randomToken();

@@ -295,7 +295,7 @@ Discord (bot token):
 docker compose run --rm openclaw-cli channels add --channel discord --token "<token>"
 ```
 
-Docs: [WhatsApp](/channels/whatsapp), [Telegram](/channels/telegram), [Discord](/channels/discord)
+Docs: [WhatsApp](/channels/whatsapp), [Telegram](/channels/whatsapp), [Discord](/channels/whatsapp)
 
 ### OpenAI Codex OAuth (headless Docker)
 

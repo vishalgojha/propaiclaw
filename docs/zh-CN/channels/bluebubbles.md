@@ -10,7 +10,7 @@ x-i18n:
   model: claude-opus-4-5
   provider: pi
   source_hash: 3aae277a8bec479800a7f6268bfbca912c65a4aadc6e513694057fb873597b69
-  source_path: channels/bluebubbles.md
+  source_path: channels/whatsapp.md
   workflow: 15
 ---
 

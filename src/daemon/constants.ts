@@ -1,3 +1,5 @@
+import { resolveDaemonProfileEnv, resolveDaemonServiceVersionEnv } from "./env-aliases.js";
+
 // Default service labels (canonical + legacy compatibility)
 export const GATEWAY_LAUNCH_AGENT_LABEL = "ai.openclaw.gateway";
 export const GATEWAY_SYSTEMD_SERVICE_NAME = "openclaw-gateway";
@@ -86,8 +88,10 @@ export function resolveGatewayServiceDescription(params: {
   return (
     params.description ??
     formatGatewayServiceDescription({
-      profile: params.env.OPENCLAW_PROFILE,
-      version: params.environment?.OPENCLAW_SERVICE_VERSION ?? params.env.OPENCLAW_SERVICE_VERSION,
+      profile: resolveDaemonProfileEnv(params.env),
+      version:
+        (params.environment ? resolveDaemonServiceVersionEnv(params.environment) : undefined) ??
+        resolveDaemonServiceVersionEnv(params.env),
     })
   );
 }

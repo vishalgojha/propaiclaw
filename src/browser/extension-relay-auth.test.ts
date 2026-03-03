@@ -28,27 +28,21 @@ async function withRelayServer(
 
 describe("extension-relay-auth", () => {
   const TEST_GATEWAY_TOKEN = "test-gateway-token";
-  let prevGatewayToken: string | undefined;
   let prevPropaiclawGatewayToken: string | undefined;
 
   beforeEach(() => {
-    prevGatewayToken = process.env.OPENCLAW_GATEWAY_TOKEN;
     prevPropaiclawGatewayToken = process.env.PROPAICLAW_GATEWAY_TOKEN;
+    process.env.PROPAICLAW_GATEWAY_TOKEN = TEST_GATEWAY_TOKEN;
     delete process.env.PROPAICLAW_GATEWAY_TOKEN;
-    process.env.OPENCLAW_GATEWAY_TOKEN = TEST_GATEWAY_TOKEN;
   });
 
   afterEach(() => {
-    if (prevGatewayToken === undefined) {
-      delete process.env.OPENCLAW_GATEWAY_TOKEN;
-    } else {
-      process.env.OPENCLAW_GATEWAY_TOKEN = prevGatewayToken;
-    }
     if (prevPropaiclawGatewayToken === undefined) {
       delete process.env.PROPAICLAW_GATEWAY_TOKEN;
     } else {
       process.env.PROPAICLAW_GATEWAY_TOKEN = prevPropaiclawGatewayToken;
     }
+    delete process.env.PROPAICLAW_GATEWAY_TOKEN;
   });
 
   it("derives deterministic relay tokens per port", () => {
@@ -67,8 +61,8 @@ describe("extension-relay-auth", () => {
     expect(tokens[0]).toBe(resolveRelayAuthTokenForPort(18790));
   });
 
-  it("uses PROPAICLAW_GATEWAY_TOKEN when OPENCLAW_GATEWAY_TOKEN is unset", () => {
-    delete process.env.OPENCLAW_GATEWAY_TOKEN;
+  it("uses PROPAICLAW_GATEWAY_TOKEN when PROPAICLAW_GATEWAY_TOKEN is unset", () => {
+    delete process.env.PROPAICLAW_GATEWAY_TOKEN;
     process.env.PROPAICLAW_GATEWAY_TOKEN = "propai-token";
 
     const tokens = resolveRelayAcceptedTokensForPort(18790);

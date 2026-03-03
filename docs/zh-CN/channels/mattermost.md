@@ -9,7 +9,7 @@ x-i18n:
   model: claude-opus-4-5
   provider: pi
   source_hash: 57fabe5eb0efbcb885f4178b317b2fa99a41daf609e3a471de2b44db9def4ad7
-  source_path: channels/mattermost.md
+  source_path: channels/whatsapp.md
   workflow: 15
 ---
 

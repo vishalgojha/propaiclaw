@@ -79,12 +79,9 @@ export function resolveRuntimeServiceVersion(
   env: RuntimeVersionEnv = process.env as RuntimeVersionEnv,
   fallback = "dev",
 ): string {
+  const serviceVersion = firstNonEmpty(env["PROPAICLAW_SERVICE_VERSION"]);
   return (
-    firstNonEmpty(
-      env["OPENCLAW_VERSION"],
-      env["OPENCLAW_SERVICE_VERSION"],
-      env["npm_package_version"],
-    ) ?? fallback
+    firstNonEmpty(env["PROPAICLAW_VERSION"], serviceVersion, env["npm_package_version"]) ?? fallback
   );
 }
 
@@ -93,6 +90,6 @@ export function resolveRuntimeServiceVersion(
 // - Dev/npm builds: package.json.
 export const VERSION =
   (typeof __OPENCLAW_VERSION__ === "string" && __OPENCLAW_VERSION__) ||
-  process.env.OPENCLAW_BUNDLED_VERSION ||
+  process.env.PROPAICLAW_BUNDLED_VERSION ||
   resolveVersionFromModuleUrl(import.meta.url) ||
   "0.0.0";

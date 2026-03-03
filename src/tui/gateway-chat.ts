@@ -5,6 +5,7 @@ import {
   ensureExplicitGatewayAuth,
   resolveExplicitGatewayAuth,
 } from "../gateway/call.js";
+import { readGatewayPasswordEnv, readGatewayTokenEnv } from "../gateway/credentials.js";
 import { GatewayClient } from "../gateway/client.js";
 import { GATEWAY_CLIENT_CAPS } from "../gateway/protocol/client-info.js";
 import {
@@ -260,7 +261,7 @@ export function resolveGatewayConnection(opts: GatewayConnectionOptions) {
         ? typeof remote?.token === "string" && remote.token.trim().length > 0
           ? remote.token.trim()
           : undefined
-        : process.env.OPENCLAW_GATEWAY_TOKEN?.trim() ||
+        : readGatewayTokenEnv(process.env) ||
           (typeof authToken === "string" && authToken.trim().length > 0
             ? authToken.trim()
             : undefined)
@@ -269,7 +270,7 @@ export function resolveGatewayConnection(opts: GatewayConnectionOptions) {
   const password =
     explicitAuth.password ||
     (!urlOverride
-      ? process.env.OPENCLAW_GATEWAY_PASSWORD?.trim() ||
+      ? readGatewayPasswordEnv(process.env) ||
         (typeof remote?.password === "string" && remote.password.trim().length > 0
           ? remote.password.trim()
           : undefined)

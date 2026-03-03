@@ -5,6 +5,7 @@ import {
   resolveGatewayServiceDescription,
   resolveGatewaySystemdServiceName,
 } from "./constants.js";
+import { resolveDaemonProfileEnv, resolveDaemonSystemdUnitEnv } from "./env-aliases.js";
 import { execFileUtf8 } from "./exec-file.js";
 import { formatLine, toPosixPath, writeFormattedLines } from "./output.js";
 import { resolveHomeDir } from "./paths.js";
@@ -35,11 +36,11 @@ function resolveSystemdUnitPathForName(env: GatewayServiceEnv, name: string): st
 }
 
 function resolveSystemdServiceName(env: GatewayServiceEnv): string {
-  const override = env.OPENCLAW_SYSTEMD_UNIT?.trim();
+  const override = resolveDaemonSystemdUnitEnv(env);
   if (override) {
     return override.endsWith(".service") ? override.slice(0, -".service".length) : override;
   }
-  return resolveGatewaySystemdServiceName(env.OPENCLAW_PROFILE);
+  return resolveGatewaySystemdServiceName(resolveDaemonProfileEnv(env));
 }
 
 function resolveSystemdUnitPath(env: GatewayServiceEnv): string {
@@ -214,7 +215,7 @@ export async function installSystemdService({
   });
   await fs.writeFile(unitPath, unit, "utf8");
 
-  const serviceName = resolveGatewaySystemdServiceName(env.OPENCLAW_PROFILE);
+  const serviceName = resolveSystemdServiceName(env);
   const unitName = `${serviceName}.service`;
   const reload = await execSystemctl(["--user", "daemon-reload"]);
   if (reload.code !== 0) {
@@ -258,7 +259,7 @@ export async function uninstallSystemdService({
   stdout,
 }: GatewayServiceManageArgs): Promise<void> {
   await assertSystemdAvailable();
-  const serviceName = resolveGatewaySystemdServiceName(env.OPENCLAW_PROFILE);
+  const serviceName = resolveSystemdServiceName(env);
   const unitName = `${serviceName}.service`;
   await execSystemctl(["--user", "disable", "--now", unitName]);
 

@@ -1,5 +1,6 @@
 import os from "node:os";
 import path from "node:path";
+import { readGatewayPortEnv } from "../gateway/credentials.js";
 import { resolveRequiredHomeDir } from "../infra/home-dir.js";
 import { isValidProfileName } from "./profile-utils.js";
 
@@ -7,21 +8,12 @@ export type CliProfileParseResult =
   | { ok: true; profile: string | null; argv: string[] }
   | { ok: false; error: string };
 
-function isTruthyEnvValue(value: string | undefined): boolean {
-  const normalized = value?.trim().toLowerCase();
-  return normalized === "1" || normalized === "true" || normalized === "yes" || normalized === "on";
+function resolveProfileStateDirBasename(_env: Record<string, string | undefined>): string {
+  return ".propaiclaw";
 }
 
-function isPropaiclawMode(env: Record<string, string | undefined>): boolean {
-  return isTruthyEnvValue(env.PROPAICLAW_MODE) || isTruthyEnvValue(env.OPENCLAW_PROPAICLAW_MODE);
-}
-
-function resolveProfileStateDirBasename(env: Record<string, string | undefined>): string {
-  return isPropaiclawMode(env) ? ".propaiclaw" : ".openclaw";
-}
-
-function resolveProfileConfigFilename(env: Record<string, string | undefined>): string {
-  return isPropaiclawMode(env) ? "propaiclaw.json" : "openclaw.json";
+function resolveProfileConfigFilename(_env: Record<string, string | undefined>): string {
+  return "propaiclaw.json";
 }
 
 function takeValue(
@@ -128,37 +120,23 @@ export function applyCliProfileEnv(params: {
   }
 
   // Convenience only: fill defaults, never override explicit env values.
-  env.OPENCLAW_PROFILE = profile;
-  if (!env.PROPAICLAW_PROFILE?.trim()) {
-    env.PROPAICLAW_PROFILE = profile;
-  }
-
+  env.PROPAICLAW_PROFILE = profile;
   const stateDir =
-    env.PROPAICLAW_STATE_DIR?.trim() ||
-    env.OPENCLAW_STATE_DIR?.trim() ||
-    resolveProfileStateDir(profile, env, homedir);
-  if (!env.OPENCLAW_STATE_DIR?.trim()) {
-    env.OPENCLAW_STATE_DIR = stateDir;
-  }
+    env.PROPAICLAW_STATE_DIR?.trim() || resolveProfileStateDir(profile, env, homedir);
   if (!env.PROPAICLAW_STATE_DIR?.trim()) {
     env.PROPAICLAW_STATE_DIR = stateDir;
   }
-
   const configPath =
-    env.PROPAICLAW_CONFIG_PATH?.trim() ||
-    env.OPENCLAW_CONFIG_PATH?.trim() ||
-    path.join(stateDir, resolveProfileConfigFilename(env));
-  if (!env.OPENCLAW_CONFIG_PATH?.trim()) {
-    env.OPENCLAW_CONFIG_PATH = configPath;
-  }
+    env.PROPAICLAW_CONFIG_PATH?.trim() || path.join(stateDir, resolveProfileConfigFilename(env));
   if (!env.PROPAICLAW_CONFIG_PATH?.trim()) {
     env.PROPAICLAW_CONFIG_PATH = configPath;
   }
 
-  if (profile === "dev" && !env.OPENCLAW_GATEWAY_PORT?.trim()) {
-    env.OPENCLAW_GATEWAY_PORT = "19001";
-  }
-  if (profile === "dev" && !env.PROPAICLAW_GATEWAY_PORT?.trim()) {
-    env.PROPAICLAW_GATEWAY_PORT = "19001";
+  if (profile === "dev") {
+    const existingGatewayPort = readGatewayPortEnv(env as NodeJS.ProcessEnv);
+    const gatewayPort = existingGatewayPort || "19001";
+    if (!env.PROPAICLAW_GATEWAY_PORT?.trim()) {
+      env.PROPAICLAW_GATEWAY_PORT = gatewayPort;
+    }
   }
 }

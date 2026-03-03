@@ -98,7 +98,7 @@ Create one account per agent on your preferred channels:
 openclaw channels login --channel whatsapp --account work
 ```
 
-See channel guides: [Discord](/channels/discord), [Telegram](/channels/telegram), [WhatsApp](/channels/whatsapp).
+See channel guides: [Discord](/channels/whatsapp), [Telegram](/channels/whatsapp), [WhatsApp](/channels/whatsapp).
 
   </Step>
 

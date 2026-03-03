@@ -1,6 +1,6 @@
-# @openclaw/voice-call
+# @Propaiclaw/voice-call
 
-Official Voice Call plugin for **OpenClaw**.
+Official Voice Call plugin for **Propaiclaw**.
 
 Providers:
 
@@ -9,15 +9,15 @@ Providers:
 - **Plivo** (Voice API + XML transfer + GetInput speech)
 - **Mock** (dev/no network)
 
-Docs: `https://docs.openclaw.ai/plugins/voice-call`
-Plugin system: `https://docs.openclaw.ai/plugin`
+Docs: `https://docs.Propaiclaw.ai/plugins/voice-call`
+Plugin system: `https://docs.Propaiclaw.ai/plugin`
 
 ## Install (local dev)
 
-### Option A: install via OpenClaw (recommended)
+### Option A: install via Propaiclaw (recommended)
 
 ```bash
-openclaw plugins install @openclaw/voice-call
+Propaiclaw plugins install @Propaiclaw/voice-call
 ```
 
 Restart the Gateway afterwards.
@@ -25,9 +25,9 @@ Restart the Gateway afterwards.
 ### Option B: copy into your global extensions folder (dev)
 
 ```bash
-mkdir -p ~/.openclaw/extensions
-cp -R extensions/voice-call ~/.openclaw/extensions/voice-call
-cd ~/.openclaw/extensions/voice-call && pnpm install
+mkdir -p ~/.Propaiclaw/extensions
+cp -R extensions/voice-call ~/.Propaiclaw/extensions/voice-call
+cd ~/.Propaiclaw/extensions/voice-call && pnpm install
 ```
 
 ## Config
@@ -143,13 +143,13 @@ Notes:
 ## CLI
 
 ```bash
-openclaw voicecall call --to "+15555550123" --message "Hello from OpenClaw"
-openclaw voicecall continue --call-id <id> --message "Any questions?"
-openclaw voicecall speak --call-id <id> --message "One moment"
-openclaw voicecall end --call-id <id>
-openclaw voicecall status --call-id <id>
-openclaw voicecall tail
-openclaw voicecall expose --mode funnel
+Propaiclaw voicecall call --to "+15555550123" --message "Hello from Propaiclaw"
+Propaiclaw voicecall continue --call-id <id> --message "Any questions?"
+Propaiclaw voicecall speak --call-id <id> --message "One moment"
+Propaiclaw voicecall end --call-id <id>
+Propaiclaw voicecall status --call-id <id>
+Propaiclaw voicecall tail
+Propaiclaw voicecall expose --mode funnel
 ```
 
 ## Tool

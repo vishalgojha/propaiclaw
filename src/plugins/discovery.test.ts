@@ -18,7 +18,7 @@ function makeTempDir() {
 async function withStateDir<T>(stateDir: string, fn: () => Promise<T>) {
   return await withEnvAsync(
     {
-      OPENCLAW_STATE_DIR: stateDir,
+      PROPAICLAW_STATE_DIR: stateDir,
       OPENCLAW_BUNDLED_PLUGINS_DIR: "/nonexistent/bundled/plugins",
     },
     fn,

@@ -55,7 +55,7 @@ describe("getApiKeyForModel", () => {
       const agentDir = path.join(tempDir, "agent");
       await withEnvAsync(
         {
-          OPENCLAW_STATE_DIR: tempDir,
+          PROPAICLAW_STATE_DIR: tempDir,
           OPENCLAW_AGENT_DIR: agentDir,
           PI_CODING_AGENT_DIR: agentDir,
         },
@@ -122,7 +122,7 @@ describe("getApiKeyForModel", () => {
       await withEnvAsync(
         {
           OPENAI_API_KEY: undefined,
-          OPENCLAW_STATE_DIR: tempDir,
+          PROPAICLAW_STATE_DIR: tempDir,
           OPENCLAW_AGENT_DIR: agentDir,
           PI_CODING_AGENT_DIR: agentDir,
         },

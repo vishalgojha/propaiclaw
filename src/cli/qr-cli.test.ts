@@ -64,8 +64,8 @@ describe("registerQrCli", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.stubEnv("OPENCLAW_GATEWAY_TOKEN", "");
-    vi.stubEnv("OPENCLAW_GATEWAY_PASSWORD", "");
+    vi.stubEnv("PROPAICLAW_GATEWAY_TOKEN", "");
+    vi.stubEnv("PROPAICLAW_GATEWAY_PASSWORD", "");
   });
 
   afterEach(() => {

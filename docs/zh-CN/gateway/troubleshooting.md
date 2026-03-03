@@ -597,7 +597,7 @@ curl -fsSL https://openclaw.ai/install.sh | bash
 4. 确保机器人有 **Message Content Intent** 和频道权限。
 5. 运行 `openclaw channels status --probe` 获取审计提示。
 
-文档：[Discord](/channels/discord)、[渠道故障排除](/channels/troubleshooting)。
+文档：[Discord](/channels/whatsapp)、[渠道故障排除](/channels/troubleshooting)。
 
 ### Cloud Code Assist API 错误：invalid tool schema（400）。现在怎么办？
 

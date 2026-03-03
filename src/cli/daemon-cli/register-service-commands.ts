@@ -8,7 +8,7 @@ import {
   runDaemonStop,
   runDaemonUninstall,
 } from "./runners.js";
-import type { DaemonInstallOptions, GatewayRpcOpts } from "./types.js";
+import type { DaemonInstallOptions, DaemonStopOptions, GatewayRpcOpts } from "./types.js";
 
 function resolveInstallOptions(
   cmdOpts: DaemonInstallOptions,
@@ -32,6 +32,14 @@ function resolveRpcOptions(cmdOpts: GatewayRpcOpts, command?: Command): GatewayR
     ...cmdOpts,
     token: cmdOpts.token ?? parentToken,
     password: cmdOpts.password ?? parentPassword,
+  };
+}
+
+function resolveStopOptions(cmdOpts: DaemonStopOptions, command?: Command): DaemonStopOptions {
+  const parentForce = inheritOptionFromParent<boolean>(command, "force");
+  return {
+    ...cmdOpts,
+    force: Boolean(cmdOpts.force || parentForce),
   };
 }
 
@@ -86,9 +94,10 @@ export function addGatewayServiceCommands(parent: Command, opts?: { statusDescri
   parent
     .command("stop")
     .description("Stop the Gateway service (launchd/systemd/schtasks)")
+    .option("--force", "Also kill lingering gateway processes after stop", false)
     .option("--json", "Output JSON", false)
-    .action(async (cmdOpts) => {
-      await runDaemonStop(cmdOpts);
+    .action(async (cmdOpts, command) => {
+      await runDaemonStop(resolveStopOptions(cmdOpts, command));
     });
 
   parent

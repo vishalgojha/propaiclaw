@@ -592,15 +592,15 @@ function buildMinimaxProviderOverride(params: {
 
 async function runGatewayModelSuite(params: GatewayModelSuiteParams) {
   const previous = {
-    configPath: process.env.OPENCLAW_CONFIG_PATH,
-    token: process.env.OPENCLAW_GATEWAY_TOKEN,
+    configPath: process.env.PROPAICLAW_CONFIG_PATH,
+    token: process.env.PROPAICLAW_GATEWAY_TOKEN,
     skipChannels: process.env.OPENCLAW_SKIP_CHANNELS,
     skipGmail: process.env.OPENCLAW_SKIP_GMAIL_WATCHER,
     skipCron: process.env.OPENCLAW_SKIP_CRON,
     skipCanvas: process.env.OPENCLAW_SKIP_CANVAS_HOST,
     agentDir: process.env.OPENCLAW_AGENT_DIR,
     piAgentDir: process.env.PI_CODING_AGENT_DIR,
-    stateDir: process.env.OPENCLAW_STATE_DIR,
+    stateDir: process.env.PROPAICLAW_STATE_DIR,
   };
   let tempAgentDir: string | undefined;
   let tempStateDir: string | undefined;
@@ -611,7 +611,7 @@ async function runGatewayModelSuite(params: GatewayModelSuiteParams) {
   process.env.OPENCLAW_SKIP_CANVAS_HOST = "1";
 
   const token = `test-${randomUUID()}`;
-  process.env.OPENCLAW_GATEWAY_TOKEN = token;
+  process.env.PROPAICLAW_GATEWAY_TOKEN = token;
   const agentId = "dev";
 
   const hostAgentDir = resolveOpenClawAgentDir();
@@ -628,7 +628,7 @@ async function runGatewayModelSuite(params: GatewayModelSuiteParams) {
     usageStats: hostStore.usageStats ? { ...hostStore.usageStats } : undefined,
   };
   tempStateDir = await fs.mkdtemp(path.join(os.tmpdir(), "openclaw-live-state-"));
-  process.env.OPENCLAW_STATE_DIR = tempStateDir;
+  process.env.PROPAICLAW_STATE_DIR = tempStateDir;
   tempAgentDir = path.join(tempStateDir, "agents", DEFAULT_AGENT_ID, "agent");
   saveAuthProfileStore(sanitizedStore, tempAgentDir);
   const tempSessionAgentDir = path.join(tempStateDir, "agents", agentId, "agent");
@@ -658,7 +658,7 @@ async function runGatewayModelSuite(params: GatewayModelSuiteParams) {
   const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "openclaw-live-"));
   const tempConfigPath = path.join(tempDir, "openclaw.json");
   await fs.writeFile(tempConfigPath, `${JSON.stringify(nextCfg, null, 2)}\n`);
-  process.env.OPENCLAW_CONFIG_PATH = tempConfigPath;
+  process.env.PROPAICLAW_CONFIG_PATH = tempConfigPath;
 
   await ensureOpenClawModelsJson(nextCfg);
 
@@ -1139,15 +1139,15 @@ async function runGatewayModelSuite(params: GatewayModelSuiteParams) {
       await fs.rm(tempStateDir, { recursive: true, force: true });
     }
 
-    process.env.OPENCLAW_CONFIG_PATH = previous.configPath;
-    process.env.OPENCLAW_GATEWAY_TOKEN = previous.token;
+    process.env.PROPAICLAW_CONFIG_PATH = previous.configPath;
+    process.env.PROPAICLAW_GATEWAY_TOKEN = previous.token;
     process.env.OPENCLAW_SKIP_CHANNELS = previous.skipChannels;
     process.env.OPENCLAW_SKIP_GMAIL_WATCHER = previous.skipGmail;
     process.env.OPENCLAW_SKIP_CRON = previous.skipCron;
     process.env.OPENCLAW_SKIP_CANVAS_HOST = previous.skipCanvas;
     process.env.OPENCLAW_AGENT_DIR = previous.agentDir;
     process.env.PI_CODING_AGENT_DIR = previous.piAgentDir;
-    process.env.OPENCLAW_STATE_DIR = previous.stateDir;
+    process.env.PROPAICLAW_STATE_DIR = previous.stateDir;
   }
 }
 
@@ -1258,8 +1258,8 @@ describeLive("gateway live (dev agent, profile keys)", () => {
       return;
     }
     const previous = {
-      configPath: process.env.OPENCLAW_CONFIG_PATH,
-      token: process.env.OPENCLAW_GATEWAY_TOKEN,
+      configPath: process.env.PROPAICLAW_CONFIG_PATH,
+      token: process.env.PROPAICLAW_GATEWAY_TOKEN,
       skipChannels: process.env.OPENCLAW_SKIP_CHANNELS,
       skipGmail: process.env.OPENCLAW_SKIP_GMAIL_WATCHER,
       skipCron: process.env.OPENCLAW_SKIP_CRON,
@@ -1272,7 +1272,7 @@ describeLive("gateway live (dev agent, profile keys)", () => {
     process.env.OPENCLAW_SKIP_CANVAS_HOST = "1";
 
     const token = `test-${randomUUID()}`;
-    process.env.OPENCLAW_GATEWAY_TOKEN = token;
+    process.env.PROPAICLAW_GATEWAY_TOKEN = token;
 
     const cfg = loadConfig();
     await ensureOpenClawModelsJson(cfg);
@@ -1389,8 +1389,8 @@ describeLive("gateway live (dev agent, profile keys)", () => {
       await server.close({ reason: "live test complete" });
       await fs.rm(toolProbePath, { force: true });
 
-      process.env.OPENCLAW_CONFIG_PATH = previous.configPath;
-      process.env.OPENCLAW_GATEWAY_TOKEN = previous.token;
+      process.env.PROPAICLAW_CONFIG_PATH = previous.configPath;
+      process.env.PROPAICLAW_GATEWAY_TOKEN = previous.token;
       process.env.OPENCLAW_SKIP_CHANNELS = previous.skipChannels;
       process.env.OPENCLAW_SKIP_GMAIL_WATCHER = previous.skipGmail;
       process.env.OPENCLAW_SKIP_CRON = previous.skipCron;

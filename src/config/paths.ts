@@ -40,7 +40,7 @@ function isTruthyEnvValue(value: string | undefined): boolean {
 }
 
 function isPropaiclawMode(env: NodeJS.ProcessEnv): boolean {
-  return isTruthyEnvValue(env.PROPAICLAW_MODE) || isTruthyEnvValue(env.OPENCLAW_PROPAICLAW_MODE);
+  return isTruthyEnvValue(env.PROPAICLAW_MODE);
 }
 
 function resolveCanonicalStateDirName(env: NodeJS.ProcessEnv): string {
@@ -52,15 +52,15 @@ function resolveCanonicalConfigFilename(env: NodeJS.ProcessEnv): string {
 }
 
 function resolveStateDirOverride(env: NodeJS.ProcessEnv): string | undefined {
-  return envFirst(env.PROPAICLAW_STATE_DIR, env.OPENCLAW_STATE_DIR);
+  return envFirst(env.PROPAICLAW_STATE_DIR);
 }
 
 function resolveConfigPathOverride(env: NodeJS.ProcessEnv): string | undefined {
-  return envFirst(env.PROPAICLAW_CONFIG_PATH, env.OPENCLAW_CONFIG_PATH);
+  return envFirst(env.PROPAICLAW_CONFIG_PATH);
 }
 
 function resolveGatewayPortOverride(env: NodeJS.ProcessEnv): string | undefined {
-  return envFirst(env.PROPAICLAW_GATEWAY_PORT, env.OPENCLAW_GATEWAY_PORT);
+  return envFirst(env.PROPAICLAW_GATEWAY_PORT);
 }
 
 function resolveConfigCandidateFilenames(env: NodeJS.ProcessEnv): string[] {
@@ -82,7 +82,7 @@ function resolveDefaultHomeDir(): string {
   return resolveRequiredHomeDir(process.env, os.homedir);
 }
 
-/** Build a homedir thunk that respects OPENCLAW_HOME for the given env. */
+/** Build a homedir thunk that respects PROPAICLAW_HOME for the given env. */
 function envHomedir(env: NodeJS.ProcessEnv): () => string {
   return () => resolveRequiredHomeDir(env, os.homedir);
 }
@@ -127,7 +127,7 @@ export function resolveNewStateDir(
 
 /**
  * State directory for mutable data (sessions, logs, caches).
- * Can be overridden via OPENCLAW_STATE_DIR.
+ * Can be overridden via PROPAICLAW_STATE_DIR.
  * Default: ~/.openclaw
  */
 export function resolveStateDir(
@@ -201,8 +201,8 @@ export const STATE_DIR = resolveStateDir();
 
 /**
  * Config file path (JSON5).
- * Can be overridden via OPENCLAW_CONFIG_PATH.
- * Default: ~/.openclaw/openclaw.json (or $OPENCLAW_STATE_DIR/openclaw.json)
+ * Can be overridden via PROPAICLAW_CONFIG_PATH.
+ * Default: ~/.openclaw/openclaw.json (or $PROPAICLAW_STATE_DIR/openclaw.json)
  */
 export function resolveCanonicalConfigPath(
   env: NodeJS.ProcessEnv = process.env,
@@ -325,14 +325,14 @@ const OAUTH_FILENAME = "oauth.json";
  * OAuth credentials storage directory.
  *
  * Precedence:
- * - `OPENCLAW_OAUTH_DIR` (explicit override)
+ * - `PROPAICLAW_OAUTH_DIR` (explicit override)
  * - `$*_STATE_DIR/credentials` (canonical server/default)
  */
 export function resolveOAuthDir(
   env: NodeJS.ProcessEnv = process.env,
   stateDir: string = resolveStateDir(env, envHomedir(env)),
 ): string {
-  const override = envFirst(env.PROPAICLAW_OAUTH_DIR, env.OPENCLAW_OAUTH_DIR);
+  const override = envFirst(env.PROPAICLAW_OAUTH_DIR);
   if (override) {
     return resolveUserPath(override, env, envHomedir(env));
   }

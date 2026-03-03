@@ -9,6 +9,7 @@ import {
   resolveNodeSystemdServiceName,
   resolveNodeWindowsTaskName,
 } from "../../daemon/constants.js";
+import { resolveDaemonLogPrefixEnv } from "../../daemon/env-aliases.js";
 import { resolveGatewayLogPaths } from "../../daemon/launchd.js";
 import { resolveNodeService } from "../../daemon/node-service.js";
 import type { GatewayServiceRuntime } from "../../daemon/service-runtime.js";
@@ -282,9 +283,10 @@ export async function runNodeDaemonStatus(opts: NodeDaemonStatusOptions = {}) {
     ...(process.env as Record<string, string | undefined>),
     ...(command?.environment ?? undefined),
   };
+  const logPrefix = resolveDaemonLogPrefixEnv(baseEnv) ?? "node";
   const hintEnv = {
     ...baseEnv,
-    OPENCLAW_LOG_PREFIX: baseEnv.OPENCLAW_LOG_PREFIX ?? "node",
+    PROPAICLAW_LOG_PREFIX: logPrefix,
   } as NodeJS.ProcessEnv;
 
   if (runtime?.missingUnit) {

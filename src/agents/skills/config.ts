@@ -63,10 +63,7 @@ const PROPAICLAW_BUNDLED_SKILLS_ALLOWLIST = [
 ];
 
 function resolvePropaiclawBundledAllowlist(): string[] | undefined {
-  if (
-    isTruthyEnvValue(process.env.OPENCLAW_PROPAICLAW_MODE) ||
-    isTruthyEnvValue(process.env.PROPAICLAW_MODE)
-  ) {
+  if (isTruthyEnvValue(process.env.PROPAICLAW_MODE)) {
     return [...PROPAICLAW_BUNDLED_SKILLS_ALLOWLIST];
   }
   return undefined;

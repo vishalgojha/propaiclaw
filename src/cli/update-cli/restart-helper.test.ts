@@ -35,7 +35,7 @@ describe("restart-helper", () => {
     it("creates a systemd restart script on Linux", async () => {
       Object.defineProperty(process, "platform", { value: "linux" });
       const { scriptPath, content } = await prepareAndReadScript({
-        OPENCLAW_PROFILE: "default",
+        PROPAICLAW_PROFILE: "default",
       });
       expect(scriptPath.endsWith(".sh")).toBe(true);
       expect(content).toContain("#!/bin/sh");
@@ -45,13 +45,23 @@ describe("restart-helper", () => {
       await cleanupScript(scriptPath);
     });
 
-    it("uses OPENCLAW_SYSTEMD_UNIT override for systemd scripts", async () => {
+    it("ignores OPENCLAW_SYSTEMD_UNIT when PROPAICLAW_SYSTEMD_UNIT is unset", async () => {
       Object.defineProperty(process, "platform", { value: "linux" });
       const { scriptPath, content } = await prepareAndReadScript({
-        OPENCLAW_PROFILE: "default",
         OPENCLAW_SYSTEMD_UNIT: "custom-gateway",
+        PROPAICLAW_PROFILE: "staging",
       });
-      expect(content).toContain("systemctl --user restart 'custom-gateway.service'");
+      expect(content).toContain("systemctl --user restart 'openclaw-gateway-staging.service'");
+      await cleanupScript(scriptPath);
+    });
+
+    it("prefers PROPAICLAW_SYSTEMD_UNIT over OPENCLAW_SYSTEMD_UNIT", async () => {
+      Object.defineProperty(process, "platform", { value: "linux" });
+      const { scriptPath, content } = await prepareAndReadScript({
+        PROPAICLAW_SYSTEMD_UNIT: "propai-gateway",
+        OPENCLAW_SYSTEMD_UNIT: "legacy-gateway",
+      });
+      expect(content).toContain("systemctl --user restart 'propai-gateway.service'");
       await cleanupScript(scriptPath);
     });
 
@@ -60,7 +70,7 @@ describe("restart-helper", () => {
       process.getuid = () => 501;
 
       const { scriptPath, content } = await prepareAndReadScript({
-        OPENCLAW_PROFILE: "default",
+        PROPAICLAW_PROFILE: "default",
       });
       expect(scriptPath.endsWith(".sh")).toBe(true);
       expect(content).toContain("#!/bin/sh");
@@ -69,15 +79,27 @@ describe("restart-helper", () => {
       await cleanupScript(scriptPath);
     });
 
-    it("uses OPENCLAW_LAUNCHD_LABEL override on macOS", async () => {
+    it("ignores OPENCLAW_LAUNCHD_LABEL when PROPAICLAW_LAUNCHD_LABEL is unset", async () => {
       Object.defineProperty(process, "platform", { value: "darwin" });
       process.getuid = () => 501;
 
       const { scriptPath, content } = await prepareAndReadScript({
-        OPENCLAW_PROFILE: "default",
         OPENCLAW_LAUNCHD_LABEL: "com.custom.openclaw",
+        PROPAICLAW_PROFILE: "default",
       });
-      expect(content).toContain("launchctl kickstart -k 'gui/501/com.custom.openclaw'");
+      expect(content).toContain("launchctl kickstart -k 'gui/501/ai.openclaw.gateway'");
+      await cleanupScript(scriptPath);
+    });
+
+    it("prefers PROPAICLAW_LAUNCHD_LABEL over OPENCLAW_LAUNCHD_LABEL on macOS", async () => {
+      Object.defineProperty(process, "platform", { value: "darwin" });
+      process.getuid = () => 501;
+
+      const { scriptPath, content } = await prepareAndReadScript({
+        PROPAICLAW_LAUNCHD_LABEL: "ai.propaiclaw.gateway",
+        OPENCLAW_LAUNCHD_LABEL: "ai.openclaw.gateway",
+      });
+      expect(content).toContain("launchctl kickstart -k 'gui/501/ai.propaiclaw.gateway'");
       await cleanupScript(scriptPath);
     });
 
@@ -85,7 +107,7 @@ describe("restart-helper", () => {
       Object.defineProperty(process, "platform", { value: "win32" });
 
       const { scriptPath, content } = await prepareAndReadScript({
-        OPENCLAW_PROFILE: "default",
+        PROPAICLAW_PROFILE: "default",
       });
       expect(scriptPath.endsWith(".bat")).toBe(true);
       expect(content).toContain("@echo off");
@@ -96,22 +118,34 @@ describe("restart-helper", () => {
       await cleanupScript(scriptPath);
     });
 
-    it("uses OPENCLAW_WINDOWS_TASK_NAME override on Windows", async () => {
+    it("ignores OPENCLAW_WINDOWS_TASK_NAME when PROPAICLAW_WINDOWS_TASK_NAME is unset", async () => {
       Object.defineProperty(process, "platform", { value: "win32" });
 
       const { scriptPath, content } = await prepareAndReadScript({
-        OPENCLAW_PROFILE: "default",
         OPENCLAW_WINDOWS_TASK_NAME: "OpenClaw Gateway (custom)",
+        PROPAICLAW_PROFILE: "default",
       });
-      expect(content).toContain('schtasks /End /TN "OpenClaw Gateway (custom)"');
-      expect(content).toContain('schtasks /Run /TN "OpenClaw Gateway (custom)"');
+      expect(content).toContain('schtasks /End /TN "OpenClaw Gateway"');
+      expect(content).toContain('schtasks /Run /TN "OpenClaw Gateway"');
+      await cleanupScript(scriptPath);
+    });
+
+    it("prefers PROPAICLAW_WINDOWS_TASK_NAME over OPENCLAW_WINDOWS_TASK_NAME on Windows", async () => {
+      Object.defineProperty(process, "platform", { value: "win32" });
+
+      const { scriptPath, content } = await prepareAndReadScript({
+        PROPAICLAW_WINDOWS_TASK_NAME: "PropAI Gateway",
+        OPENCLAW_WINDOWS_TASK_NAME: "OpenClaw Gateway (legacy)",
+      });
+      expect(content).toContain('schtasks /End /TN "PropAI Gateway"');
+      expect(content).toContain('schtasks /Run /TN "PropAI Gateway"');
       await cleanupScript(scriptPath);
     });
 
     it("uses custom profile in service names", async () => {
       Object.defineProperty(process, "platform", { value: "linux" });
       const { scriptPath, content } = await prepareAndReadScript({
-        OPENCLAW_PROFILE: "production",
+        PROPAICLAW_PROFILE: "production",
       });
       expect(content).toContain("openclaw-gateway-production.service");
       await cleanupScript(scriptPath);
@@ -122,7 +156,7 @@ describe("restart-helper", () => {
       process.getuid = () => 502;
 
       const { scriptPath, content } = await prepareAndReadScript({
-        OPENCLAW_PROFILE: "staging",
+        PROPAICLAW_PROFILE: "staging",
       });
       expect(content).toContain("gui/502/ai.openclaw.staging");
       await cleanupScript(scriptPath);
@@ -132,7 +166,7 @@ describe("restart-helper", () => {
       Object.defineProperty(process, "platform", { value: "win32" });
 
       const { scriptPath, content } = await prepareAndReadScript({
-        OPENCLAW_PROFILE: "production",
+        PROPAICLAW_PROFILE: "production",
       });
       expect(content).toContain('schtasks /End /TN "OpenClaw Gateway (production)"');
       await cleanupScript(scriptPath);
@@ -151,7 +185,7 @@ describe("restart-helper", () => {
         .mockRejectedValueOnce(new Error("simulated write failure"));
 
       const scriptPath = await prepareRestartScript({
-        OPENCLAW_PROFILE: "default",
+        PROPAICLAW_PROFILE: "default",
       });
 
       expect(scriptPath).toBeNull();
@@ -161,7 +195,7 @@ describe("restart-helper", () => {
     it("escapes single quotes in profile names for shell scripts", async () => {
       Object.defineProperty(process, "platform", { value: "linux" });
       const { scriptPath, content } = await prepareAndReadScript({
-        OPENCLAW_PROFILE: "it's-a-test",
+        PROPAICLAW_PROFILE: "it's-a-test",
       });
       // Single quotes should be escaped with '\'' pattern
       expect(content).not.toContain("it's");
@@ -172,7 +206,7 @@ describe("restart-helper", () => {
     it("rejects unsafe batch profile names on Windows", async () => {
       Object.defineProperty(process, "platform", { value: "win32" });
       const scriptPath = await prepareRestartScript({
-        OPENCLAW_PROFILE: "test&whoami",
+        PROPAICLAW_PROFILE: "test&whoami",
       });
 
       expect(scriptPath).toBeNull();

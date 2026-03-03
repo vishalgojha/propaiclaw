@@ -756,21 +756,21 @@ Pick region-pinned endpoints. OpenRouter exposes US-hosted options for MiniMax, 
 No. OpenClaw runs on macOS or Linux (Windows via WSL2). A Mac mini is optional - some people
 buy one as an always-on host, but a small VPS, home server, or Raspberry Pi-class box works too.
 
-You only need a Mac **for macOS-only tools**. For iMessage, use [BlueBubbles](/channels/bluebubbles) (recommended) - the BlueBubbles server runs on any Mac, and the Gateway can run on Linux or elsewhere. If you want other macOS-only tools, run the Gateway on a Mac or pair a macOS node.
+You only need a Mac **for macOS-only tools**. For iMessage, use [BlueBubbles](/channels/whatsapp) (recommended) - the BlueBubbles server runs on any Mac, and the Gateway can run on Linux or elsewhere. If you want other macOS-only tools, run the Gateway on a Mac or pair a macOS node.
 
-Docs: [BlueBubbles](/channels/bluebubbles), [Nodes](/nodes), [Mac remote mode](/platforms/mac/remote).
+Docs: [BlueBubbles](/channels/whatsapp), [Nodes](/nodes), [Mac remote mode](/platforms/mac/remote).
 
 ### Do I need a Mac mini for iMessage support
 
 You need **some macOS device** signed into Messages. It does **not** have to be a Mac mini -
-any Mac works. **Use [BlueBubbles](/channels/bluebubbles)** (recommended) for iMessage - the BlueBubbles server runs on macOS, while the Gateway can run on Linux or elsewhere.
+any Mac works. **Use [BlueBubbles](/channels/whatsapp)** (recommended) for iMessage - the BlueBubbles server runs on macOS, while the Gateway can run on Linux or elsewhere.
 
 Common setups:
 
 - Run the Gateway on Linux/VPS, and run the BlueBubbles server on any Mac signed into Messages.
 - Run everything on the Mac if you want the simplest single‑machine setup.
 
-Docs: [BlueBubbles](/channels/bluebubbles), [Nodes](/nodes),
+Docs: [BlueBubbles](/channels/whatsapp), [Nodes](/nodes),
 [Mac remote mode](/platforms/mac/remote).
 
 ### If I buy a Mac mini to run OpenClaw can I connect it to my MacBook Pro
@@ -813,7 +813,7 @@ Third-party (less private):
 
 - DM `@userinfobot` or `@getidsbot`.
 
-See [/channels/telegram](/channels/telegram#access-control-dms--groups).
+See [/channels/whatsapp](/channels/whatsapp#access-control-dms--groups).
 
 ### Can multiple people use one WhatsApp number with different OpenClaw instances
 
@@ -1059,7 +1059,7 @@ Required config:
 - Discord overrides: `channels.discord.threadBindings.enabled`, `channels.discord.threadBindings.idleHours`, `channels.discord.threadBindings.maxAgeHours`.
 - Auto-bind on spawn: set `channels.discord.threadBindings.spawnSubagentSessions: true`.
 
-Docs: [Sub-agents](/tools/subagents), [Discord](/channels/discord), [Configuration Reference](/gateway/configuration-reference), [Slash commands](/tools/slash-commands).
+Docs: [Sub-agents](/tools/subagents), [Discord](/channels/whatsapp), [Configuration Reference](/gateway/configuration-reference), [Slash commands](/tools/slash-commands).
 
 ### Cron or reminders do not fire What should I check
 
@@ -1975,7 +1975,7 @@ Best-practice setup:
 - Slack channel(s) bound to those agents.
 - Local browser via extension relay (or a node) when needed.
 
-Docs: [Multi-Agent Routing](/concepts/multi-agent), [Slack](/channels/slack),
+Docs: [Multi-Agent Routing](/concepts/multi-agent), [Slack](/channels/whatsapp),
 [Browser](/tools/browser), [Chrome extension](/tools/chrome-extension), [Nodes](/nodes).
 
 ## Models: defaults, selection, aliases, switching
@@ -2631,7 +2631,7 @@ openclaw channels logs --channel telegram
 If you are on a VPS or behind a proxy, confirm outbound HTTPS is allowed and DNS works.
 If the Gateway is remote, make sure you are looking at logs on the Gateway host.
 
-Docs: [Telegram](/channels/telegram), [Channel troubleshooting](/channels/troubleshooting).
+Docs: [Telegram](/channels/whatsapp), [Channel troubleshooting](/channels/troubleshooting).
 
 ### TUI shows no output What should I check
 

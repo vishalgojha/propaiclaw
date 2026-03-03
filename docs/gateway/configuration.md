@@ -78,14 +78,14 @@ When validation fails:
     Each channel has its own config section under `channels.<provider>`. See the dedicated channel page for setup steps:
 
     - [WhatsApp](/channels/whatsapp) — `channels.whatsapp`
-    - [Telegram](/channels/telegram) — `channels.telegram`
-    - [Discord](/channels/discord) — `channels.discord`
-    - [Slack](/channels/slack) — `channels.slack`
-    - [Signal](/channels/signal) — `channels.signal`
-    - [iMessage](/channels/imessage) — `channels.imessage`
-    - [Google Chat](/channels/googlechat) — `channels.googlechat`
-    - [Mattermost](/channels/mattermost) — `channels.mattermost`
-    - [MS Teams](/channels/msteams) — `channels.msteams`
+    - [Telegram](/channels/whatsapp) — `channels.telegram`
+    - [Discord](/channels/whatsapp) — `channels.discord`
+    - [Slack](/channels/whatsapp) — `channels.slack`
+    - [Signal](/channels/whatsapp) — `channels.signal`
+    - [iMessage](/channels/whatsapp) — `channels.imessage`
+    - [Google Chat](/channels/whatsapp) — `channels.googlechat`
+    - [Mattermost](/channels/whatsapp) — `channels.mattermost`
+    - [MS Teams](/channels/whatsapp) — `channels.msteams`
 
     All channels share the same DM policy pattern:
 
@@ -519,7 +519,7 @@ Rules:
       serviceAccountRef: {
         source: "exec",
         provider: "vault",
-        id: "channels/googlechat/serviceAccount",
+        id: "channels/whatsapp/serviceAccount",
       },
     },
   },

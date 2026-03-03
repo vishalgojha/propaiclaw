@@ -82,16 +82,12 @@ describe("initializeRealtorWorkspaceProfile", () => {
     const previous = {
       PROPAICLAW_MODE: process.env.PROPAICLAW_MODE,
       PROPAICLAW_HOME: process.env.PROPAICLAW_HOME,
-      OPENCLAW_HOME: process.env.OPENCLAW_HOME,
-      OPENCLAW_STATE_DIR: process.env.OPENCLAW_STATE_DIR,
       PROPAICLAW_STATE_DIR: process.env.PROPAICLAW_STATE_DIR,
     };
 
     try {
       process.env.PROPAICLAW_MODE = "1";
       process.env.PROPAICLAW_HOME = tempHome;
-      delete process.env.OPENCLAW_HOME;
-      delete process.env.OPENCLAW_STATE_DIR;
       delete process.env.PROPAICLAW_STATE_DIR;
 
       const result = await initializeRealtorWorkspaceProfile({});
@@ -99,20 +95,72 @@ describe("initializeRealtorWorkspaceProfile", () => {
         path.join(path.resolve(tempHome), ".propaiclaw", "workspace"),
       );
     } finally {
-      if (previous.PROPAICLAW_MODE === undefined) delete process.env.PROPAICLAW_MODE;
-      else process.env.PROPAICLAW_MODE = previous.PROPAICLAW_MODE;
+      if (previous.PROPAICLAW_MODE === undefined) {
+        delete process.env.PROPAICLAW_MODE;
+      } else {
+        process.env.PROPAICLAW_MODE = previous.PROPAICLAW_MODE;
+      }
+      if (previous.PROPAICLAW_HOME === undefined) {
+        delete process.env.PROPAICLAW_HOME;
+      } else {
+        process.env.PROPAICLAW_HOME = previous.PROPAICLAW_HOME;
+      }
+      if (previous.PROPAICLAW_STATE_DIR === undefined) {
+        delete process.env.PROPAICLAW_STATE_DIR;
+      } else {
+        process.env.PROPAICLAW_STATE_DIR = previous.PROPAICLAW_STATE_DIR;
+      }
 
-      if (previous.PROPAICLAW_HOME === undefined) delete process.env.PROPAICLAW_HOME;
-      else process.env.PROPAICLAW_HOME = previous.PROPAICLAW_HOME;
+      await fs.rm(tempHome, { recursive: true, force: true });
+    }
+  });
 
-      if (previous.OPENCLAW_HOME === undefined) delete process.env.OPENCLAW_HOME;
-      else process.env.OPENCLAW_HOME = previous.OPENCLAW_HOME;
+  it("uses PROPAICLAW_PROFILE for workspace suffixing", async () => {
+    const tempHome = await createTempDir("propaiclaw-home-profile-");
+    const previous = {
+      PROPAICLAW_MODE: process.env.PROPAICLAW_MODE,
+      PROPAICLAW_HOME: process.env.PROPAICLAW_HOME,
+      PROPAICLAW_PROFILE: process.env.PROPAICLAW_PROFILE,
+      PROPAICLAW_STATE_DIR: process.env.PROPAICLAW_STATE_DIR,
+    };
 
-      if (previous.OPENCLAW_STATE_DIR === undefined) delete process.env.OPENCLAW_STATE_DIR;
-      else process.env.OPENCLAW_STATE_DIR = previous.OPENCLAW_STATE_DIR;
+    try {
+      process.env.PROPAICLAW_MODE = "1";
+      process.env.PROPAICLAW_HOME = tempHome;
+      process.env.PROPAICLAW_PROFILE = "legacy";
+      delete process.env.PROPAICLAW_STATE_DIR;
 
-      if (previous.PROPAICLAW_STATE_DIR === undefined) delete process.env.PROPAICLAW_STATE_DIR;
-      else process.env.PROPAICLAW_STATE_DIR = previous.PROPAICLAW_STATE_DIR;
+      const profileLegacy = await initializeRealtorWorkspaceProfile({});
+      expect(profileLegacy.workspaceDir).toBe(
+        path.join(path.resolve(tempHome), ".propaiclaw", "workspace-legacy"),
+      );
+
+      process.env.PROPAICLAW_PROFILE = "sales";
+      const canonical = await initializeRealtorWorkspaceProfile({});
+      expect(canonical.workspaceDir).toBe(
+        path.join(path.resolve(tempHome), ".propaiclaw", "workspace-sales"),
+      );
+    } finally {
+      if (previous.PROPAICLAW_MODE === undefined) {
+        delete process.env.PROPAICLAW_MODE;
+      } else {
+        process.env.PROPAICLAW_MODE = previous.PROPAICLAW_MODE;
+      }
+      if (previous.PROPAICLAW_HOME === undefined) {
+        delete process.env.PROPAICLAW_HOME;
+      } else {
+        process.env.PROPAICLAW_HOME = previous.PROPAICLAW_HOME;
+      }
+      if (previous.PROPAICLAW_PROFILE === undefined) {
+        delete process.env.PROPAICLAW_PROFILE;
+      } else {
+        process.env.PROPAICLAW_PROFILE = previous.PROPAICLAW_PROFILE;
+      }
+      if (previous.PROPAICLAW_STATE_DIR === undefined) {
+        delete process.env.PROPAICLAW_STATE_DIR;
+      } else {
+        process.env.PROPAICLAW_STATE_DIR = previous.PROPAICLAW_STATE_DIR;
+      }
 
       await fs.rm(tempHome, { recursive: true, force: true });
     }
