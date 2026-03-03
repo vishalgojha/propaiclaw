@@ -67,3 +67,6 @@ OPENCLAW_PROFILE=<tenant-profile> openclaw migrate-state --apply --json --audit-
 
 Legacy directories are preserved or moved to timestamped legacy paths when needed by migration internals.
 If a batch is halted, keep the audit log as source-of-truth and resume only after warning root-cause analysis.
+
+For explicit rollback steps and validation checkpoints, use:
+[State Migration Rollback Runbook](/refactor/state-migration-rollback)

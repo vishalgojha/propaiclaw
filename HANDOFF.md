@@ -621,6 +621,22 @@ Stage 7 progress update (2026-03-03, pass 2)
   - Command: `pnpm exec oxfmt --check src/commands/migrate-state.ts src/commands/migrate-state.test.ts src/cli/program/register.maintenance.ts src/cli/program/register.maintenance.test.ts docs/refactor/state-migration-rollout.md HANDOFF.md`
     - Result: passed (all matched files correctly formatted).
 
+Stage 7 progress update (2026-03-03, pass 3)
+
+- done
+  - Added explicit rollback runbook with validation checkpoints:
+    - `docs/refactor/state-migration-rollback.md`
+  - Linked rollback guidance from rollout runbook:
+    - `docs/refactor/state-migration-rollout.md`
+  - Stage 7 rollout path is now fully documented across pilot, batch gating, and rollback operations.
+
+- pending
+  - Stage 8 cutover/deprecation work remains pending by plan.
+
+- verification
+  - Command: `pnpm exec oxfmt --check docs/refactor/state-migration-rollout.md docs/refactor/state-migration-rollback.md HANDOFF.md`
+    - Result: passed (all matched files correctly formatted).
+
 ### Stage 8 - Cutover and deprecation
 
 1. Default to Propaiclaw runtime identity for new installs
