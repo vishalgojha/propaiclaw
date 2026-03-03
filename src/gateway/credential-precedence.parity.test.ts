@@ -38,12 +38,7 @@ function makeRemoteGatewayConfig(remote: { token?: string; password?: string }):
 }
 
 function withGatewayAuthEnv<T>(env: NodeJS.ProcessEnv, fn: () => T): T {
-  const keys = [
-    "OPENCLAW_GATEWAY_TOKEN",
-    "OPENCLAW_GATEWAY_PASSWORD",
-    "CLAWDBOT_GATEWAY_TOKEN",
-    "CLAWDBOT_GATEWAY_PASSWORD",
-  ] as const;
+  const keys = ["OPENCLAW_GATEWAY_TOKEN", "OPENCLAW_GATEWAY_PASSWORD"] as const;
   const previous = new Map<string, string | undefined>();
   for (const key of keys) {
     previous.set(key, process.env[key]);
@@ -120,7 +115,7 @@ describe("gateway credential precedence parity", () => {
       },
     },
     {
-      name: "legacy env vars are ignored by probe/status/auth but still supported for call path",
+      name: "legacy env vars are ignored by call/probe/status/auth",
       cfg: {
         gateway: {
           mode: "local",
@@ -132,7 +127,7 @@ describe("gateway credential precedence parity", () => {
         CLAWDBOT_GATEWAY_PASSWORD: "legacy-password",
       } as NodeJS.ProcessEnv,
       expected: {
-        call: { token: "legacy-token", password: "legacy-password" },
+        call: { token: undefined, password: undefined },
         probe: { token: undefined, password: undefined },
         status: { token: undefined, password: undefined },
         auth: { token: undefined, password: undefined },

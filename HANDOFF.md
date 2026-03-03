@@ -713,6 +713,34 @@ Stage 8 progress update (2026-03-03, pass 3)
   - Command: `pnpm exec oxfmt --check src/config/paths.ts src/config/paths.test.ts src/config/io.compat.test.ts src/commands/migrate-state.ts`
     - Result: passed (all matched files correctly formatted).
 
+Stage 8 progress update (2026-03-03, pass 4)
+
+- done
+  - Completed second Stage 8.3 legacy-only cleanup slice for gateway env aliases:
+    - Removed `CLAWDBOT_GATEWAY_TOKEN` / `CLAWDBOT_GATEWAY_PASSWORD` fallback from:
+      - `src/gateway/credentials.ts`
+      - `src/browser/extension-relay-auth.ts`
+      - `src/pairing/setup-code.ts`
+      - `src/cli/daemon-cli/install.ts`
+      - `src/commands/doctor-gateway-services.ts`
+  - Updated related regression tests to enforce that these aliases are ignored:
+    - `src/gateway/credentials.test.ts`
+    - `src/gateway/credential-precedence.parity.test.ts`
+    - `src/agents/tools/gateway.test.ts`
+    - `src/pairing/setup-code.test.ts`
+    - `src/cli/qr-cli.test.ts`
+    - `src/cli/daemon-cli/lifecycle-core.test.ts`
+
+- pending
+  - Remaining Stage 8.3 cleanup slices for non-gateway `CLAWDBOT_*` aliases/usages (`CLAWDBOT_SHELL`, `CLAWDBOT_MDNS_HOSTNAME`, `CLAWDBOT_SHOW_SECRETS`, and helper-only legacy env handling).
+  - Eventual staged retirement plan for `OPENCLAW_*` compatibility aliases.
+
+- verification
+  - Command: `pnpm exec vitest run src/gateway/credentials.test.ts src/gateway/credential-precedence.parity.test.ts src/pairing/setup-code.test.ts src/cli/qr-cli.test.ts src/cli/daemon-cli/lifecycle-core.test.ts src/agents/tools/gateway.test.ts src/browser/extension-relay-auth.test.ts src/commands/doctor-gateway-services.test.ts src/commands/migrate-state.test.ts src/config/paths.test.ts`
+    - Result: passed (`10` test files, `80` tests).
+  - Command: `pnpm exec oxfmt --check src/gateway/credentials.ts src/browser/extension-relay-auth.ts src/pairing/setup-code.ts src/cli/daemon-cli/install.ts src/commands/doctor-gateway-services.ts src/gateway/credentials.test.ts src/gateway/credential-precedence.parity.test.ts src/agents/tools/gateway.test.ts src/pairing/setup-code.test.ts src/cli/qr-cli.test.ts src/cli/daemon-cli/lifecycle-core.test.ts`
+    - Result: passed (all matched files correctly formatted).
+
 ## Verification run
 
 - `pnpm --dir ui test -- src/ui/views/cron.test.ts src/ui/app-gateway.node.test.ts`

@@ -194,7 +194,7 @@ describe("resolveGatewayCredentialsFromConfig", () => {
     expect(resolved.token).toBeUndefined();
   });
 
-  it("can disable legacy CLAWDBOT env fallback", () => {
+  it("ignores legacy CLAWDBOT env aliases", () => {
     const resolved = resolveGatewayCredentialsFromConfig({
       cfg: cfg({
         gateway: {
@@ -205,7 +205,6 @@ describe("resolveGatewayCredentialsFromConfig", () => {
         CLAWDBOT_GATEWAY_TOKEN: "legacy-token",
         CLAWDBOT_GATEWAY_PASSWORD: "legacy-password",
       } as NodeJS.ProcessEnv,
-      includeLegacyEnv: false,
     });
     expect(resolved).toEqual({ token: undefined, password: undefined });
   });
