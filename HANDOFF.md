@@ -576,6 +576,31 @@ Stage 6 progress update (2026-03-03, pass 3)
 
 - Keep reversible mapping for config/service identity in case of live failures.
 
+Stage 7 progress update (2026-03-03, pass 1)
+
+- done
+  - Added pilot-rollout support to explicit migration command:
+    - `openclaw migrate-state --json` now emits a machine-readable migration report.
+    - `openclaw migrate-state --audit-log <path>` appends JSONL audit records for each run.
+    - `openclaw migrate-state --rollout-tag <tag>` annotates audit records for pilot/batch tracking.
+  - Kept existing runtime behavior unchanged:
+    - default remains dry-run,
+    - apply path remains wrapper over existing migration internals.
+  - Added regression coverage for:
+    - JSON dry-run report output,
+    - audit log write behavior,
+    - maintenance CLI flag passthrough for new options.
+
+- pending
+  - Stage 7.2 full rollout batching policy and operator runbook.
+  - Stage 7.3 explicit rollback runbook with documented validation checkpoints.
+
+- verification
+  - Command: `pnpm exec vitest run src/commands/migrate-state.test.ts src/cli/program/register.maintenance.test.ts`
+    - Result: passed (`2` test files, `15` tests).
+  - Command: `pnpm exec oxfmt --check src/commands/migrate-state.ts src/commands/migrate-state.test.ts src/cli/program/register.maintenance.ts src/cli/program/register.maintenance.test.ts`
+    - Result: passed (all matched files correctly formatted).
+
 ### Stage 8 - Cutover and deprecation
 
 1. Default to Propaiclaw runtime identity for new installs

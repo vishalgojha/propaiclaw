@@ -130,6 +130,31 @@ describe("registerMaintenanceCommands doctor action", () => {
     expect(runtime.exit).toHaveBeenCalledWith(0);
   });
 
+  it("passes json/audit/rollout options to migrate-state command", async () => {
+    migrateStateCommand.mockResolvedValue(undefined);
+
+    await runMaintenanceCli([
+      "migrate-state",
+      "--apply",
+      "--json",
+      "--audit-log",
+      "./migration-audit.jsonl",
+      "--rollout-tag",
+      "pilot-tenant-a",
+    ]);
+
+    expect(migrateStateCommand).toHaveBeenCalledWith(
+      runtime,
+      expect.objectContaining({
+        dryRun: false,
+        apply: true,
+        json: true,
+        auditLogPath: "./migration-audit.jsonl",
+        rolloutTag: "pilot-tenant-a",
+      }),
+    );
+  });
+
   it("passes reset options to reset command", async () => {
     resetCommand.mockResolvedValue(undefined);
 

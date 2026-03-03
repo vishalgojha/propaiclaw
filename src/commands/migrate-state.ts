@@ -14,6 +14,9 @@ import {
 export type MigrateStateOptions = {
   dryRun?: boolean;
   apply?: boolean;
+  json?: boolean;
+  auditLogPath?: string;
+  rolloutTag?: string;
 };
 
 type StateDirPlan = {
@@ -21,6 +24,21 @@ type StateDirPlan = {
   targetDir: string;
   status: "planned" | "skipped-target-exists" | "skipped-env-override";
   reason?: string;
+};
+
+type MigrateStateAuditRecord = {
+  timestamp: string;
+  mode: "dry-run" | "apply";
+  rolloutTag: string | null;
+  targetAgentId: string;
+  targetMainKey: string;
+  sessionScope: string;
+  stateDir: string;
+  oauthDir: string;
+  stateDirPlan: StateDirPlan | null;
+  previewActions: string[];
+  applyChanges: string[];
+  applyWarnings: string[];
 };
 
 function resolveDryRun(opts: MigrateStateOptions): boolean {
@@ -106,6 +124,46 @@ function reportDetectionSummary(params: {
   }
 }
 
+function createAuditRecord(params: {
+  mode: "dry-run" | "apply";
+  rolloutTag?: string;
+  cfg: OpenClawConfig;
+  stateDirPlan: StateDirPlan | null;
+  detection: Awaited<ReturnType<typeof detectLegacyStateMigrations>>;
+  previewActions?: string[];
+  applyChanges?: string[];
+  applyWarnings?: string[];
+}): MigrateStateAuditRecord {
+  return {
+    timestamp: new Date().toISOString(),
+    mode: params.mode,
+    rolloutTag: params.rolloutTag?.trim() ? params.rolloutTag.trim() : null,
+    targetAgentId: params.detection.targetAgentId,
+    targetMainKey: params.detection.targetMainKey,
+    sessionScope: params.cfg.session?.scope ?? "dm",
+    stateDir: params.detection.stateDir,
+    oauthDir: params.detection.oauthDir,
+    stateDirPlan: params.stateDirPlan,
+    previewActions: params.previewActions ?? [],
+    applyChanges: params.applyChanges ?? [],
+    applyWarnings: params.applyWarnings ?? [],
+  };
+}
+
+function writeAuditRecord(params: { auditLogPath: string; record: MigrateStateAuditRecord }): void {
+  const auditLogPath = params.auditLogPath.trim();
+  if (!auditLogPath) {
+    return;
+  }
+  const resolvedPath = path.resolve(auditLogPath);
+  fs.mkdirSync(path.dirname(resolvedPath), { recursive: true });
+  fs.appendFileSync(resolvedPath, `${JSON.stringify(params.record)}\n`, "utf-8");
+}
+
+function emitJsonReport(runtime: RuntimeEnv, record: MigrateStateAuditRecord): void {
+  runtime.log(JSON.stringify(record, null, 2));
+}
+
 export async function migrateStateCommand(
   runtime: RuntimeEnv,
   opts: MigrateStateOptions = {},
@@ -114,7 +172,9 @@ export async function migrateStateCommand(
   const cfg = loadConfig();
   const stateDirPlan = resolveStateDirPlan();
   const detected = await detectLegacyStateMigrations({ cfg });
-  reportDetectionSummary({ runtime, cfg, stateDirPlan, detection: detected });
+  if (!opts.json) {
+    reportDetectionSummary({ runtime, cfg, stateDirPlan, detection: detected });
+  }
 
   if (dryRun) {
     const preview = [];
@@ -122,13 +182,29 @@ export async function migrateStateCommand(
       preview.push(`State dir: ${stateDirPlan.legacyDir} -> ${stateDirPlan.targetDir}`);
     }
     preview.push(...detected.preview);
-    if (preview.length === 0) {
-      runtime.log("Dry run: no migration actions detected.");
-      return;
+    if (!opts.json) {
+      if (preview.length === 0) {
+        runtime.log("Dry run: no migration actions detected.");
+      } else {
+        runtime.log("Dry run actions:");
+        for (const entry of preview) {
+          runtime.log(entry.startsWith("- ") ? entry : `- ${entry}`);
+        }
+      }
     }
-    runtime.log("Dry run actions:");
-    for (const entry of preview) {
-      runtime.log(entry.startsWith("- ") ? entry : `- ${entry}`);
+    const record = createAuditRecord({
+      mode: "dry-run",
+      rolloutTag: opts.rolloutTag,
+      cfg,
+      stateDirPlan,
+      detection: detected,
+      previewActions: preview,
+    });
+    if (opts.auditLogPath) {
+      writeAuditRecord({ auditLogPath: opts.auditLogPath, record });
+    }
+    if (opts.json) {
+      emitJsonReport(runtime, record);
     }
     return;
   }
@@ -141,18 +217,37 @@ export async function migrateStateCommand(
   const changes = [...stateDirResult.changes, ...migrationResult.changes];
   const warnings = [...stateDirResult.warnings, ...migrationResult.warnings];
 
-  if (changes.length === 0) {
-    runtime.log("Apply: no migration changes were required.");
-  } else {
-    runtime.log("Apply changes:");
-    for (const entry of changes) {
-      runtime.log(`- ${entry}`);
+  if (!opts.json) {
+    if (changes.length === 0) {
+      runtime.log("Apply: no migration changes were required.");
+    } else {
+      runtime.log("Apply changes:");
+      for (const entry of changes) {
+        runtime.log(`- ${entry}`);
+      }
+    }
+    if (warnings.length > 0) {
+      runtime.log("Apply warnings:");
+      for (const entry of warnings) {
+        runtime.log(`- ${entry}`);
+      }
     }
   }
-  if (warnings.length > 0) {
-    runtime.log("Apply warnings:");
-    for (const entry of warnings) {
-      runtime.log(`- ${entry}`);
-    }
+
+  const record = createAuditRecord({
+    mode: "apply",
+    rolloutTag: opts.rolloutTag,
+    cfg,
+    stateDirPlan,
+    detection: applyDetection,
+    previewActions: applyDetection.preview,
+    applyChanges: changes,
+    applyWarnings: warnings,
+  });
+  if (opts.auditLogPath) {
+    writeAuditRecord({ auditLogPath: opts.auditLogPath, record });
+  }
+  if (opts.json) {
+    emitJsonReport(runtime, record);
   }
 }

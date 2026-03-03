@@ -46,11 +46,17 @@ export function registerMaintenanceCommands(program: Command) {
     .description("Run explicit legacy state migration (dry-run by default)")
     .option("--dry-run", "Preview migration actions without writing changes", false)
     .option("--apply", "Apply migration changes", false)
+    .option("--json", "Emit machine-readable migration report", false)
+    .option("--audit-log <path>", "Append JSONL audit records to file path")
+    .option("--rollout-tag <tag>", "Attach rollout label (for pilot/batch tracking)")
     .action(async (opts) => {
       await runCommandWithRuntime(defaultRuntime, async () => {
         await migrateStateCommand(defaultRuntime, {
           dryRun: Boolean(opts.dryRun),
           apply: Boolean(opts.apply),
+          json: Boolean(opts.json),
+          auditLogPath: typeof opts.auditLog === "string" ? opts.auditLog : undefined,
+          rolloutTag: typeof opts.rolloutTag === "string" ? opts.rolloutTag : undefined,
         });
         defaultRuntime.exit(0);
       });
