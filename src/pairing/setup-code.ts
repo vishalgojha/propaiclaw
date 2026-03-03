@@ -1,5 +1,6 @@
 import os from "node:os";
 import type { OpenClawConfig } from "../config/types.js";
+import { readGatewayPasswordEnv, readGatewayTokenEnv } from "../gateway/credentials.js";
 import { resolveGatewayBindUrl } from "../shared/gateway-bind-url.js";
 import { isCarrierGradeNatIpv4Address, isRfc1918Ipv4Address } from "../shared/net/ip.js";
 import { resolveTailnetHostWithRunner } from "../shared/tailscale-status.js";
@@ -165,8 +166,8 @@ function pickTailnetIPv4(
 
 function resolveAuth(cfg: OpenClawConfig, env: NodeJS.ProcessEnv): ResolveAuthResult {
   const mode = cfg.gateway?.auth?.mode;
-  const token = env.OPENCLAW_GATEWAY_TOKEN?.trim() || cfg.gateway?.auth?.token?.trim();
-  const password = env.OPENCLAW_GATEWAY_PASSWORD?.trim() || cfg.gateway?.auth?.password?.trim();
+  const token = readGatewayTokenEnv(env) || cfg.gateway?.auth?.token?.trim();
+  const password = readGatewayPasswordEnv(env) || cfg.gateway?.auth?.password?.trim();
 
   if (mode === "password") {
     if (!password) {

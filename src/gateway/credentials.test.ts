@@ -194,6 +194,27 @@ describe("resolveGatewayCredentialsFromConfig", () => {
     expect(resolved.token).toBeUndefined();
   });
 
+  it("prefers PROPAICLAW gateway env values over OPENCLAW values", () => {
+    const resolved = resolveGatewayCredentialsFromConfig({
+      cfg: cfg({
+        gateway: {
+          mode: "local",
+          auth: {},
+        },
+      }),
+      env: {
+        PROPAICLAW_GATEWAY_TOKEN: "propaiclaw-token",
+        PROPAICLAW_GATEWAY_PASSWORD: "propaiclaw-password",
+        OPENCLAW_GATEWAY_TOKEN: "openclaw-token",
+        OPENCLAW_GATEWAY_PASSWORD: "openclaw-password",
+      } as NodeJS.ProcessEnv,
+    });
+    expect(resolved).toEqual({
+      token: "propaiclaw-token",
+      password: "propaiclaw-password",
+    });
+  });
+
   it("ignores legacy CLAWDBOT env aliases", () => {
     const resolved = resolveGatewayCredentialsFromConfig({
       cfg: cfg({
@@ -241,6 +262,23 @@ describe("resolveGatewayCredentialsFromValues", () => {
     expect(resolved).toEqual({
       token: "env-token",
       password: "env-password",
+    });
+  });
+
+  it("prefers PROPAICLAW env aliases when both env namespaces are set", () => {
+    const resolved = resolveGatewayCredentialsFromValues({
+      configToken: "config-token",
+      configPassword: "config-password",
+      env: {
+        PROPAICLAW_GATEWAY_TOKEN: "propaiclaw-token",
+        PROPAICLAW_GATEWAY_PASSWORD: "propaiclaw-password",
+        OPENCLAW_GATEWAY_TOKEN: "openclaw-token",
+        OPENCLAW_GATEWAY_PASSWORD: "openclaw-password",
+      } as NodeJS.ProcessEnv,
+    });
+    expect(resolved).toEqual({
+      token: "propaiclaw-token",
+      password: "propaiclaw-password",
     });
   });
 });

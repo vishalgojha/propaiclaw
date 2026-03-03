@@ -787,6 +787,31 @@ Stage 8 progress update (2026-03-03, pass 6)
   - Command: `rg -n "CLAWDBOT_" src --glob "**/*.test.ts"`
     - Result: narrowed to `4` focused test files (`src/config/paths.test.ts`, `src/config/io.compat.test.ts`, `src/gateway/auth.test.ts`, `src/gateway/credentials.test.ts`).
 
+Stage 8 progress update (2026-03-03, pass 7)
+
+- done
+  - Began staged `OPENCLAW_*` gateway-auth alias retirement by introducing canonical `PROPAICLAW_*` env support in shared credential resolution:
+    - `src/gateway/credentials.ts` now reads:
+      - `PROPAICLAW_GATEWAY_TOKEN` with fallback to `OPENCLAW_GATEWAY_TOKEN`
+      - `PROPAICLAW_GATEWAY_PASSWORD` with fallback to `OPENCLAW_GATEWAY_PASSWORD`
+  - Updated direct gateway-auth consumers to use shared resolution helpers:
+    - `src/browser/extension-relay-auth.ts`
+    - `src/pairing/setup-code.ts`
+  - Added regression coverage for canonical alias precedence/fallback:
+    - `src/gateway/credentials.test.ts`
+    - `src/browser/extension-relay-auth.test.ts`
+    - `src/pairing/setup-code.test.ts`
+
+- pending
+  - Remaining direct `OPENCLAW_GATEWAY_TOKEN` / `OPENCLAW_GATEWAY_PASSWORD` reads outside shared credential helpers (wizard/dashboard/daemon/status/security surfaces) for staged conversion.
+  - Eventual staged retirement plan for broader `OPENCLAW_*` compatibility aliases.
+
+- verification
+  - Command: `pnpm exec vitest run src/gateway/credentials.test.ts src/gateway/auth.test.ts src/gateway/credential-precedence.parity.test.ts src/browser/extension-relay-auth.test.ts src/pairing/setup-code.test.ts src/cli/qr-cli.test.ts`
+    - Result: passed (`6` test files, `71` tests).
+  - Command: `pnpm exec oxfmt --check src/gateway/credentials.ts src/gateway/credentials.test.ts src/browser/extension-relay-auth.ts src/browser/extension-relay-auth.test.ts src/pairing/setup-code.ts src/pairing/setup-code.test.ts`
+    - Result: passed (all matched files correctly formatted).
+
 ## Verification run
 
 - `pnpm --dir ui test -- src/ui/views/cron.test.ts src/ui/app-gateway.node.test.ts`

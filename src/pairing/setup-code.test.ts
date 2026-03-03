@@ -3,6 +3,8 @@ import { encodePairingSetupCode, resolvePairingSetupFromConfig } from "./setup-c
 
 describe("pairing setup code", () => {
   beforeEach(() => {
+    vi.stubEnv("PROPAICLAW_GATEWAY_TOKEN", "");
+    vi.stubEnv("PROPAICLAW_GATEWAY_PASSWORD", "");
     vi.stubEnv("OPENCLAW_GATEWAY_TOKEN", "");
     vi.stubEnv("OPENCLAW_GATEWAY_PASSWORD", "");
   });
@@ -63,6 +65,30 @@ describe("pairing setup code", () => {
       throw new Error("expected setup resolution to succeed");
     }
     expect(resolved.payload.token).toBe("new-token");
+  });
+
+  it("prefers PROPAICLAW env token over OPENCLAW env token", async () => {
+    const resolved = await resolvePairingSetupFromConfig(
+      {
+        gateway: {
+          bind: "custom",
+          customBindHost: "gateway.local",
+          auth: { mode: "token", token: "old" },
+        },
+      },
+      {
+        env: {
+          PROPAICLAW_GATEWAY_TOKEN: "propai-token",
+          OPENCLAW_GATEWAY_TOKEN: "openclaw-token",
+        },
+      },
+    );
+
+    expect(resolved.ok).toBe(true);
+    if (!resolved.ok) {
+      throw new Error("expected setup resolution to succeed");
+    }
+    expect(resolved.payload.token).toBe("propai-token");
   });
 
   it("errors when gateway is loopback only", async () => {
