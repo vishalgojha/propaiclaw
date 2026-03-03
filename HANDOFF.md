@@ -533,6 +533,20 @@ Stage 6 progress update (2026-03-03, pass 2)
   - Command: `pnpm exec oxfmt --check ui/src/i18n/locales/de.ts ui/src/i18n/locales/pt-BR.ts ui/src/i18n/locales/zh-CN.ts ui/src/i18n/locales/zh-TW.ts HANDOFF.md docs/tools/plugin.md docs/zh-CN/tools/plugin.md`
     - Result: passed (all matched files correctly formatted).
 
+Stage 6 progress update (2026-03-03, pass 3)
+
+- done
+  - Completed Stage 6.3 UI stability validation pass for Agent Tasks surfaces under gateway event updates.
+  - Re-ran focused UI suites covering Agent Tasks list/history rendering and app-gateway event handling path.
+  - Stage 6 (6.1 + 6.2 + 6.3) is complete for this slice.
+
+- pending
+  - Stage 7 tenant migration rollout remains pending by plan.
+
+- verification
+  - Command: `pnpm --dir ui test -- src/ui/views/cron.test.ts src/ui/app-gateway.node.test.ts`
+    - Result: passed (`2` test files, `35` tests).
+
 ### Stage 6 - Realtor UX hardening and command simplification
 
 1. Simplify high-frequency realtor actions
