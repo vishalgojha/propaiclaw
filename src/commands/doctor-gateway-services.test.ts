@@ -255,4 +255,39 @@ describe("maybeScanExtraGatewayServices", () => {
       "Legacy gateway services removed. Installing Propaiclaw gateway next.",
     );
   });
+
+  it("emits migration guidance when legacy OpenClaw services are detected", async () => {
+    mocks.findExtraGatewayServices.mockResolvedValue([
+      {
+        platform: "darwin",
+        label: "com.openclaw.gateway",
+        detail: "plist: /Users/test/Library/LaunchAgents/com.openclaw.gateway.plist",
+        scope: "user",
+        marker: "openclaw",
+        legacy: true,
+      },
+    ]);
+
+    const runtime = { log: vi.fn(), error: vi.fn(), exit: vi.fn() };
+    const prompter = {
+      confirm: vi.fn(),
+      confirmRepair: vi.fn(),
+      confirmAggressive: vi.fn(),
+      confirmSkipInNonInteractive: vi.fn().mockResolvedValue(false),
+      select: vi.fn(),
+      shouldRepair: false,
+      shouldForce: false,
+    };
+
+    await maybeScanExtraGatewayServices({ deep: false }, runtime, prompter);
+
+    expect(mocks.note).toHaveBeenCalledWith(
+      expect.stringContaining("Legacy OpenClaw gateway service detected."),
+      "Gateway migration",
+    );
+    expect(mocks.note).toHaveBeenCalledWith(
+      expect.stringContaining("propai migrate-state --apply"),
+      "Gateway migration",
+    );
+  });
 });

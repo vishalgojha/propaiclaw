@@ -333,6 +333,20 @@ export async function maybeScanExtraGatewayServices(
 
   const legacyServices = extraServices.filter((svc) => svc.legacy === true);
   if (legacyServices.length > 0) {
+    const hasLegacyOpenClawService = legacyServices.some((svc) => {
+      const lower = svc.label.toLowerCase();
+      return svc.marker === "openclaw" || lower.includes("openclaw");
+    });
+    if (hasLegacyOpenClawService) {
+      note(
+        [
+          "Legacy OpenClaw gateway service detected.",
+          "Recommended: run `propai migrate-state --apply`, then reinstall the daemon with `propai gateway install --force`.",
+        ].join("\n"),
+        "Gateway migration",
+      );
+    }
+
     const shouldRemove = await prompter.confirmSkipInNonInteractive({
       message: "Remove legacy gateway services (openclaw/clawdbot/moltbot) now?",
       initialValue: true,

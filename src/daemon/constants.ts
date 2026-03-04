@@ -49,7 +49,9 @@ export function resolveLegacyGatewayLaunchAgentLabels(profile?: string): string[
   const labels = new Set<string>(LEGACY_GATEWAY_LAUNCH_AGENT_LABELS);
   if (normalized) {
     labels.add(`ai.openclaw.${normalized}`);
+    labels.add(`ai.openclaw.gateway-${normalized}`);
     labels.add(`com.openclaw.${normalized}`);
+    labels.add(`com.openclaw.gateway-${normalized}`);
   }
   return Array.from(labels);
 }

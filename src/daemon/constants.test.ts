@@ -153,7 +153,9 @@ describe("legacy gateway identity resolvers", () => {
     expect(resolveLegacyGatewayLaunchAgentLabels()).toContain("ai.openclaw.gateway");
     expect(resolveLegacyGatewayLaunchAgentLabels()).toContain("com.openclaw.gateway");
     expect(resolveLegacyGatewayLaunchAgentLabels("dev")).toContain("ai.openclaw.dev");
+    expect(resolveLegacyGatewayLaunchAgentLabels("dev")).toContain("ai.openclaw.gateway-dev");
     expect(resolveLegacyGatewayLaunchAgentLabels("dev")).toContain("com.openclaw.dev");
+    expect(resolveLegacyGatewayLaunchAgentLabels("dev")).toContain("com.openclaw.gateway-dev");
   });
 
   it("keeps legacy systemd names for default and profile modes", () => {
