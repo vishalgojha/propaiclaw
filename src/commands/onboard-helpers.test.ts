@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   normalizeGatewayTokenInput,
   openUrl,
+  printWizardHeader,
   resolveBrowserOpenCommand,
   resolveControlUiLinks,
   validateGatewayPasswordInput,
@@ -151,5 +152,31 @@ describe("validateGatewayPasswordInput", () => {
 
   it("accepts a normal password", () => {
     expect(validateGatewayPasswordInput(" secret ")).toBeUndefined();
+  });
+});
+
+describe("printWizardHeader", () => {
+  it("prints PROPAI label in propaiclaw mode", () => {
+    const previousMode = process.env.PROPAICLAW_MODE;
+    process.env.PROPAICLAW_MODE = "1";
+    const runtime = {
+      log: vi.fn(),
+      error: vi.fn(),
+      exit: vi.fn(),
+    };
+
+    try {
+      printWizardHeader(runtime);
+    } finally {
+      if (previousMode === undefined) {
+        delete process.env.PROPAICLAW_MODE;
+      } else {
+        process.env.PROPAICLAW_MODE = previousMode;
+      }
+    }
+
+    const header = String(runtime.log.mock.calls[0]?.[0] ?? "");
+    expect(header).toContain("PROPAI");
+    expect(header).not.toContain("OPENCLAW");
   });
 });

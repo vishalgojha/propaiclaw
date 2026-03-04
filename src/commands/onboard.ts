@@ -1,5 +1,6 @@
 import { formatCliCommand } from "../cli/command-format.js";
 import { readConfigFileSnapshot } from "../config/config.js";
+import { isTruthyEnvValue } from "../infra/env.js";
 import { assertSupportedRuntime } from "../infra/runtime-guard.js";
 import type { RuntimeEnv } from "../runtime.js";
 import { defaultRuntime } from "../runtime.js";
@@ -11,6 +12,15 @@ import { runNonInteractiveOnboarding } from "./onboard-non-interactive.js";
 import type { OnboardOptions, ResetScope } from "./onboard-types.js";
 
 const VALID_RESET_SCOPES = new Set<ResetScope>(["config", "config+creds+sessions", "full"]);
+
+function resolvePropaiclawWrapperName(env: NodeJS.ProcessEnv): string {
+  const raw = env.PROPAICLAW_CLI_NAME;
+  if (!raw) {
+    return "propaiclaw";
+  }
+  const trimmed = raw.trim();
+  return trimmed || "propaiclaw";
+}
 
 export async function onboardCommand(opts: OnboardOptions, runtime: RuntimeEnv = defaultRuntime) {
   assertSupportedRuntime(runtime);
@@ -54,11 +64,15 @@ export async function onboardCommand(opts: OnboardOptions, runtime: RuntimeEnv =
   }
 
   if (normalizedOpts.nonInteractive && normalizedOpts.acceptRisk !== true) {
+    const wrapperName = resolvePropaiclawWrapperName(process.env);
+    const rerunCommand = isTruthyEnvValue(process.env.PROPAICLAW_MODE)
+      ? `${wrapperName} onboard --non-interactive --accept-risk ...`
+      : formatCliCommand("openclaw onboard --non-interactive --accept-risk ...");
     runtime.error(
       [
         "Non-interactive onboarding requires explicit risk acknowledgement.",
         "Read: https://docs.openclaw.ai/security",
-        `Re-run with: ${formatCliCommand("openclaw onboard --non-interactive --accept-risk ...")}`,
+        `Re-run with: ${rerunCommand}`,
       ].join("\n"),
     );
     runtime.exit(1);
@@ -75,9 +89,12 @@ export async function onboardCommand(opts: OnboardOptions, runtime: RuntimeEnv =
   }
 
   if (process.platform === "win32") {
+    const wslLabel = isTruthyEnvValue(process.env.PROPAICLAW_MODE)
+      ? "PropAI runs best on WSL2!"
+      : "OpenClaw runs great on WSL2!";
     runtime.log(
       [
-        "Windows detected — OpenClaw runs great on WSL2!",
+        `Windows detected — ${wslLabel}`,
         "Native Windows might be trickier.",
         "Quick setup: wsl --install (one command, one reboot)",
         "Guide: https://docs.openclaw.ai/windows",

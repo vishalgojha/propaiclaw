@@ -1,3 +1,4 @@
+import path from "node:path";
 import { describe, expect, it } from "vitest";
 import { applyProcessEnvValues, resolvePropaiclawRuntimeEnv } from "./propaiclaw-entry.env.js";
 
@@ -6,6 +7,7 @@ describe("propaiclaw runtime env bootstrap", () => {
     const resolved = resolvePropaiclawRuntimeEnv({} as NodeJS.ProcessEnv);
     expect(resolved.PROPAICLAW_MODE).toBe("1");
     expect(resolved.PROPAICLAW_CHANNELS_ONLY).toBe("whatsapp");
+    expect(resolved.OPENCLAW_HIDE_BANNER).toBe("1");
   });
 
   it("keeps canonical propaiclaw env values", () => {
@@ -37,6 +39,38 @@ describe("propaiclaw runtime env bootstrap", () => {
     expect(resolved.LEGACY_PROFILE).toBe("tenant-a");
   });
 
+  it("falls back to legacy ~/.openclaw state dir when canonical dir is not present", () => {
+    const homeDir = path.join(path.sep, "users", "visha");
+    const legacyDir = path.join(homeDir, ".openclaw");
+    const resolved = resolvePropaiclawRuntimeEnv(
+      {
+        HOME: homeDir,
+      } as NodeJS.ProcessEnv,
+      {
+        homedir: () => homeDir,
+        existsSync: (targetPath) => targetPath === legacyDir,
+      },
+    );
+    expect(resolved.PROPAICLAW_STATE_DIR).toBe(legacyDir);
+  });
+
+  it("does not force legacy fallback when canonical ~/.propaiclaw exists", () => {
+    const homeDir = path.join(path.sep, "users", "visha");
+    const legacyDir = path.join(homeDir, ".openclaw");
+    const canonicalDir = path.join(homeDir, ".propaiclaw");
+    const resolved = resolvePropaiclawRuntimeEnv(
+      {
+        HOME: homeDir,
+      } as NodeJS.ProcessEnv,
+      {
+        homedir: () => homeDir,
+        existsSync: (targetPath) =>
+          targetPath === canonicalDir || targetPath === legacyDir,
+      },
+    );
+    expect(resolved.PROPAICLAW_STATE_DIR).toBeUndefined();
+  });
+
   it("applies resolved env values onto process-like env target", () => {
     const target = {} as NodeJS.ProcessEnv;
     const source = resolvePropaiclawRuntimeEnv({
@@ -45,5 +79,12 @@ describe("propaiclaw runtime env bootstrap", () => {
     applyProcessEnvValues(source, target);
     expect(target.PROPAICLAW_GATEWAY_PORT).toBe("18790");
     expect(target.PROPAICLAW_MODE).toBe("1");
+  });
+
+  it("preserves explicit banner visibility preference", () => {
+    const resolved = resolvePropaiclawRuntimeEnv({
+      OPENCLAW_HIDE_BANNER: "0",
+    } as NodeJS.ProcessEnv);
+    expect(resolved.OPENCLAW_HIDE_BANNER).toBe("0");
   });
 });

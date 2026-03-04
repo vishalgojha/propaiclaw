@@ -396,6 +396,7 @@ export async function finalizeOnboardingWizard(
 
   const shouldOpenControlUi =
     !opts.skipUi &&
+    gatewayProbe.ok &&
     settings.authMode === "token" &&
     Boolean(settings.gatewayToken) &&
     hatchChoice === null;

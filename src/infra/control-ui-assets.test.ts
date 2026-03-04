@@ -8,6 +8,7 @@ const state = vi.hoisted(() => ({
   entries: new Map<string, FakeFsEntry>(),
   realpaths: new Map<string, string>(),
 }));
+const runCommandWithTimeout = vi.hoisted(() => vi.fn());
 
 const abs = (p: string) => path.resolve(p);
 
@@ -73,11 +74,16 @@ vi.mock("./openclaw-root.js", () => ({
   resolveOpenClawPackageRootSync: vi.fn(() => null),
 }));
 
+vi.mock("../process/exec.js", () => ({
+  runCommandWithTimeout,
+}));
+
 let resolveControlUiRepoRoot: typeof import("./control-ui-assets.js").resolveControlUiRepoRoot;
 let resolveControlUiDistIndexPath: typeof import("./control-ui-assets.js").resolveControlUiDistIndexPath;
 let resolveControlUiDistIndexHealth: typeof import("./control-ui-assets.js").resolveControlUiDistIndexHealth;
 let resolveControlUiRootOverrideSync: typeof import("./control-ui-assets.js").resolveControlUiRootOverrideSync;
 let resolveControlUiRootSync: typeof import("./control-ui-assets.js").resolveControlUiRootSync;
+let ensureControlUiAssetsBuilt: typeof import("./control-ui-assets.js").ensureControlUiAssetsBuilt;
 let openclawRoot: typeof import("./openclaw-root.js");
 
 describe("control UI assets helpers (fs-mocked)", () => {
@@ -88,6 +94,7 @@ describe("control UI assets helpers (fs-mocked)", () => {
       resolveControlUiDistIndexHealth,
       resolveControlUiRootOverrideSync,
       resolveControlUiRootSync,
+      ensureControlUiAssetsBuilt,
     } = await import("./control-ui-assets.js"));
     openclawRoot = await import("./openclaw-root.js");
   });
@@ -95,6 +102,7 @@ describe("control UI assets helpers (fs-mocked)", () => {
   beforeEach(() => {
     state.entries.clear();
     state.realpaths.clear();
+    runCommandWithTimeout.mockReset();
     vi.clearAllMocks();
   });
 
@@ -198,5 +206,27 @@ describe("control UI assets helpers (fs-mocked)", () => {
     // moduleUrl candidate: <moduleDir>/control-ui
     const moduleUrl = pathToFileURL(path.join(pkgRoot, "dist", "bundle.js")).toString();
     expect(resolveControlUiRootSync({ moduleUrl })).toBe(uiDir);
+  });
+
+  it("returns a non-throwing error when ui build process fails to launch", async () => {
+    const root = abs("fixtures/ui-build-eprem");
+    setFile(path.join(root, "package.json"), JSON.stringify({ name: "openclaw" }));
+    setFile(path.join(root, "ui", "vite.config.ts"), "export {};\n");
+    setFile(path.join(root, "scripts", "ui.js"), "console.log('ui');\n");
+    const previousArgv1 = process.argv[1];
+    process.argv[1] = path.join(root, "dist", "index.js");
+    runCommandWithTimeout.mockRejectedValueOnce(new Error("spawn EPERM"));
+
+    try {
+      await expect(ensureControlUiAssetsBuilt()).resolves.toEqual(
+        expect.objectContaining({
+          ok: false,
+          built: false,
+          message: expect.stringContaining("Control UI build failed to launch: spawn EPERM"),
+        }),
+      );
+    } finally {
+      process.argv[1] = previousArgv1;
+    }
   });
 });

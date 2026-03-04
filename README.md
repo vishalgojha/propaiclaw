@@ -34,6 +34,26 @@ propai schedule daily "Good morning check-in" --to +15555550123
 propai history +15555550123
 ```
 
+## Windows One-Click TUI Launcher
+
+If TUI shows `not connected to gateway`, use the launcher from the repo root:
+
+```powershell
+.\start-propai-tui.bat
+```
+
+It automatically:
+
+- stops stale PropAI/OpenClaw TUI and gateway node processes
+- starts one fresh gateway on `ws://127.0.0.1:18789`
+- opens TUI after the gateway is reachable
+
+Manual cleanup only:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\propai-stop.ps1
+```
+
 ## WhatsApp Group Allowlist (Simple)
 
 ```bash

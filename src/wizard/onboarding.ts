@@ -13,11 +13,46 @@ import {
   writeConfigFile,
 } from "../config/config.js";
 import { readGatewayPasswordEnv, readGatewayTokenEnv } from "../gateway/credentials.js";
+import { isTruthyEnvValue } from "../infra/env.js";
 import type { RuntimeEnv } from "../runtime.js";
 import { defaultRuntime } from "../runtime.js";
 import { resolveUserPath } from "../utils.js";
 import type { QuickstartGatewayDefaults, WizardFlow } from "./onboarding.types.js";
 import { WizardCancelledError, type WizardPrompter } from "./prompts.js";
+
+function isPropaiclawMode(env: NodeJS.ProcessEnv = process.env): boolean {
+  return isTruthyEnvValue(env.PROPAICLAW_MODE);
+}
+
+function resolveWrapperCliName(env: NodeJS.ProcessEnv = process.env): string {
+  const raw = env.PROPAICLAW_CLI_NAME;
+  if (!raw) {
+    return "propaiclaw";
+  }
+  const trimmed = raw.trim();
+  return trimmed || "propaiclaw";
+}
+
+function resolveSecurityAuditCommands(env: NodeJS.ProcessEnv = process.env): {
+  deep: string;
+  fix: string;
+} {
+  if (isPropaiclawMode(env)) {
+    const wrapperCliName = resolveWrapperCliName(env);
+    return {
+      deep: `${wrapperCliName} security audit --deep`,
+      fix: `${wrapperCliName} security audit --fix`,
+    };
+  }
+  return {
+    deep: formatCliCommand("openclaw security audit --deep"),
+    fix: formatCliCommand("openclaw security audit --fix"),
+  };
+}
+
+function resolveOnboardingBrandName(env: NodeJS.ProcessEnv = process.env): string {
+  return isPropaiclawMode(env) ? "PropAI" : "OpenClaw";
+}
 
 async function requireRiskAcknowledgement(params: {
   opts: OnboardOptions;
@@ -26,20 +61,22 @@ async function requireRiskAcknowledgement(params: {
   if (params.opts.acceptRisk === true) {
     return;
   }
+  const brandName = resolveOnboardingBrandName();
+  const auditCommands = resolveSecurityAuditCommands();
 
   await params.prompter.note(
     [
       "Security warning — please read.",
       "",
-      "OpenClaw is a hobby project and still in beta. Expect sharp edges.",
-      "By default, OpenClaw is a personal agent: one trusted operator boundary.",
+      `${brandName} is a hobby project and still in beta. Expect sharp edges.`,
+      `By default, ${brandName} is a personal agent: one trusted operator boundary.`,
       "This bot can read files and run actions if tools are enabled.",
       "A bad prompt can trick it into doing unsafe things.",
       "",
-      "OpenClaw is not a hostile multi-tenant boundary by default.",
+      `${brandName} is not a hostile multi-tenant boundary by default.`,
       "If multiple users can message one tool-enabled agent, they share that delegated tool authority.",
       "",
-      "If you’re not comfortable with security hardening and access control, don’t run OpenClaw.",
+      `If you’re not comfortable with security hardening and access control, don’t run ${brandName}.`,
       "Ask someone experienced to help before enabling tools or exposing it to the internet.",
       "",
       "Recommended baseline:",
@@ -51,8 +88,8 @@ async function requireRiskAcknowledgement(params: {
       "- Use the strongest available model for any bot with tools or untrusted inboxes.",
       "",
       "Run regularly:",
-      "openclaw security audit --deep",
-      "openclaw security audit --fix",
+      auditCommands.deep,
+      auditCommands.fix,
       "",
       "Must read: https://docs.openclaw.ai/gateway/security",
     ].join("\n"),
@@ -74,9 +111,10 @@ export async function runOnboardingWizard(
   runtime: RuntimeEnv = defaultRuntime,
   prompter: WizardPrompter,
 ) {
+  const brandName = resolveOnboardingBrandName();
   const onboardHelpers = await import("../commands/onboard-helpers.js");
   onboardHelpers.printWizardHeader(runtime);
-  await prompter.intro("OpenClaw onboarding");
+  await prompter.intro(`${brandName} onboarding`);
   await requireRiskAcknowledgement({ opts, prompter });
 
   const snapshot = await readConfigFileSnapshot();

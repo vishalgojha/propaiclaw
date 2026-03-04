@@ -502,7 +502,13 @@ export async function verifyDeviceToken(params: {
     device.tokens ??= {};
     device.tokens[role] = entry;
     state.pairedByDeviceId[device.deviceId] = device;
-    await persistState(state, params.baseDir);
+    try {
+      // Keep auth path resilient on Windows when background scanners lock temp files.
+      // Failing to persist lastUsedAtMs must not block a valid authenticated request.
+      await persistState(state, params.baseDir);
+    } catch {
+      // best-effort telemetry write
+    }
     return { ok: true };
   });
 }

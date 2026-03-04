@@ -2,6 +2,7 @@ import type { Command } from "commander";
 import { formatDocsLink } from "../../terminal/links.js";
 import { isRich, theme } from "../../terminal/theme.js";
 import { escapeRegExp } from "../../utils.js";
+import { isTruthyEnvValue } from "../../infra/env.js";
 import { hasFlag, hasRootVersionAlias } from "../argv.js";
 import { formatCliBannerLine, hasEmittedCliBanner } from "../banner.js";
 import { replaceCliName, resolveCliName } from "../cli-name.js";
@@ -114,7 +115,7 @@ export function configureProgramHelp(program: Command, ctx: ProgramContext) {
   }
 
   program.addHelpText("beforeAll", () => {
-    if (hasEmittedCliBanner()) {
+    if (hasEmittedCliBanner() || isTruthyEnvValue(process.env.OPENCLAW_HIDE_BANNER)) {
       return "";
     }
     const rich = isRich();

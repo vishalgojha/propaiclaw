@@ -1,7 +1,8 @@
 import { mkdtemp } from "node:fs/promises";
+import fs from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { describe, expect, test } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 import {
   approveDevicePairing,
   clearDevicePairing,
@@ -49,6 +50,12 @@ function requireToken(token: string | undefined): string {
     throw new Error("expected operator token to be issued");
   }
   return token;
+}
+
+function errnoError(code: string): NodeJS.ErrnoException {
+  const error = new Error(code) as NodeJS.ErrnoException;
+  error.code = code;
+  return error;
 }
 
 describe("device pairing tokens", () => {
@@ -197,6 +204,35 @@ describe("device pairing tokens", () => {
     });
     expect(mismatch.ok).toBe(false);
     expect(mismatch.reason).toBe("token-mismatch");
+  });
+
+  test("keeps auth successful when persisting lastUsed telemetry fails", async () => {
+    const { baseDir, token } = await setupOperatorToken(["operator.read"]);
+    const writeFile = fs.writeFile.bind(fs);
+    const spy = vi
+      .spyOn(fs, "writeFile")
+      .mockImplementation(async (...args: Parameters<typeof fs.writeFile>) => {
+        const [filePath] = args;
+        if (
+          typeof filePath === "string" &&
+          filePath.includes("paired.json.") &&
+          filePath.endsWith(".tmp")
+        ) {
+          throw errnoError("EPERM");
+        }
+        await writeFile(...args);
+      });
+    try {
+      await expect(
+        verifyOperatorToken({
+          baseDir,
+          token,
+          scopes: ["operator.read"],
+        }),
+      ).resolves.toEqual({ ok: true });
+    } finally {
+      spy.mockRestore();
+    }
   });
 
   test("accepts operator.read/operator.write requests with an operator.admin token scope", async () => {

@@ -222,6 +222,13 @@ function summarizeCommandOutput(text: string): string | undefined {
   return last.length > 240 ? `${last.slice(0, 239)}…` : last;
 }
 
+function summarizeError(error: unknown): string {
+  if (error instanceof Error) {
+    return error.message;
+  }
+  return String(error);
+}
+
 export async function ensureControlUiAssetsBuilt(
   runtime: RuntimeEnv = defaultRuntime,
   opts?: { timeoutMs?: number },
@@ -260,10 +267,25 @@ export async function ensureControlUiAssetsBuilt(
 
   runtime.log("Control UI assets missing; building (ui:build, auto-installs UI deps)…");
 
-  const build = await runCommandWithTimeout([process.execPath, uiScript, "build"], {
-    cwd: repoRoot,
-    timeoutMs: opts?.timeoutMs ?? 10 * 60_000,
-  });
+  let build:
+    | {
+        code: number;
+        stdout: string;
+        stderr: string;
+      }
+    | undefined;
+  try {
+    build = await runCommandWithTimeout([process.execPath, uiScript, "build"], {
+      cwd: repoRoot,
+      timeoutMs: opts?.timeoutMs ?? 10 * 60_000,
+    });
+  } catch (error) {
+    return {
+      ok: false,
+      built: false,
+      message: `Control UI build failed to launch: ${summarizeError(error)}`,
+    };
+  }
   if (build.code !== 0) {
     return {
       ok: false,

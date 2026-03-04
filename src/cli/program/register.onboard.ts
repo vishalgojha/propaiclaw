@@ -2,6 +2,7 @@ import type { Command } from "commander";
 import { formatAuthChoiceChoicesForCli } from "../../commands/auth-choice-options.js";
 import type { GatewayDaemonRuntime } from "../../commands/daemon-runtime.js";
 import { ONBOARD_PROVIDER_AUTH_FLAGS } from "../../commands/onboard-provider-auth-flags.js";
+import { isTruthyEnvValue } from "../../infra/env.js";
 import type {
   AuthChoice,
   GatewayAuthChoice,
@@ -47,6 +48,9 @@ const AUTH_CHOICE_HELP = formatAuthChoiceChoicesForCli({
 });
 
 export function registerOnboardCommand(program: Command) {
+  const propaiclawMode = isTruthyEnvValue(process.env.PROPAICLAW_MODE);
+  const workspaceDefaultHint = propaiclawMode ? "~/.propaiclaw/workspace" : "~/.openclaw/workspace";
+  const uiPromptLabel = propaiclawMode ? "PropAI Studio/TUI" : "Control UI/TUI";
   const command = program
     .command("onboard")
     .description("Interactive wizard to set up the gateway, workspace, and skills")
@@ -55,7 +59,7 @@ export function registerOnboardCommand(program: Command) {
       () =>
         `\n${theme.muted("Docs:")} ${formatDocsLink("/cli/onboard", "docs.openclaw.ai/cli/onboard")}\n`,
     )
-    .option("--workspace <dir>", "Agent workspace directory (default: ~/.openclaw/workspace)")
+    .option("--workspace <dir>", `Agent workspace directory (default: ${workspaceDefaultHint})`)
     .option(
       "--reset",
       "Reset config + credentials + sessions before running wizard (workspace only with --reset-scope full)",
@@ -116,7 +120,7 @@ export function registerOnboardCommand(program: Command) {
     .option("--skip-channels", "Skip channel setup")
     .option("--skip-skills", "Skip skills setup")
     .option("--skip-health", "Skip health check")
-    .option("--skip-ui", "Skip Control UI/TUI prompts")
+    .option("--skip-ui", `Skip ${uiPromptLabel} prompts`)
     .option("--node-manager <name>", "Node manager for skills: npm|pnpm|bun")
     .option("--json", "Output JSON summary", false);
 

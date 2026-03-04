@@ -34,7 +34,10 @@
     "docs/",
     "extensions/",
     "propai-studio/",
+    "scripts/propai-launch.ps1",
+    "scripts/propai-stop.ps1",
     "start-propai-studio.bat",
+    "start-propai-tui.bat",
     "skills/"
   ],
   "type": "module",
@@ -118,6 +121,7 @@
     "openclaw": "node scripts/run-node.mjs",
     "openclaw:rpc": "node scripts/run-node.mjs agent --mode rpc --json",
     "propai": "node propai.mjs",
+    "propai:launch": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/propai-launch.ps1",
     "propai:studio": "npm --prefix ./propai-studio install && npm --prefix ./propai-studio run dev",
     "propai:studio:install": "npm --prefix ./propai-studio install",
     "plugins:sync": "node --import tsx scripts/sync-plugin-versions.ts",

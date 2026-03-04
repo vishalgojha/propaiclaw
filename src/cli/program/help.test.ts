@@ -50,15 +50,23 @@ const testProgramContext: ProgramContext = {
 
 describe("configureProgramHelp", () => {
   let originalArgv: string[];
+  let originalHideBanner: string | undefined;
 
   beforeEach(() => {
     vi.clearAllMocks();
     originalArgv = [...process.argv];
+    originalHideBanner = process.env.OPENCLAW_HIDE_BANNER;
+    delete process.env.OPENCLAW_HIDE_BANNER;
     hasEmittedCliBannerMock.mockReturnValue(false);
   });
 
   afterEach(() => {
     process.argv = originalArgv;
+    if (originalHideBanner === undefined) {
+      delete process.env.OPENCLAW_HIDE_BANNER;
+    } else {
+      process.env.OPENCLAW_HIDE_BANNER = originalHideBanner;
+    }
   });
 
   function makeProgramWithCommands() {
@@ -105,6 +113,17 @@ describe("configureProgramHelp", () => {
     expect(help).toContain("BANNER-LINE");
     expect(help).toContain("Examples:");
     expect(help).toContain("https://docs.openclaw.ai/cli");
+  });
+
+  it("omits help banner when OPENCLAW_HIDE_BANNER is truthy", () => {
+    process.argv = ["node", "openclaw", "--help"];
+    process.env.OPENCLAW_HIDE_BANNER = "1";
+    const program = makeProgramWithCommands();
+    configureProgramHelp(program, testProgramContext);
+
+    const help = captureHelpOutput(program);
+    expect(help).not.toContain("BANNER-LINE");
+    expect(help).toContain("Examples:");
   });
 
   it("prints version and exits immediately when version flags are present", () => {

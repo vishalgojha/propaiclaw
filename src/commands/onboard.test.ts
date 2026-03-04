@@ -37,9 +37,22 @@ function makeRuntime(): RuntimeEnv {
 }
 
 describe("onboardCommand", () => {
+  const originalPropaiclawMode = process.env.PROPAICLAW_MODE;
+  const originalPropaiclawCliName = process.env.PROPAICLAW_CLI_NAME;
+
   afterEach(() => {
     vi.clearAllMocks();
     mocks.readConfigFileSnapshot.mockResolvedValue({ exists: false, valid: false, config: {} });
+    if (originalPropaiclawMode === undefined) {
+      delete process.env.PROPAICLAW_MODE;
+    } else {
+      process.env.PROPAICLAW_MODE = originalPropaiclawMode;
+    }
+    if (originalPropaiclawCliName === undefined) {
+      delete process.env.PROPAICLAW_CLI_NAME;
+    } else {
+      process.env.PROPAICLAW_CLI_NAME = originalPropaiclawCliName;
+    }
   });
 
   it("fails fast for invalid secret-input-mode before onboarding starts", async () => {
@@ -137,5 +150,55 @@ describe("onboardCommand", () => {
     expect(mocks.handleReset).not.toHaveBeenCalled();
     expect(mocks.runInteractiveOnboarding).not.toHaveBeenCalled();
     expect(mocks.runNonInteractiveOnboarding).not.toHaveBeenCalled();
+  });
+
+  it("uses propaiclaw rerun command hint in non-interactive mode when wrapper mode is enabled", async () => {
+    const runtime = makeRuntime();
+    process.env.PROPAICLAW_MODE = "1";
+
+    await onboardCommand(
+      {
+        nonInteractive: true,
+      },
+      runtime,
+    );
+
+    expect(runtime.error).toHaveBeenCalledWith(
+      expect.stringContaining("Re-run with: propaiclaw onboard --non-interactive --accept-risk ..."),
+    );
+    expect(runtime.exit).toHaveBeenCalledWith(1);
+  });
+
+  it("uses wrapper alias name in rerun hint when provided", async () => {
+    const runtime = makeRuntime();
+    process.env.PROPAICLAW_MODE = "1";
+    process.env.PROPAICLAW_CLI_NAME = "propai";
+
+    await onboardCommand(
+      {
+        nonInteractive: true,
+      },
+      runtime,
+    );
+
+    expect(runtime.error).toHaveBeenCalledWith(
+      expect.stringContaining("Re-run with: propai onboard --non-interactive --accept-risk ..."),
+    );
+  });
+
+  it("prints PropAI WSL hint on Windows in wrapper mode", async () => {
+    const runtime = makeRuntime();
+    process.env.PROPAICLAW_MODE = "1";
+    const platformSpy = vi.spyOn(process, "platform", "get").mockReturnValue("win32");
+
+    try {
+      await onboardCommand({}, runtime);
+    } finally {
+      platformSpy.mockRestore();
+    }
+
+    expect(runtime.log).toHaveBeenCalledWith(
+      expect.stringContaining("Windows detected — PropAI runs best on WSL2!"),
+    );
   });
 });

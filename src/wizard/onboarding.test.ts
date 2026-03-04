@@ -392,4 +392,54 @@ describe("runOnboardingWizard", () => {
       }
     }
   });
+
+  it("uses PropAI onboarding and wrapper security commands in propaiclaw mode", async () => {
+    const previousMode = process.env.PROPAICLAW_MODE;
+    const previousCliName = process.env.PROPAICLAW_CLI_NAME;
+    process.env.PROPAICLAW_MODE = "1";
+    process.env.PROPAICLAW_CLI_NAME = "propai";
+
+    try {
+      const intro: WizardPrompter["intro"] = vi.fn(async () => {});
+      const note: WizardPrompter["note"] = vi.fn(async () => {});
+      const confirm: WizardPrompter["confirm"] = vi.fn(async () => true);
+      const prompter = buildWizardPrompter({ intro, note, confirm });
+      const runtime = createRuntime();
+
+      await runOnboardingWizard(
+        {
+          flow: "quickstart",
+          authChoice: "skip",
+          installDaemon: false,
+          skipProviders: true,
+          skipSkills: true,
+          skipHealth: true,
+          skipUi: true,
+        },
+        runtime,
+        prompter,
+      );
+
+      expect(intro).toHaveBeenCalledWith("PropAI onboarding");
+      const securityNoteCall = (note as unknown as { mock: { calls: unknown[][] } }).mock.calls.find(
+        (call) => call?.[1] === "Security",
+      );
+      const securityText = String(securityNoteCall?.[0] ?? "");
+      expect(securityText).toContain("PropAI is a hobby project");
+      expect(securityText).toContain("propai security audit --deep");
+      expect(securityText).toContain("propai security audit --fix");
+      expect(securityText).not.toContain("OpenClaw is a hobby project");
+    } finally {
+      if (previousMode === undefined) {
+        delete process.env.PROPAICLAW_MODE;
+      } else {
+        process.env.PROPAICLAW_MODE = previousMode;
+      }
+      if (previousCliName === undefined) {
+        delete process.env.PROPAICLAW_CLI_NAME;
+      } else {
+        process.env.PROPAICLAW_CLI_NAME = previousCliName;
+      }
+    }
+  });
 });

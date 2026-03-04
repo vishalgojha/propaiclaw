@@ -48,8 +48,22 @@ function resolveCliCommandName(argv = process.argv): string {
 
 const CLI_COMMAND_NAME = resolveCliCommandName();
 
+function shouldUseColorOutput(): boolean {
+  if (process.env.NO_COLOR) {
+    return false;
+  }
+  const forceColor = process.env.FORCE_COLOR;
+  if (typeof forceColor === "string") {
+    return forceColor !== "0";
+  }
+  return Boolean(process.stdout.isTTY);
+}
+
 function bootstrapPropaiclawRuntimeIdentity(): void {
-  const runtimeEnv = resolvePropaiclawRuntimeEnv(process.env);
+  const runtimeEnv = resolvePropaiclawRuntimeEnv({
+    ...process.env,
+    PROPAICLAW_CLI_NAME: CLI_COMMAND_NAME,
+  });
   applyProcessEnvValues(runtimeEnv, process.env);
 }
 
@@ -145,7 +159,9 @@ function runOpenClawCommand(params: {
 async function runRoute(route: PropAiCommandRoute): Promise<number> {
   const openClawWrapperPath = resolveOpenClawWrapperPath();
   if (route.kind === "help") {
-    process.stdout.write(`${renderPropAiHelp(CLI_COMMAND_NAME)}\n`);
+    process.stdout.write(
+      `${renderPropAiHelp(CLI_COMMAND_NAME, { color: shouldUseColorOutput() })}\n`,
+    );
     return 0;
   }
   if (route.kind === "error") {

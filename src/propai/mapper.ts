@@ -1,5 +1,8 @@
 import { normalizeWhatsAppGroupAllowlistEntries } from "./group-allowlist.js";
 
+const ANSI_BLUE_BOLD = "\x1b[1;34m";
+const ANSI_RESET = "\x1b[0m";
+
 export type PropAiCommandRoute =
   | {
       kind: "help";
@@ -56,55 +59,60 @@ export type PropAiCommandRoute =
       };
     };
 
-export function renderPropAiHelp(commandName = "propaiclaw"): string {
+type RenderPropAiHelpOptions = {
+  color?: boolean;
+};
+
+function colorizeCommandName(commandName: string, colorEnabled: boolean): string {
+  if (!colorEnabled) {
+    return commandName;
+  }
+  return `${ANSI_BLUE_BOLD}${commandName}${ANSI_RESET}`;
+}
+
+export function renderPropAiHelp(
+  commandName = "propaiclaw",
+  options: RenderPropAiHelpOptions = {},
+): string {
+  const colorEnabled = options.color ?? false;
+  const styledCommandName = colorizeCommandName(commandName, colorEnabled);
+  const cmd = (suffix: string) => `  ${styledCommandName} ${suffix}`;
+
   return [
-    "Propaiclaw Realtor CLI (WhatsApp-first wrapper runtime)",
+    "Propaiclaw Realtor CLI",
     "",
-    "Usage:",
-    `  ${commandName} profile init [brokerage-name] [options]`,
-    `  ${commandName} start`,
-    `  ${commandName} setup`,
-    `  ${commandName} sync`,
-    `  ${commandName} dashboard`,
-    `  ${commandName} ui`,
-    `  ${commandName} tui`,
-    `  ${commandName} connect whatsapp`,
-    `  ${commandName} channels list`,
-    `  ${commandName} channels add <account-id> [options]`,
-    `  ${commandName} channels remove <account-id>`,
-    `  ${commandName} groups list [--account <id>] [--agent <id>]`,
-    `  ${commandName} groups allow <group-id...> [--account <id>] [--agent <id>]`,
-    `  ${commandName} groups allow-all [--account <id>] [--agent <id>]`,
-    `  ${commandName} lead follow-up <target> "<message>"`,
-    `  ${commandName} schedule daily "<message>" --to <target>`,
-    `  ${commandName} history [target]`,
-    `  ${commandName} status`,
+    `Command: ${styledCommandName}`,
     "",
-    "Examples:",
-    `  ${commandName} profile init "Acme Realty" --owner "Vishal" --city "Miami"`,
-    `  ${commandName} start`,
-    `  ${commandName} sync`,
-    `  ${commandName} dashboard`,
-    `  ${commandName} tui`,
-    `  ${commandName} connect whatsapp`,
-    `  ${commandName} channels add team2 --name "Team Phone 2"`,
-    `  ${commandName} channels list`,
-    `  ${commandName} channels remove team2`,
-    `  ${commandName} groups list --account tenant-a`,
-    `  ${commandName} groups allow "Family Investors"`,
-    `  ${commandName} groups allow 1203630@g.us 1203631@g.us --account tenant-a`,
-    `  ${commandName} groups allow-all --account tenant-a`,
-    `  ${commandName} lead follow-up +15555550123 "Just checking in on 123 Main St!"`,
-    `  ${commandName} schedule daily "Good morning check-in" --to +15555550123`,
-    `  ${commandName} history +15555550123 --limit 30`,
-    `  ${commandName} status`,
+    "Quick start:",
+    cmd("profile init [brokerage-name] [options]"),
+    cmd("sync"),
+    cmd("start"),
+    cmd("connect whatsapp"),
     "",
-    "Flags:",
+    "Daily commands:",
+    cmd("status"),
+    cmd("history [target]"),
+    cmd('lead follow-up <target> "<message>"'),
+    cmd('schedule daily "<message>" --to <target>'),
+    "",
+    "Workspace commands:",
+    cmd("dashboard"),
+    cmd("ui"),
+    cmd("tui"),
+    cmd("setup"),
+    cmd("channels list"),
+    cmd("channels add <account-id> [options]"),
+    cmd("channels remove <account-id>"),
+    cmd("groups list [--account <id>] [--agent <id>]"),
+    cmd("groups allow <group-id...> [--account <id>] [--agent <id>]"),
+    cmd("groups allow-all [--account <id>] [--agent <id>]"),
+    "",
+    "Flags (global):",
     "  --debug   Show underlying runtime command and keep raw diagnostics",
     "  --admin   Enable advanced/developer passthrough commands",
     "",
     "Advanced (admin only):",
-    `  ${commandName} --admin raw <runtime args...>`,
+    cmd("--admin raw <runtime args...>"),
   ].join("\n");
 }
 
