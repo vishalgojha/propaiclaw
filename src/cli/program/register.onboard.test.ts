@@ -1,5 +1,5 @@
 import { Command } from "commander";
-import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 const onboardCommandMock = vi.fn();
 
@@ -37,15 +37,33 @@ beforeAll(async () => {
 });
 
 describe("registerOnboardCommand", () => {
+  const originalPropaiclawMode = process.env.PROPAICLAW_MODE;
+
   async function runCli(args: string[]) {
     const program = new Command();
     registerOnboardCommand(program);
     await program.parseAsync(args, { from: "user" });
   }
 
+  function renderOnboardHelp() {
+    const program = new Command();
+    registerOnboardCommand(program);
+    const onboard = program.commands.find((cmd) => cmd.name() === "onboard");
+    return onboard?.helpInformation() ?? "";
+  }
+
   beforeEach(() => {
     vi.clearAllMocks();
     onboardCommandMock.mockResolvedValue(undefined);
+    delete process.env.PROPAICLAW_MODE;
+  });
+
+  afterEach(() => {
+    if (originalPropaiclawMode === undefined) {
+      delete process.env.PROPAICLAW_MODE;
+    } else {
+      process.env.PROPAICLAW_MODE = originalPropaiclawMode;
+    }
   });
 
   it("defaults installDaemon to undefined when no daemon flags are provided", async () => {
@@ -136,5 +154,18 @@ describe("registerOnboardCommand", () => {
 
     expect(runtime.error).toHaveBeenCalledWith("Error: onboard failed");
     expect(runtime.exit).toHaveBeenCalledWith(1);
+  });
+
+  it("uses openclaw defaults in onboard help when wrapper mode is disabled", () => {
+    const help = renderOnboardHelp();
+    expect(help).toContain("default: ~/.openclaw/workspace");
+    expect(help).toContain("Skip Control UI/TUI prompts");
+  });
+
+  it("uses propaiclaw defaults in onboard help when wrapper mode is enabled", () => {
+    process.env.PROPAICLAW_MODE = "1";
+    const help = renderOnboardHelp();
+    expect(help).toContain("default: ~/.propaiclaw/workspace");
+    expect(help).toContain("Skip PropAI Studio/TUI prompts");
   });
 });
