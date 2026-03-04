@@ -149,8 +149,11 @@ describe("resolveGatewayServiceDescription", () => {
 describe("legacy gateway identity resolvers", () => {
   it("keeps legacy LaunchAgent labels for default and profile modes", () => {
     expect(LEGACY_GATEWAY_LAUNCH_AGENT_LABELS).toContain("ai.openclaw.gateway");
+    expect(LEGACY_GATEWAY_LAUNCH_AGENT_LABELS).toContain("com.openclaw.gateway");
     expect(resolveLegacyGatewayLaunchAgentLabels()).toContain("ai.openclaw.gateway");
+    expect(resolveLegacyGatewayLaunchAgentLabels()).toContain("com.openclaw.gateway");
     expect(resolveLegacyGatewayLaunchAgentLabels("dev")).toContain("ai.openclaw.dev");
+    expect(resolveLegacyGatewayLaunchAgentLabels("dev")).toContain("com.openclaw.dev");
   });
 
   it("keeps legacy systemd names for default and profile modes", () => {

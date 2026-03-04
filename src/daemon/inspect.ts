@@ -94,7 +94,7 @@ function isCurrentGatewayLaunchdService(label: string, contents: string): boolea
   if (label.startsWith("ai.propaiclaw.")) {
     return true;
   }
-  return hasGatewayServiceMarker(contents) && !label.startsWith("ai.openclaw.");
+  return hasGatewayServiceMarker(contents) && !isLegacyOpenClawLaunchdLabel(label);
 }
 
 function isCurrentGatewaySystemdService(name: string, contents: string): boolean {
@@ -118,7 +118,8 @@ function isCurrentGatewayTaskName(name: string): boolean {
 }
 
 function isLegacyOpenClawLaunchdLabel(label: string): boolean {
-  return label.trim().toLowerCase().startsWith("ai.openclaw.");
+  const normalized = label.trim().toLowerCase();
+  return normalized.startsWith("ai.openclaw.") || normalized.startsWith("com.openclaw.");
 }
 
 function isLegacyOpenClawSystemdName(name: string): boolean {
