@@ -2,7 +2,11 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { parseCmdScriptCommandLine, quoteCmdScriptArg } from "./cmd-argv.js";
 import { assertNoCmdLineBreak, parseCmdSetAssignment, renderCmdSetAssignment } from "./cmd-set.js";
-import { resolveGatewayServiceDescription, resolveGatewayWindowsTaskName } from "./constants.js";
+import {
+  resolveGatewayServiceDescription,
+  resolveGatewayWindowsTaskName,
+  resolveLegacyGatewayWindowsTaskNames,
+} from "./constants.js";
 import {
   resolveDaemonProfileEnv,
   resolveDaemonTaskScriptEnv,
@@ -30,6 +34,17 @@ function resolveTaskName(env: GatewayServiceEnv): string {
     return override;
   }
   return resolveGatewayWindowsTaskName(resolveDaemonProfileEnv(env));
+}
+
+function resolveTaskCandidates(env: GatewayServiceEnv): string[] {
+  const primary = resolveTaskName(env);
+  const candidates = [primary];
+  for (const legacyName of resolveLegacyGatewayWindowsTaskNames(resolveDaemonProfileEnv(env))) {
+    if (legacyName !== primary) {
+      candidates.push(legacyName);
+    }
+  }
+  return candidates;
 }
 
 export function resolveTaskScriptPath(env: GatewayServiceEnv): string {
@@ -196,6 +211,12 @@ export async function installScheduledTask({
   await fs.writeFile(scriptPath, script, "utf8");
 
   const taskName = resolveTaskName(env);
+  for (const legacyName of resolveLegacyGatewayWindowsTaskNames(resolveDaemonProfileEnv(env))) {
+    if (legacyName === taskName) {
+      continue;
+    }
+    await execSchtasks(["/Delete", "/F", "/TN", legacyName]);
+  }
   const quotedScript = quoteSchtasksArg(scriptPath);
   const baseArgs = [
     "/Create",
@@ -259,9 +280,24 @@ function isTaskNotRunning(res: { stdout: string; stderr: string; code: number })
   return detail.includes("not running");
 }
 
+function isTaskMissing(res: { stdout: string; stderr: string; code: number }): boolean {
+  const detail = (res.stderr || res.stdout).toLowerCase();
+  return detail.includes("cannot find the file");
+}
+
+async function resolveInstalledTaskName(env: GatewayServiceEnv): Promise<string> {
+  for (const taskName of resolveTaskCandidates(env)) {
+    const res = await execSchtasks(["/Query", "/TN", taskName]);
+    if (res.code === 0) {
+      return taskName;
+    }
+  }
+  return resolveTaskName(env);
+}
+
 export async function stopScheduledTask({ stdout, env }: GatewayServiceControlArgs): Promise<void> {
   await assertSchtasksAvailable();
-  const taskName = resolveTaskName(env ?? (process.env as GatewayServiceEnv));
+  const taskName = await resolveInstalledTaskName(env ?? (process.env as GatewayServiceEnv));
   const res = await execSchtasks(["/End", "/TN", taskName]);
   if (res.code !== 0 && !isTaskNotRunning(res)) {
     throw new Error(`schtasks end failed: ${res.stderr || res.stdout}`.trim());
@@ -274,7 +310,7 @@ export async function restartScheduledTask({
   env,
 }: GatewayServiceControlArgs): Promise<void> {
   await assertSchtasksAvailable();
-  const taskName = resolveTaskName(env ?? (process.env as GatewayServiceEnv));
+  const taskName = await resolveInstalledTaskName(env ?? (process.env as GatewayServiceEnv));
   await execSchtasks(["/End", "/TN", taskName]);
   const res = await execSchtasks(["/Run", "/TN", taskName]);
   if (res.code !== 0) {
@@ -285,9 +321,13 @@ export async function restartScheduledTask({
 
 export async function isScheduledTaskInstalled(args: GatewayServiceEnvArgs): Promise<boolean> {
   await assertSchtasksAvailable();
-  const taskName = resolveTaskName(args.env ?? (process.env as GatewayServiceEnv));
-  const res = await execSchtasks(["/Query", "/TN", taskName]);
-  return res.code === 0;
+  for (const taskName of resolveTaskCandidates(args.env ?? (process.env as GatewayServiceEnv))) {
+    const res = await execSchtasks(["/Query", "/TN", taskName]);
+    if (res.code === 0) {
+      return true;
+    }
+  }
+  return false;
 }
 
 export async function readScheduledTaskRuntime(
@@ -301,24 +341,35 @@ export async function readScheduledTaskRuntime(
       detail: String(err),
     };
   }
-  const taskName = resolveTaskName(env);
-  const res = await execSchtasks(["/Query", "/TN", taskName, "/V", "/FO", "LIST"]);
-  if (res.code !== 0) {
-    const detail = (res.stderr || res.stdout).trim();
-    const missing = detail.toLowerCase().includes("cannot find the file");
+  let firstMissingDetail: string | undefined;
+  for (const taskName of resolveTaskCandidates(env)) {
+    const res = await execSchtasks(["/Query", "/TN", taskName, "/V", "/FO", "LIST"]);
+    if (res.code !== 0) {
+      const detail = (res.stderr || res.stdout).trim();
+      if (isTaskMissing(res)) {
+        if (!firstMissingDetail && detail) {
+          firstMissingDetail = detail;
+        }
+        continue;
+      }
+      return {
+        status: "unknown",
+        detail: detail || undefined,
+      };
+    }
+    const parsed = parseSchtasksQuery(res.stdout || "");
+    const statusRaw = parsed.status?.toLowerCase();
+    const status = statusRaw === "running" ? "running" : statusRaw ? "stopped" : "unknown";
     return {
-      status: missing ? "stopped" : "unknown",
-      detail: detail || undefined,
-      missingUnit: missing,
+      status,
+      state: parsed.status,
+      lastRunTime: parsed.lastRunTime,
+      lastRunResult: parsed.lastRunResult,
     };
   }
-  const parsed = parseSchtasksQuery(res.stdout || "");
-  const statusRaw = parsed.status?.toLowerCase();
-  const status = statusRaw === "running" ? "running" : statusRaw ? "stopped" : "unknown";
   return {
-    status,
-    state: parsed.status,
-    lastRunTime: parsed.lastRunTime,
-    lastRunResult: parsed.lastRunResult,
+    status: "stopped",
+    detail: firstMissingDetail,
+    missingUnit: true,
   };
 }

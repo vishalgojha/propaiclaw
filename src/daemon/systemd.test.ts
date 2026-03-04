@@ -65,17 +65,17 @@ describe("resolveSystemdUserUnitPath", () => {
     {
       name: "uses default service name when PROPAICLAW_PROFILE is unset",
       env: { HOME: "/home/test" },
-      expected: "/home/test/.config/systemd/user/openclaw-gateway.service",
+      expected: "/home/test/.config/systemd/user/propaiclaw-gateway.service",
     },
     {
       name: "uses profile-specific service name when PROPAICLAW_PROFILE is set to a custom value",
       env: { HOME: "/home/test", PROPAICLAW_PROFILE: "jbphoenix" },
-      expected: "/home/test/.config/systemd/user/openclaw-gateway-jbphoenix.service",
+      expected: "/home/test/.config/systemd/user/propaiclaw-gateway-jbphoenix.service",
     },
     {
       name: "uses profile-specific service name when PROPAICLAW_PROFILE is set",
       env: { HOME: "/home/test", PROPAICLAW_PROFILE: "pro" },
-      expected: "/home/test/.config/systemd/user/openclaw-gateway-pro.service",
+      expected: "/home/test/.config/systemd/user/propaiclaw-gateway-pro.service",
     },
     {
       name: "uses PROPAICLAW_SYSTEMD_UNIT override",
@@ -163,7 +163,7 @@ describe("systemd service control", () => {
     execFileMock
       .mockImplementationOnce((_cmd, _args, _opts, cb) => cb(null, "", ""))
       .mockImplementationOnce((_cmd, args, _opts, cb) => {
-        expect(args).toEqual(["--user", "stop", "openclaw-gateway.service"]);
+        expect(args).toEqual(["--user", "stop", "propaiclaw-gateway.service"]);
         cb(null, "", "");
       });
     const write = vi.fn();
@@ -179,7 +179,7 @@ describe("systemd service control", () => {
     execFileMock
       .mockImplementationOnce((_cmd, _args, _opts, cb) => cb(null, "", ""))
       .mockImplementationOnce((_cmd, args, _opts, cb) => {
-        expect(args).toEqual(["--user", "restart", "openclaw-gateway-work.service"]);
+        expect(args).toEqual(["--user", "restart", "propaiclaw-gateway-work.service"]);
         cb(null, "", "");
       });
     const write = vi.fn();
@@ -195,7 +195,7 @@ describe("systemd service control", () => {
     execFileMock
       .mockImplementationOnce((_cmd, _args, _opts, cb) => cb(null, "", ""))
       .mockImplementationOnce((_cmd, args, _opts, cb) => {
-        expect(args).toEqual(["--user", "restart", "openclaw-gateway-pro.service"]);
+        expect(args).toEqual(["--user", "restart", "propaiclaw-gateway-pro.service"]);
         cb(null, "", "");
       });
     const write = vi.fn();

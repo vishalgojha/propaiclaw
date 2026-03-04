@@ -103,7 +103,7 @@ describe("launchd runtime parsing", () => {
 
 describe("launchctl list detection", () => {
   it("detects the resolved label in launchctl list", async () => {
-    state.listOutput = "123 0 ai.openclaw.gateway\n";
+    state.listOutput = "123 0 ai.propaiclaw.gateway\n";
     const listed = await isLaunchAgentListed({
       env: { HOME: "/Users/test", PROPAICLAW_PROFILE: "default" },
     });
@@ -129,7 +129,7 @@ describe("launchd bootstrap repair", () => {
     expect(repair.ok).toBe(true);
 
     const domain = typeof process.getuid === "function" ? `gui/${process.getuid()}` : "gui/501";
-    const label = "ai.openclaw.gateway";
+    const label = "ai.propaiclaw.gateway";
     const plistPath = resolveLaunchAgentPlistPath(env);
 
     expect(state.launchctlCalls).toContainEqual(["bootstrap", domain, plistPath]);
@@ -154,7 +154,7 @@ describe("launchd install", () => {
     });
 
     const domain = typeof process.getuid === "function" ? `gui/${process.getuid()}` : "gui/501";
-    const label = "ai.openclaw.gateway";
+    const label = "ai.propaiclaw.gateway";
     const plistPath = resolveLaunchAgentPlistPath(env);
     const serviceId = `${domain}/${label}`;
 
@@ -211,7 +211,7 @@ describe("launchd install", () => {
     });
 
     const domain = typeof process.getuid === "function" ? `gui/${process.getuid()}` : "gui/501";
-    const label = "ai.openclaw.gateway";
+    const label = "ai.propaiclaw.gateway";
     const plistPath = resolveLaunchAgentPlistPath(env);
     const bootoutIndex = state.launchctlCalls.findIndex(
       (c) => c[0] === "bootout" && c[1] === `${domain}/${label}`,
@@ -252,7 +252,7 @@ describe("launchd install", () => {
       await restartPromise;
       expect(killSpy).toHaveBeenCalledWith(4242, 0);
       const domain = typeof process.getuid === "function" ? `gui/${process.getuid()}` : "gui/501";
-      const label = "ai.openclaw.gateway";
+      const label = "ai.propaiclaw.gateway";
       const bootoutIndex = state.launchctlCalls.findIndex(
         (c) => c[0] === "bootout" && c[1] === `${domain}/${label}`,
       );
@@ -303,17 +303,17 @@ describe("resolveLaunchAgentPlistPath", () => {
     {
       name: "uses default label when PROPAICLAW_PROFILE is unset",
       env: { HOME: "/Users/test" },
-      expected: "/Users/test/Library/LaunchAgents/ai.openclaw.gateway.plist",
+      expected: "/Users/test/Library/LaunchAgents/ai.propaiclaw.gateway.plist",
     },
     {
       name: "uses profile-specific label when PROPAICLAW_PROFILE is set to a custom value",
       env: { HOME: "/Users/test", PROPAICLAW_PROFILE: "jbphoenix" },
-      expected: "/Users/test/Library/LaunchAgents/ai.openclaw.jbphoenix.plist",
+      expected: "/Users/test/Library/LaunchAgents/ai.propaiclaw.jbphoenix.plist",
     },
     {
       name: "uses profile-specific label when PROPAICLAW_PROFILE is set",
       env: { HOME: "/Users/test", PROPAICLAW_PROFILE: "pro" },
-      expected: "/Users/test/Library/LaunchAgents/ai.openclaw.pro.plist",
+      expected: "/Users/test/Library/LaunchAgents/ai.propaiclaw.pro.plist",
     },
     {
       name: "uses PROPAICLAW_LAUNCHD_LABEL override",
@@ -339,7 +339,7 @@ describe("resolveLaunchAgentPlistPath", () => {
         PROPAICLAW_PROFILE: "myprofile",
         PROPAICLAW_LAUNCHD_LABEL: "   ",
       },
-      expected: "/Users/test/Library/LaunchAgents/ai.openclaw.myprofile.plist",
+      expected: "/Users/test/Library/LaunchAgents/ai.propaiclaw.myprofile.plist",
     },
   ])("$name", ({ env, expected }) => {
     expect(resolveLaunchAgentPlistPath(env)).toBe(expected);

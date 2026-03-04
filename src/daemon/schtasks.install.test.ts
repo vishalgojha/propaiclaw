@@ -97,8 +97,9 @@ describe("installScheduledTask", () => {
       expect(parsed?.environment).not.toHaveProperty("OC_EMPTY");
 
       expect(schtasksCalls[0]).toEqual(["/Query"]);
-      expect(schtasksCalls[1]?.[0]).toBe("/Create");
-      expect(schtasksCalls[2]).toEqual(["/Run", "/TN", "OpenClaw Gateway"]);
+      expect(schtasksCalls).toContainEqual(["/Delete", "/F", "/TN", "OpenClaw Gateway"]);
+      expect(schtasksCalls.some((call) => call[0] === "/Create")).toBe(true);
+      expect(schtasksCalls).toContainEqual(["/Run", "/TN", "Propaiclaw Gateway"]);
     });
   });
 

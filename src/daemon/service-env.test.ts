@@ -277,11 +277,11 @@ describe("buildServiceEnvironment", () => {
     expect(env.PROPAICLAW_SERVICE_MARKER).toBe("openclaw");
     expect(env.PROPAICLAW_SERVICE_KIND).toBe("gateway");
     expect(typeof env.PROPAICLAW_SERVICE_VERSION).toBe("string");
-    expect(env.PROPAICLAW_SYSTEMD_UNIT).toBe("openclaw-gateway.service");
+    expect(env.PROPAICLAW_SYSTEMD_UNIT).toBe("propaiclaw-gateway.service");
     expect(env.OPENCLAW_SYSTEMD_UNIT).toBeUndefined();
     expect(env.OPENCLAW_SERVICE_MARKER).toBeUndefined();
     if (process.platform === "darwin") {
-      expect(env.PROPAICLAW_LAUNCHD_LABEL).toBe("ai.openclaw.gateway");
+      expect(env.PROPAICLAW_LAUNCHD_LABEL).toBe("ai.propaiclaw.gateway");
       expect(env.OPENCLAW_LAUNCHD_LABEL).toBeUndefined();
     }
   });
@@ -300,7 +300,7 @@ describe("buildServiceEnvironment", () => {
     expect(env.PROPAICLAW_PROFILE).toBe("work");
     expect(env.PROPAICLAW_STATE_DIR).toBe("/srv/propaiclaw-state");
     expect(env.PROPAICLAW_CONFIG_PATH).toBe("/srv/propaiclaw-state/propaiclaw.json");
-    expect(env.PROPAICLAW_SYSTEMD_UNIT).toBe("openclaw-gateway-work.service");
+    expect(env.PROPAICLAW_SYSTEMD_UNIT).toBe("propaiclaw-gateway-work.service");
   });
 
   it("forwards TMPDIR from the host environment", () => {
@@ -324,10 +324,10 @@ describe("buildServiceEnvironment", () => {
       env: { HOME: "/home/user", PROPAICLAW_PROFILE: "work" },
       port: 18789,
     });
-    expect(env.PROPAICLAW_SYSTEMD_UNIT).toBe("openclaw-gateway-work.service");
+    expect(env.PROPAICLAW_SYSTEMD_UNIT).toBe("propaiclaw-gateway-work.service");
     expect(env.OPENCLAW_SYSTEMD_UNIT).toBeUndefined();
     if (process.platform === "darwin") {
-      expect(env.PROPAICLAW_LAUNCHD_LABEL).toBe("ai.openclaw.work");
+      expect(env.PROPAICLAW_LAUNCHD_LABEL).toBe("ai.propaiclaw.work");
       expect(env.OPENCLAW_LAUNCHD_LABEL).toBeUndefined();
     }
   });
@@ -447,8 +447,6 @@ describe("buildNodeServiceEnvironment", () => {
 
     expect(env.PROPAICLAW_STATE_DIR).toBe("/srv/propaiclaw-node");
     expect(env.PROPAICLAW_CONFIG_PATH).toBe("/srv/propaiclaw-node/propaiclaw.json");
-    expect(env.PROPAICLAW_STATE_DIR).toBeUndefined();
-    expect(env.PROPAICLAW_CONFIG_PATH).toBeUndefined();
   });
 });
 

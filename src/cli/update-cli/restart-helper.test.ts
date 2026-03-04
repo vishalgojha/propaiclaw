@@ -39,7 +39,7 @@ describe("restart-helper", () => {
       });
       expect(scriptPath.endsWith(".sh")).toBe(true);
       expect(content).toContain("#!/bin/sh");
-      expect(content).toContain("systemctl --user restart 'openclaw-gateway.service'");
+      expect(content).toContain("systemctl --user restart 'propaiclaw-gateway.service'");
       // Script should self-cleanup
       expect(content).toContain('rm -f "$0"');
       await cleanupScript(scriptPath);
@@ -51,7 +51,7 @@ describe("restart-helper", () => {
         OPENCLAW_SYSTEMD_UNIT: "custom-gateway",
         PROPAICLAW_PROFILE: "staging",
       });
-      expect(content).toContain("systemctl --user restart 'openclaw-gateway-staging.service'");
+      expect(content).toContain("systemctl --user restart 'propaiclaw-gateway-staging.service'");
       await cleanupScript(scriptPath);
     });
 
@@ -74,7 +74,7 @@ describe("restart-helper", () => {
       });
       expect(scriptPath.endsWith(".sh")).toBe(true);
       expect(content).toContain("#!/bin/sh");
-      expect(content).toContain("launchctl kickstart -k 'gui/501/ai.openclaw.gateway'");
+      expect(content).toContain("launchctl kickstart -k 'gui/501/ai.propaiclaw.gateway'");
       expect(content).toContain('rm -f "$0"');
       await cleanupScript(scriptPath);
     });
@@ -87,7 +87,7 @@ describe("restart-helper", () => {
         OPENCLAW_LAUNCHD_LABEL: "com.custom.openclaw",
         PROPAICLAW_PROFILE: "default",
       });
-      expect(content).toContain("launchctl kickstart -k 'gui/501/ai.openclaw.gateway'");
+      expect(content).toContain("launchctl kickstart -k 'gui/501/ai.propaiclaw.gateway'");
       await cleanupScript(scriptPath);
     });
 
@@ -111,8 +111,8 @@ describe("restart-helper", () => {
       });
       expect(scriptPath.endsWith(".bat")).toBe(true);
       expect(content).toContain("@echo off");
-      expect(content).toContain('schtasks /End /TN "OpenClaw Gateway"');
-      expect(content).toContain('schtasks /Run /TN "OpenClaw Gateway"');
+      expect(content).toContain('schtasks /End /TN "Propaiclaw Gateway"');
+      expect(content).toContain('schtasks /Run /TN "Propaiclaw Gateway"');
       // Batch self-cleanup
       expect(content).toContain('del "%~f0"');
       await cleanupScript(scriptPath);
@@ -125,8 +125,8 @@ describe("restart-helper", () => {
         OPENCLAW_WINDOWS_TASK_NAME: "OpenClaw Gateway (custom)",
         PROPAICLAW_PROFILE: "default",
       });
-      expect(content).toContain('schtasks /End /TN "OpenClaw Gateway"');
-      expect(content).toContain('schtasks /Run /TN "OpenClaw Gateway"');
+      expect(content).toContain('schtasks /End /TN "Propaiclaw Gateway"');
+      expect(content).toContain('schtasks /Run /TN "Propaiclaw Gateway"');
       await cleanupScript(scriptPath);
     });
 
@@ -147,7 +147,7 @@ describe("restart-helper", () => {
       const { scriptPath, content } = await prepareAndReadScript({
         PROPAICLAW_PROFILE: "production",
       });
-      expect(content).toContain("openclaw-gateway-production.service");
+      expect(content).toContain("propaiclaw-gateway-production.service");
       await cleanupScript(scriptPath);
     });
 
@@ -158,7 +158,7 @@ describe("restart-helper", () => {
       const { scriptPath, content } = await prepareAndReadScript({
         PROPAICLAW_PROFILE: "staging",
       });
-      expect(content).toContain("gui/502/ai.openclaw.staging");
+      expect(content).toContain("gui/502/ai.propaiclaw.staging");
       await cleanupScript(scriptPath);
     });
 
@@ -168,7 +168,7 @@ describe("restart-helper", () => {
       const { scriptPath, content } = await prepareAndReadScript({
         PROPAICLAW_PROFILE: "production",
       });
-      expect(content).toContain('schtasks /End /TN "OpenClaw Gateway (production)"');
+      expect(content).toContain('schtasks /End /TN "Propaiclaw Gateway (production)"');
       await cleanupScript(scriptPath);
     });
 

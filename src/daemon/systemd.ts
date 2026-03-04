@@ -1,9 +1,9 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import {
-  LEGACY_GATEWAY_SYSTEMD_SERVICE_NAMES,
   resolveGatewayServiceDescription,
   resolveGatewaySystemdServiceName,
+  resolveLegacyGatewaySystemdServiceNames,
 } from "./constants.js";
 import { resolveDaemonProfileEnv, resolveDaemonSystemdUnitEnv } from "./env-aliases.js";
 import { execFileUtf8 } from "./exec-file.js";
@@ -192,6 +192,20 @@ export async function installSystemdService({
 }: GatewayServiceInstallArgs): Promise<{ unitPath: string }> {
   await assertSystemdAvailable();
 
+  const serviceName = resolveSystemdServiceName(env);
+  for (const legacyName of resolveLegacyGatewaySystemdServiceNames(resolveDaemonProfileEnv(env))) {
+    if (legacyName === serviceName) {
+      continue;
+    }
+    await execSystemctl(["--user", "disable", "--now", `${legacyName}.service`]);
+    const legacyUnitPath = resolveSystemdUnitPathForName(env, legacyName);
+    try {
+      await fs.unlink(legacyUnitPath);
+    } catch {
+      // ignore
+    }
+  }
+
   const unitPath = resolveSystemdUnitPath(env);
   await fs.mkdir(path.dirname(unitPath), { recursive: true });
 
@@ -215,7 +229,6 @@ export async function installSystemdService({
   });
   await fs.writeFile(unitPath, unit, "utf8");
 
-  const serviceName = resolveSystemdServiceName(env);
   const unitName = `${serviceName}.service`;
   const reload = await execSystemctl(["--user", "daemon-reload"]);
   if (reload.code !== 0) {
@@ -381,7 +394,7 @@ async function isSystemctlAvailable(): Promise<boolean> {
 export async function findLegacySystemdUnits(env: GatewayServiceEnv): Promise<LegacySystemdUnit[]> {
   const results: LegacySystemdUnit[] = [];
   const systemctlAvailable = await isSystemctlAvailable();
-  for (const name of LEGACY_GATEWAY_SYSTEMD_SERVICE_NAMES) {
+  for (const name of resolveLegacyGatewaySystemdServiceNames(resolveDaemonProfileEnv(env))) {
     const unitPath = resolveSystemdUnitPathForName(env, name);
     let exists = false;
     try {

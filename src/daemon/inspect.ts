@@ -72,8 +72,8 @@ function detectMarker(content: string): Marker | null {
 
 function hasGatewayServiceMarker(content: string): boolean {
   const lower = content.toLowerCase();
-  const markerKeys = ["openclaw_service_marker"];
-  const kindKeys = ["openclaw_service_kind"];
+  const markerKeys = ["propaiclaw_service_marker", "openclaw_service_marker"];
+  const kindKeys = ["propaiclaw_service_kind", "openclaw_service_kind"];
   const markerValues = [GATEWAY_SERVICE_MARKER.toLowerCase()];
   const hasMarkerKey = markerKeys.some((key) => lower.includes(key));
   const hasKindKey = kindKeys.some((key) => lower.includes(key));
@@ -86,34 +86,47 @@ function hasGatewayServiceMarker(content: string): boolean {
   );
 }
 
-function isOpenClawGatewayLaunchdService(label: string, contents: string): boolean {
-  if (hasGatewayServiceMarker(contents)) {
-    return true;
-  }
+function isCurrentGatewayLaunchdService(label: string, contents: string): boolean {
   const lowerContents = contents.toLowerCase();
   if (!lowerContents.includes("gateway")) {
     return false;
   }
-  return label.startsWith("ai.openclaw.");
-}
-
-function isOpenClawGatewaySystemdService(name: string, contents: string): boolean {
-  if (hasGatewayServiceMarker(contents)) {
+  if (label.startsWith("ai.propaiclaw.")) {
     return true;
   }
-  if (!name.startsWith("openclaw-gateway")) {
-    return false;
-  }
-  return contents.toLowerCase().includes("gateway");
+  return hasGatewayServiceMarker(contents) && !label.startsWith("ai.openclaw.");
 }
 
-function isOpenClawGatewayTaskName(name: string): boolean {
+function isCurrentGatewaySystemdService(name: string, contents: string): boolean {
+  const lowerContents = contents.toLowerCase();
+  if (!lowerContents.includes("gateway")) {
+    return false;
+  }
+  if (name.startsWith("propaiclaw-gateway")) {
+    return true;
+  }
+  return hasGatewayServiceMarker(contents) && !name.startsWith("openclaw-gateway");
+}
+
+function isCurrentGatewayTaskName(name: string): boolean {
   const normalized = name.trim().toLowerCase();
   if (!normalized) {
     return false;
   }
   const defaultName = resolveGatewayWindowsTaskName().toLowerCase();
-  return normalized === defaultName || normalized.startsWith("openclaw gateway");
+  return normalized === defaultName || normalized.startsWith("propaiclaw gateway");
+}
+
+function isLegacyOpenClawLaunchdLabel(label: string): boolean {
+  return label.trim().toLowerCase().startsWith("ai.openclaw.");
+}
+
+function isLegacyOpenClawSystemdName(name: string): boolean {
+  return name.trim().toLowerCase().startsWith("openclaw-gateway");
+}
+
+function isLegacyOpenClawGatewayTaskName(name: string): boolean {
+  return name.trim().toLowerCase().startsWith("openclaw gateway");
 }
 
 function tryExtractPlistLabel(contents: string): string | null {
@@ -200,8 +213,10 @@ async function scanLaunchdDir(params: {
     const marker = detectMarker(contents);
     const label = tryExtractPlistLabel(contents) ?? labelFromName;
     if (!marker) {
-      const legacyLabel = isLegacyLabel(labelFromName) || isLegacyLabel(label);
-      if (!legacyLabel) {
+      const legacyOpenClaw =
+        isLegacyOpenClawLaunchdLabel(labelFromName) || isLegacyOpenClawLaunchdLabel(label);
+      const legacyLabel = isLegacyLabel(labelFromName) || isLegacyLabel(label) || legacyOpenClaw;
+      if (!legacyLabel || isCurrentGatewayLaunchdService(label, contents)) {
         continue;
       }
       results.push({
@@ -209,7 +224,7 @@ async function scanLaunchdDir(params: {
         label,
         detail: `plist: ${fullPath}`,
         scope: params.scope,
-        marker: isLegacyLabel(label) ? "clawdbot" : "moltbot",
+        marker: legacyOpenClaw ? "openclaw" : isLegacyLabel(label) ? "clawdbot" : "moltbot",
         legacy: true,
       });
       continue;
@@ -217,16 +232,19 @@ async function scanLaunchdDir(params: {
     if (isIgnoredLaunchdLabel(label)) {
       continue;
     }
-    if (marker === "openclaw" && isOpenClawGatewayLaunchdService(label, contents)) {
+    if (marker === "openclaw" && isCurrentGatewayLaunchdService(label, contents)) {
       continue;
     }
+    const legacyOpenClaw =
+      marker === "openclaw" &&
+      (isLegacyOpenClawLaunchdLabel(label) || isLegacyOpenClawLaunchdLabel(labelFromName));
     results.push({
       platform: "darwin",
       label,
       detail: `plist: ${fullPath}`,
       scope: params.scope,
       marker,
-      legacy: marker !== "openclaw" || isLegacyLabel(label),
+      legacy: marker !== "openclaw" || isLegacyLabel(label) || legacyOpenClaw,
     });
   }
 
@@ -247,9 +265,19 @@ async function scanSystemdDir(params: {
   for (const { entry, name, fullPath, contents } of candidates) {
     const marker = detectMarker(contents);
     if (!marker) {
+      if (isLegacyOpenClawSystemdName(name) && !isCurrentGatewaySystemdService(name, contents)) {
+        results.push({
+          platform: "linux",
+          label: entry,
+          detail: `unit: ${fullPath}`,
+          scope: params.scope,
+          marker: "openclaw",
+          legacy: true,
+        });
+      }
       continue;
     }
-    if (marker === "openclaw" && isOpenClawGatewaySystemdService(name, contents)) {
+    if (marker === "openclaw" && isCurrentGatewaySystemdService(name, contents)) {
       continue;
     }
     results.push({
@@ -258,7 +286,7 @@ async function scanSystemdDir(params: {
       detail: `unit: ${fullPath}`,
       scope: params.scope,
       marker,
-      legacy: marker !== "openclaw",
+      legacy: marker !== "openclaw" || isLegacyOpenClawSystemdName(name),
     });
   }
 
@@ -402,7 +430,7 @@ export async function findExtraGatewayServices(
       if (!name) {
         continue;
       }
-      if (isOpenClawGatewayTaskName(name)) {
+      if (isCurrentGatewayTaskName(name)) {
         continue;
       }
       const lowerName = name.toLowerCase();
@@ -423,7 +451,10 @@ export async function findExtraGatewayServices(
         detail: task.taskToRun ? `task: ${name}, run: ${task.taskToRun}` : name,
         scope: "system",
         marker,
-        legacy: marker !== "openclaw",
+        legacy:
+          marker !== "openclaw" ||
+          isLegacyOpenClawGatewayTaskName(name) ||
+          lowerCommand.includes("openclaw"),
       });
     }
     return results;

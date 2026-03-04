@@ -44,7 +44,7 @@ describe("findExtraGatewayServices (win32)", () => {
     expect(result).toEqual([]);
   });
 
-  it("collects only non-openclaw marker tasks from schtasks output", async () => {
+  it("collects legacy marker tasks from schtasks output", async () => {
     execSchtasksMock.mockResolvedValueOnce({
       code: 0,
       stdout: [
@@ -66,6 +66,15 @@ describe("findExtraGatewayServices (win32)", () => {
 
     const result = await findExtraGatewayServices({}, { deep: true });
     expect(result).toEqual([
+      {
+        platform: "win32",
+        label: "OpenClaw Gateway",
+        detail:
+          "task: OpenClaw Gateway, run: C:\\Program Files\\OpenClaw\\openclaw.exe gateway run",
+        scope: "system",
+        marker: "openclaw",
+        legacy: true,
+      },
       {
         platform: "win32",
         label: "Clawdbot Legacy",
