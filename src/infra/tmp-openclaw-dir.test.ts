@@ -1,11 +1,21 @@
 import path from "node:path";
 import { describe, expect, it, vi } from "vitest";
-import { POSIX_OPENCLAW_TMP_DIR, resolvePreferredOpenClawTmpDir } from "./tmp-openclaw-dir.js";
+import {
+  POSIX_OPENCLAW_TMP_DIR,
+  POSIX_PROPAICLAW_TMP_DIR,
+  resolvePreferredOpenClawTmpDir,
+} from "./tmp-openclaw-dir.js";
 
 type TmpDirOptions = NonNullable<Parameters<typeof resolvePreferredOpenClawTmpDir>[0]>;
 
-function fallbackTmp(uid = 501) {
-  return path.join("/var/fallback", `openclaw-${uid}`);
+function fallbackTmp(uid = 501, baseName = "openclaw") {
+  return path.join("/var/fallback", `${baseName}-${uid}`);
+}
+
+function isPropaiclawMode(env: NodeJS.ProcessEnv | undefined): boolean {
+  const raw = env?.PROPAICLAW_MODE;
+  const normalized = raw?.trim().toLowerCase();
+  return normalized === "1" || normalized === "true" || normalized === "yes" || normalized === "on";
 }
 
 function nodeErrorWithCode(code: string) {
@@ -31,9 +41,11 @@ function resolveWithMocks(params: {
   warn?: NonNullable<TmpDirOptions["warn"]>;
   uid?: number;
   tmpdirPath?: string;
+  env?: NodeJS.ProcessEnv;
 }) {
   const uid = params.uid ?? 501;
-  const fallbackPath = fallbackTmp(uid);
+  const fallbackBaseName = isPropaiclawMode(params.env) ? "propaiclaw" : "openclaw";
+  const fallbackPath = fallbackTmp(uid, fallbackBaseName);
   const accessSync = params.accessSync ?? vi.fn();
   const chmodSync = params.chmodSync ?? vi.fn();
   const warn = params.warn ?? vi.fn();
@@ -60,6 +72,7 @@ function resolveWithMocks(params: {
     getuid,
     tmpdir,
     warn,
+    env: params.env,
   });
   return { resolved, accessSync, lstatSync: wrappedLstatSync, mkdirSync, tmpdir };
 }
@@ -78,6 +91,39 @@ describe("resolvePreferredOpenClawTmpDir", () => {
     expect(accessSync).toHaveBeenCalledTimes(1);
     expect(resolved).toBe(POSIX_OPENCLAW_TMP_DIR);
     expect(tmpdir).not.toHaveBeenCalled();
+  });
+
+  it("prefers /tmp/propaiclaw in propaiclaw mode", () => {
+    const lstatSync: NonNullable<TmpDirOptions["lstatSync"]> = vi.fn((target: string) => {
+      if (target === POSIX_PROPAICLAW_TMP_DIR) {
+        return secureDirStat(501);
+      }
+      throw nodeErrorWithCode("ENOENT");
+    });
+    const { resolved } = resolveWithMocks({
+      lstatSync,
+      env: { PROPAICLAW_MODE: "1" } as NodeJS.ProcessEnv,
+    });
+
+    expect(resolved).toBe(POSIX_PROPAICLAW_TMP_DIR);
+  });
+
+  it("uses propaiclaw fallback name in propaiclaw mode", () => {
+    const accessSync = vi.fn((target: string) => {
+      if (target.includes("tmp")) {
+        throw new Error("read-only");
+      }
+    });
+    const lstatSync = vi.fn(() => {
+      throw nodeErrorWithCode("ENOENT");
+    });
+    const { resolved } = resolveWithMocks({
+      accessSync,
+      lstatSync,
+      env: { PROPAICLAW_MODE: "1" } as NodeJS.ProcessEnv,
+    });
+
+    expect(resolved).toBe(fallbackTmp(501, "propaiclaw"));
   });
 
   it("prefers /tmp/openclaw when it does not exist but /tmp is writable", () => {

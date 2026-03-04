@@ -3,6 +3,7 @@ import os from "node:os";
 import path from "node:path";
 
 export const POSIX_OPENCLAW_TMP_DIR = "/tmp/openclaw";
+export const POSIX_PROPAICLAW_TMP_DIR = "/tmp/propaiclaw";
 const TMP_DIR_ACCESS_MODE = fs.constants.W_OK | fs.constants.X_OK;
 
 type ResolvePreferredOpenClawTmpDirOptions = {
@@ -18,6 +19,7 @@ type ResolvePreferredOpenClawTmpDirOptions = {
   getuid?: () => number | undefined;
   tmpdir?: () => string;
   warn?: (message: string) => void;
+  env?: NodeJS.ProcessEnv;
 };
 
 type MaybeNodeError = { code?: string };
@@ -31,9 +33,25 @@ function isNodeErrorWithCode(err: unknown, code: string): err is MaybeNodeError 
   );
 }
 
+function isTruthyEnvValue(value: string | undefined): boolean {
+  const normalized = value?.trim().toLowerCase();
+  return normalized === "1" || normalized === "true" || normalized === "yes" || normalized === "on";
+}
+
+function isPropaiclawMode(env: NodeJS.ProcessEnv): boolean {
+  return isTruthyEnvValue(env.PROPAICLAW_MODE);
+}
+
 export function resolvePreferredOpenClawTmpDir(
   options: ResolvePreferredOpenClawTmpDirOptions = {},
 ): string {
+  const env = options.env ?? process.env;
+  const propaiclawMode = isPropaiclawMode(env);
+  const preferredPosixTmpDir = propaiclawMode ? POSIX_PROPAICLAW_TMP_DIR : POSIX_OPENCLAW_TMP_DIR;
+  const fallbackBaseName = propaiclawMode ? "propaiclaw" : "openclaw";
+  const bannerPrefix = propaiclawMode ? "[propaiclaw]" : "[openclaw]";
+  const productName = propaiclawMode ? "PropAI" : "OpenClaw";
+
   const accessSync = options.accessSync ?? fs.accessSync;
   const chmodSync = options.chmodSync ?? fs.chmodSync;
   const lstatSync = options.lstatSync ?? fs.lstatSync;
@@ -67,7 +85,7 @@ export function resolvePreferredOpenClawTmpDir(
 
   const fallback = (): string => {
     const base = tmpdir();
-    const suffix = uid === undefined ? "openclaw" : `openclaw-${uid}`;
+    const suffix = uid === undefined ? fallbackBaseName : `${fallbackBaseName}-${uid}`;
     return path.join(base, suffix);
   };
 
@@ -109,7 +127,7 @@ export function resolvePreferredOpenClawTmpDir(
         return false;
       }
       chmodSync(candidatePath, 0o700);
-      warn(`[openclaw] tightened permissions on temp dir: ${candidatePath}`);
+      warn(`${bannerPrefix} tightened permissions on temp dir: ${candidatePath}`);
       return resolveDirState(candidatePath) === "available";
     } catch {
       return false;
@@ -126,27 +144,27 @@ export function resolvePreferredOpenClawTmpDir(
       if (tryRepairWritableBits(fallbackPath)) {
         return fallbackPath;
       }
-      throw new Error(`Unsafe fallback OpenClaw temp dir: ${fallbackPath}`);
+      throw new Error(`Unsafe fallback ${productName} temp dir: ${fallbackPath}`);
     }
     try {
       mkdirSync(fallbackPath, { recursive: true, mode: 0o700 });
       chmodSync(fallbackPath, 0o700);
     } catch {
-      throw new Error(`Unable to create fallback OpenClaw temp dir: ${fallbackPath}`);
+      throw new Error(`Unable to create fallback ${productName} temp dir: ${fallbackPath}`);
     }
     if (resolveDirState(fallbackPath) !== "available" && !tryRepairWritableBits(fallbackPath)) {
-      throw new Error(`Unsafe fallback OpenClaw temp dir: ${fallbackPath}`);
+      throw new Error(`Unsafe fallback ${productName} temp dir: ${fallbackPath}`);
     }
     return fallbackPath;
   };
 
-  const existingPreferredState = resolveDirState(POSIX_OPENCLAW_TMP_DIR);
+  const existingPreferredState = resolveDirState(preferredPosixTmpDir);
   if (existingPreferredState === "available") {
-    return POSIX_OPENCLAW_TMP_DIR;
+    return preferredPosixTmpDir;
   }
   if (existingPreferredState === "invalid") {
-    if (tryRepairWritableBits(POSIX_OPENCLAW_TMP_DIR)) {
-      return POSIX_OPENCLAW_TMP_DIR;
+    if (tryRepairWritableBits(preferredPosixTmpDir)) {
+      return preferredPosixTmpDir;
     }
     return ensureTrustedFallbackDir();
   }
@@ -154,15 +172,15 @@ export function resolvePreferredOpenClawTmpDir(
   try {
     accessSync("/tmp", TMP_DIR_ACCESS_MODE);
     // Create with a safe default; subsequent callers expect it exists.
-    mkdirSync(POSIX_OPENCLAW_TMP_DIR, { recursive: true, mode: 0o700 });
-    chmodSync(POSIX_OPENCLAW_TMP_DIR, 0o700);
+    mkdirSync(preferredPosixTmpDir, { recursive: true, mode: 0o700 });
+    chmodSync(preferredPosixTmpDir, 0o700);
     if (
-      resolveDirState(POSIX_OPENCLAW_TMP_DIR) !== "available" &&
-      !tryRepairWritableBits(POSIX_OPENCLAW_TMP_DIR)
+      resolveDirState(preferredPosixTmpDir) !== "available" &&
+      !tryRepairWritableBits(preferredPosixTmpDir)
     ) {
       return ensureTrustedFallbackDir();
     }
-    return POSIX_OPENCLAW_TMP_DIR;
+    return preferredPosixTmpDir;
   } catch {
     return ensureTrustedFallbackDir();
   }

@@ -2,6 +2,7 @@ import fs from "node:fs/promises";
 import type { IncomingMessage, ServerResponse } from "node:http";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { isTruthyEnvValue } from "../infra/env.js";
 import { detectMime } from "../media/mime.js";
 import { resolveFileWithinRoot } from "./file-resolver.js";
 
@@ -11,13 +12,25 @@ export const CANVAS_HOST_PATH = "/__openclaw__/canvas";
 
 export const CANVAS_WS_PATH = "/__openclaw__/ws";
 
-const PROPAICLAW_A2UI_PATH = "/__propaiclaw__/a2ui";
-const PROPAICLAW_CANVAS_HOST_PATH = "/__propaiclaw__/canvas";
-const PROPAICLAW_CANVAS_WS_PATH = "/__propaiclaw__/ws";
+export const PROPAICLAW_A2UI_PATH = "/__propaiclaw__/a2ui";
+export const PROPAICLAW_CANVAS_HOST_PATH = "/__propaiclaw__/canvas";
+export const PROPAICLAW_CANVAS_WS_PATH = "/__propaiclaw__/ws";
 
 export const A2UI_PATH_ALIASES = [A2UI_PATH, PROPAICLAW_A2UI_PATH] as const;
 export const CANVAS_HOST_PATH_ALIASES = [CANVAS_HOST_PATH, PROPAICLAW_CANVAS_HOST_PATH] as const;
 export const CANVAS_WS_PATH_ALIASES = [CANVAS_WS_PATH, PROPAICLAW_CANVAS_WS_PATH] as const;
+
+export function resolvePreferredA2uiPath(env: NodeJS.ProcessEnv = process.env): string {
+  return isTruthyEnvValue(env.PROPAICLAW_MODE) ? PROPAICLAW_A2UI_PATH : A2UI_PATH;
+}
+
+export function resolvePreferredCanvasHostPath(env: NodeJS.ProcessEnv = process.env): string {
+  return isTruthyEnvValue(env.PROPAICLAW_MODE) ? PROPAICLAW_CANVAS_HOST_PATH : CANVAS_HOST_PATH;
+}
+
+export function resolvePreferredCanvasWsPath(env: NodeJS.ProcessEnv = process.env): string {
+  return isTruthyEnvValue(env.PROPAICLAW_MODE) ? PROPAICLAW_CANVAS_WS_PATH : CANVAS_WS_PATH;
+}
 
 export function pathMatchesPathOrSubpath(pathname: string, basePath: string): boolean {
   return pathname === basePath || pathname.startsWith(`${basePath}/`);
@@ -147,7 +160,7 @@ export function injectCanvasLiveReload(html: string): string {
     const cap = new URLSearchParams(location.search).get("oc_cap");
     const proto = location.protocol === "https:" ? "wss" : "ws";
     const capQuery = cap ? "?oc_cap=" + encodeURIComponent(cap) : "";
-    const ws = new WebSocket(proto + "://" + location.host + ${JSON.stringify(CANVAS_WS_PATH)} + capQuery);
+    const ws = new WebSocket(proto + "://" + location.host + ${JSON.stringify(resolvePreferredCanvasWsPath())} + capQuery);
     ws.onmessage = (ev) => {
       if (String(ev.data || "") === "reload") location.reload();
     };

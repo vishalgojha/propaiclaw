@@ -1,6 +1,6 @@
 import type { Server as HttpServer } from "node:http";
 import { WebSocketServer } from "ws";
-import { CANVAS_HOST_PATH } from "../canvas-host/a2ui.js";
+import { resolvePreferredCanvasHostPath } from "../canvas-host/a2ui.js";
 import { type CanvasHostHandler, createCanvasHostHandler } from "../canvas-host/server.js";
 import type { CliDeps } from "../cli/deps.js";
 import type { createSubsystemLogger } from "../logging/subsystem.js";
@@ -79,20 +79,21 @@ export async function createGatewayRuntimeState(params: {
   chatAbortControllers: Map<string, ChatAbortControllerEntry>;
   toolEventRecipients: ReturnType<typeof createToolEventRecipientRegistry>;
 }> {
+  const canvasBasePath = resolvePreferredCanvasHostPath(process.env);
   let canvasHost: CanvasHostHandler | null = null;
   if (params.canvasHostEnabled) {
     try {
       const handler = await createCanvasHostHandler({
         runtime: params.canvasRuntime,
         rootDir: params.cfg.canvasHost?.root,
-        basePath: CANVAS_HOST_PATH,
+        basePath: canvasBasePath,
         allowInTests: params.allowCanvasHostInTests,
         liveReload: params.cfg.canvasHost?.liveReload,
       });
       if (handler.rootDir) {
         canvasHost = handler;
         params.logCanvas.info(
-          `canvas host mounted at http://${params.bindHost}:${params.port}${CANVAS_HOST_PATH}/ (root ${handler.rootDir})`,
+          `canvas host mounted at http://${params.bindHost}:${params.port}${canvasBasePath}/ (root ${handler.rootDir})`,
         );
       }
     } catch (err) {

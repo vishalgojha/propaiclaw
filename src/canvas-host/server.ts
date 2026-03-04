@@ -17,6 +17,7 @@ import {
   CANVAS_WS_PATH_ALIASES,
   handleA2uiHttpRequest,
   injectCanvasLiveReload,
+  resolvePreferredCanvasHostPath,
   resolveAliasBasePath,
 } from "./a2ui.js";
 import { normalizeUrlPath, resolveFileWithinRoot } from "./file-resolver.js";
@@ -168,8 +169,9 @@ function isDisabledByEnv() {
 }
 
 function normalizeBasePath(rawPath: string | undefined) {
-  const trimmed = (rawPath ?? CANVAS_HOST_PATH).trim();
-  const normalized = normalizeUrlPath(trimmed || CANVAS_HOST_PATH);
+  const preferredBasePath = resolvePreferredCanvasHostPath(process.env);
+  const trimmed = (rawPath ?? preferredBasePath).trim();
+  const normalized = normalizeUrlPath(trimmed || preferredBasePath);
   if (normalized === "/") {
     return "/";
   }
