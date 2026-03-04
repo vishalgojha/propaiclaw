@@ -428,7 +428,9 @@ describe("runOnboardingWizard", () => {
       expect(securityText).toContain("PropAI is a hobby project");
       expect(securityText).toContain("propai security audit --deep");
       expect(securityText).toContain("propai security audit --fix");
+      expect(securityText).toContain("Must read: /gateway/security");
       expect(securityText).not.toContain("OpenClaw is a hobby project");
+      expect(securityText).not.toContain("docs.openclaw.ai");
     } finally {
       if (previousMode === undefined) {
         delete process.env.PROPAICLAW_MODE;

@@ -22,6 +22,17 @@ function resolvePropaiclawWrapperName(env: NodeJS.ProcessEnv): string {
   return trimmed || "propaiclaw";
 }
 
+function resolveOnboardingDocsReference(
+  path: string,
+  env: NodeJS.ProcessEnv = process.env,
+): string {
+  const normalizedPath = path.startsWith("/") ? path : `/${path}`;
+  if (isTruthyEnvValue(env.PROPAICLAW_MODE)) {
+    return normalizedPath;
+  }
+  return `https://docs.openclaw.ai${normalizedPath}`;
+}
+
 export async function onboardCommand(opts: OnboardOptions, runtime: RuntimeEnv = defaultRuntime) {
   assertSupportedRuntime(runtime);
   const originalAuthChoice = opts.authChoice;
@@ -68,10 +79,11 @@ export async function onboardCommand(opts: OnboardOptions, runtime: RuntimeEnv =
     const rerunCommand = isTruthyEnvValue(process.env.PROPAICLAW_MODE)
       ? `${wrapperName} onboard --non-interactive --accept-risk ...`
       : formatCliCommand("openclaw onboard --non-interactive --accept-risk ...");
+    const securityDocs = resolveOnboardingDocsReference("/security", process.env);
     runtime.error(
       [
         "Non-interactive onboarding requires explicit risk acknowledgement.",
-        "Read: https://docs.openclaw.ai/security",
+        `Read: ${securityDocs}`,
         `Re-run with: ${rerunCommand}`,
       ].join("\n"),
     );
@@ -92,12 +104,13 @@ export async function onboardCommand(opts: OnboardOptions, runtime: RuntimeEnv =
     const wslLabel = isTruthyEnvValue(process.env.PROPAICLAW_MODE)
       ? "PropAI runs best on WSL2!"
       : "OpenClaw runs great on WSL2!";
+    const windowsGuide = resolveOnboardingDocsReference("/windows", process.env);
     runtime.log(
       [
         `Windows detected — ${wslLabel}`,
         "Native Windows might be trickier.",
         "Quick setup: wsl --install (one command, one reboot)",
-        "Guide: https://docs.openclaw.ai/windows",
+        `Guide: ${windowsGuide}`,
       ].join("\n"),
     );
   }

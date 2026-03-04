@@ -30,8 +30,15 @@ function makeRuntime(): RuntimeEnv {
 }
 
 describe("runInteractiveOnboarding", () => {
+  const originalPropaiclawMode = process.env.PROPAICLAW_MODE;
+
   afterEach(() => {
     vi.clearAllMocks();
+    if (originalPropaiclawMode === undefined) {
+      delete process.env.PROPAICLAW_MODE;
+    } else {
+      process.env.PROPAICLAW_MODE = originalPropaiclawMode;
+    }
   });
 
   it("restores terminal state without resuming stdin on success", async () => {
@@ -46,6 +53,7 @@ describe("runInteractiveOnboarding", () => {
   });
 
   it("restores terminal state without resuming stdin on cancel", async () => {
+    delete process.env.PROPAICLAW_MODE;
     const exitError = new Error("exit");
     const runtime: RuntimeEnv = {
       log: vi.fn(),
@@ -68,6 +76,24 @@ describe("runInteractiveOnboarding", () => {
       (runtime.exit as unknown as ReturnType<typeof vi.fn>).mock.invocationCallOrder[0] ??
       Number.MAX_SAFE_INTEGER;
     expect(restoreOrder).toBeLessThan(exitOrder);
+  });
+
+  it("treats cancel as a clean exit in propaiclaw mode", async () => {
+    process.env.PROPAICLAW_MODE = "1";
+    const exitError = new Error("exit");
+    const runtime: RuntimeEnv = {
+      log: vi.fn(),
+      error: vi.fn(),
+      exit: vi.fn(() => {
+        throw exitError;
+      }) as unknown as RuntimeEnv["exit"],
+    };
+    mocks.runOnboardingWizard.mockRejectedValueOnce(new WizardCancelledError("cancelled"));
+
+    await expect(runInteractiveOnboarding({} as never, runtime)).rejects.toBe(exitError);
+
+    expect(runtime.log).toHaveBeenCalledWith("Setup cancelled.");
+    expect(runtime.exit).toHaveBeenCalledWith(0);
   });
 
   it("rethrows non-cancel errors after restoring terminal state", async () => {

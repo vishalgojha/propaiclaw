@@ -56,6 +56,8 @@ function mockSnapshot(token = "abc") {
 }
 
 describe("dashboardCommand", () => {
+  const originalPropaiclawMode = process.env.PROPAICLAW_MODE;
+
   beforeEach(() => {
     resetRuntime();
     readConfigFileSnapshotMock.mockClear();
@@ -65,6 +67,11 @@ describe("dashboardCommand", () => {
     openUrlMock.mockClear();
     formatControlUiSshHintMock.mockClear();
     copyToClipboardMock.mockClear();
+    if (originalPropaiclawMode === undefined) {
+      delete process.env.PROPAICLAW_MODE;
+    } else {
+      process.env.PROPAICLAW_MODE = originalPropaiclawMode;
+    }
   });
 
   it("opens and copies the dashboard link by default", async () => {
@@ -113,6 +120,20 @@ describe("dashboardCommand", () => {
     expect(openUrlMock).not.toHaveBeenCalled();
     expect(runtime.log).toHaveBeenCalledWith(
       "Browser launch disabled (--no-open). Use the URL above.",
+    );
+  });
+
+  it("uses PropAI wording in propaiclaw mode", async () => {
+    process.env.PROPAICLAW_MODE = "1";
+    mockSnapshot("abc123");
+    copyToClipboardMock.mockResolvedValue(true);
+    detectBrowserOpenSupportMock.mockResolvedValue({ ok: true });
+    openUrlMock.mockResolvedValue(true);
+
+    await dashboardCommand(runtime);
+
+    expect(runtime.log).toHaveBeenCalledWith(
+      "Opened in your browser. Keep that tab to control PropAI.",
     );
   });
 });

@@ -1,6 +1,7 @@
 import type { RuntimeEnv } from "../runtime.js";
 import { defaultRuntime } from "../runtime.js";
 import { restoreTerminalState } from "../terminal/restore.js";
+import { isTruthyEnvValue } from "../infra/env.js";
 import { createClackPrompter } from "../wizard/clack-prompter.js";
 import { runOnboardingWizard } from "../wizard/onboarding.js";
 import { WizardCancelledError } from "../wizard/prompts.js";
@@ -16,8 +17,13 @@ export async function runInteractiveOnboarding(
     await runOnboardingWizard(opts, runtime, prompter);
   } catch (err) {
     if (err instanceof WizardCancelledError) {
-      // Best practice: cancellation is not a successful completion.
-      exitCode = 1;
+      if (isTruthyEnvValue(process.env.PROPAICLAW_MODE)) {
+        runtime.log("Setup cancelled.");
+        exitCode = 0;
+      } else {
+        // Best practice: cancellation is not a successful completion.
+        exitCode = 1;
+      }
       return;
     }
     throw err;

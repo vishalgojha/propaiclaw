@@ -54,6 +54,14 @@ function resolveOnboardingBrandName(env: NodeJS.ProcessEnv = process.env): strin
   return isPropaiclawMode(env) ? "PropAI" : "OpenClaw";
 }
 
+function resolveOnboardingDocsReference(path: string, env: NodeJS.ProcessEnv = process.env): string {
+  const normalizedPath = path.startsWith("/") ? path : `/${path}`;
+  if (isPropaiclawMode(env)) {
+    return normalizedPath;
+  }
+  return `https://docs.openclaw.ai${normalizedPath}`;
+}
+
 async function requireRiskAcknowledgement(params: {
   opts: OnboardOptions;
   prompter: WizardPrompter;
@@ -91,7 +99,7 @@ async function requireRiskAcknowledgement(params: {
       auditCommands.deep,
       auditCommands.fix,
       "",
-      "Must read: https://docs.openclaw.ai/gateway/security",
+      `Must read: ${resolveOnboardingDocsReference("/gateway/security")}`,
     ].join("\n"),
     "Security",
   );
@@ -127,7 +135,7 @@ export async function runOnboardingWizard(
         [
           ...snapshot.issues.map((iss) => `- ${iss.path}: ${iss.message}`),
           "",
-          "Docs: https://docs.openclaw.ai/gateway/configuration",
+          `Docs: ${resolveOnboardingDocsReference("/gateway/configuration")}`,
         ].join("\n"),
         "Config issues",
       );

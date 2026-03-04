@@ -25,6 +25,7 @@ import type { OpenClawConfig } from "../config/config.js";
 import { resolveGatewayService } from "../daemon/service.js";
 import { isSystemdUserServiceAvailable } from "../daemon/systemd.js";
 import { ensureControlUiAssetsBuilt } from "../infra/control-ui-assets.js";
+import { isTruthyEnvValue } from "../infra/env.js";
 import type { RuntimeEnv } from "../runtime.js";
 import { restoreTerminalState } from "../terminal/restore.js";
 import { runTui } from "../tui/tui.js";
@@ -44,10 +45,36 @@ type FinalizeOnboardingOptions = {
   runtime: RuntimeEnv;
 };
 
+function isPropaiclawMode(env: NodeJS.ProcessEnv = process.env): boolean {
+  return isTruthyEnvValue(env.PROPAICLAW_MODE);
+}
+
+function resolveWrapperCliName(env: NodeJS.ProcessEnv = process.env): string {
+  const raw = env.PROPAICLAW_CLI_NAME;
+  if (!raw) {
+    return "propai";
+  }
+  const trimmed = raw.trim();
+  return trimmed || "propai";
+}
+
+function resolveOnboardingBrandName(env: NodeJS.ProcessEnv = process.env): string {
+  return isPropaiclawMode(env) ? "PropAI" : "OpenClaw";
+}
+
+function formatOnboardingCommand(command: string, env: NodeJS.ProcessEnv = process.env): string {
+  const formatted = formatCliCommand(command, env as Record<string, string | undefined>);
+  if (!isPropaiclawMode(env)) {
+    return formatted;
+  }
+  return formatted.replace(/\bopenclaw\b/, resolveWrapperCliName(env));
+}
+
 export async function finalizeOnboardingWizard(
   options: FinalizeOnboardingOptions,
 ): Promise<{ launchedTui: boolean }> {
   const { flow, opts, baseConfig, nextConfig, settings, prompter, runtime } = options;
+  const brandName = resolveOnboardingBrandName();
 
   const withWizardProgress = async <T>(
     label: string,
@@ -309,10 +336,10 @@ export async function finalizeOnboardingWizard(
       [
         "Gateway token: shared auth for the Gateway + Control UI.",
         "Stored in: ~/.openclaw/openclaw.json (gateway.auth.token) or PROPAICLAW_GATEWAY_TOKEN.",
-        `View token: ${formatCliCommand("openclaw config get gateway.auth.token")}`,
-        `Generate token: ${formatCliCommand("openclaw doctor --generate-gateway-token")}`,
+        `View token: ${formatOnboardingCommand("openclaw config get gateway.auth.token")}`,
+        `Generate token: ${formatOnboardingCommand("openclaw doctor --generate-gateway-token")}`,
         "Web UI stores a copy in this browser's localStorage (openclaw.control.settings.v1).",
-        `Open the dashboard anytime: ${formatCliCommand("openclaw dashboard --no-open")}`,
+        `Open the dashboard anytime: ${formatOnboardingCommand("openclaw dashboard --no-open")}`,
         "If prompted: paste the token into Control UI settings (or use the tokenized dashboard URL).",
       ].join("\n"),
       "Token",
@@ -361,8 +388,8 @@ export async function finalizeOnboardingWizard(
         [
           `Dashboard link (with token): ${authedUrl}`,
           controlUiOpened
-            ? "Opened in your browser. Keep that tab to control OpenClaw."
-            : "Copy/paste this URL in a browser on this machine to control OpenClaw.",
+            ? `Opened in your browser. Keep that tab to control ${brandName}.`
+            : `Copy/paste this URL in a browser on this machine to control ${brandName}.`,
           controlUiOpenHint,
         ]
           .filter(Boolean)
@@ -371,7 +398,7 @@ export async function finalizeOnboardingWizard(
       );
     } else {
       await prompter.note(
-        `When you're ready: ${formatCliCommand("openclaw dashboard --no-open")}`,
+        `When you're ready: ${formatOnboardingCommand("openclaw dashboard --no-open")}`,
         "Later",
       );
     }
@@ -423,8 +450,8 @@ export async function finalizeOnboardingWizard(
       [
         `Dashboard link (with token): ${authedUrl}`,
         controlUiOpened
-          ? "Opened in your browser. Keep that tab to control OpenClaw."
-          : "Copy/paste this URL in a browser on this machine to control OpenClaw.",
+          ? `Opened in your browser. Keep that tab to control ${brandName}.`
+          : `Copy/paste this URL in a browser on this machine to control ${brandName}.`,
         controlUiOpenHint,
       ]
         .filter(Boolean)
@@ -449,10 +476,10 @@ export async function finalizeOnboardingWizard(
       : [
           "If you want your agent to be able to search the web, you’ll need an API key.",
           "",
-          "OpenClaw uses Brave Search for the `web_search` tool. Without a Brave Search API key, web search won’t work.",
+          `${brandName} uses Brave Search for the \`web_search\` tool. Without a Brave Search API key, web search won’t work.`,
           "",
           "Set it up interactively:",
-          `- Run: ${formatCliCommand("openclaw configure --section web")}`,
+          `- Run: ${formatOnboardingCommand("openclaw configure --section web")}`,
           "- Enable web_search and paste your Brave Search API key",
           "",
           "Alternative: set BRAVE_API_KEY in the Gateway environment (no config changes).",
@@ -468,10 +495,10 @@ export async function finalizeOnboardingWizard(
 
   await prompter.outro(
     controlUiOpened
-      ? "Onboarding complete. Dashboard opened; keep that tab to control OpenClaw."
+      ? `Onboarding complete. Dashboard opened; keep that tab to control ${brandName}.`
       : seededInBackground
         ? "Onboarding complete. Web UI seeded in the background; open it anytime with the dashboard link above."
-        : "Onboarding complete. Use the dashboard link above to control OpenClaw.",
+        : `Onboarding complete. Use the dashboard link above to control ${brandName}.`,
   );
 
   return { launchedTui };

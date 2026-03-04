@@ -2,7 +2,17 @@
 
 import module from "node:module";
 
-if (module.enableCompileCache && !process.env.NODE_DISABLE_COMPILE_CACHE) {
+const compileCacheOptIn =
+  process.env.OPENCLAW_ENABLE_COMPILE_CACHE === "1" ||
+  process.env.PROPAICLAW_ENABLE_COMPILE_CACHE === "1";
+
+// Disable by default on Windows to avoid stale hashed dist chunk imports after rebuilds.
+const shouldEnableCompileCache =
+  module.enableCompileCache &&
+  !process.env.NODE_DISABLE_COMPILE_CACHE &&
+  (process.platform !== "win32" || compileCacheOptIn);
+
+if (shouldEnableCompileCache) {
   try {
     module.enableCompileCache();
   } catch {

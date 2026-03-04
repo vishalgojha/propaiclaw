@@ -178,5 +178,6 @@ describe("printWizardHeader", () => {
     const header = String(runtime.log.mock.calls[0]?.[0] ?? "");
     expect(header).toContain("PROPAI");
     expect(header).not.toContain("OPENCLAW");
+    expect(header).not.toContain("▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄");
   });
 });

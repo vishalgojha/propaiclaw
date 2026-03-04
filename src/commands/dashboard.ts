@@ -1,6 +1,7 @@
 import { readConfigFileSnapshot, resolveGatewayPort } from "../config/config.js";
 import { readGatewayTokenEnv } from "../gateway/credentials.js";
 import { copyToClipboard } from "../infra/clipboard.js";
+import { isTruthyEnvValue } from "../infra/env.js";
 import type { RuntimeEnv } from "../runtime.js";
 import { defaultRuntime } from "../runtime.js";
 import {
@@ -13,6 +14,10 @@ import {
 type DashboardOptions = {
   noOpen?: boolean;
 };
+
+function resolveDashboardBrandName(env: NodeJS.ProcessEnv = process.env): string {
+  return isTruthyEnvValue(env.PROPAICLAW_MODE) ? "PropAI" : "OpenClaw";
+}
 
 export async function dashboardCommand(
   runtime: RuntimeEnv = defaultRuntime,
@@ -63,7 +68,7 @@ export async function dashboardCommand(
   }
 
   if (opened) {
-    runtime.log("Opened in your browser. Keep that tab to control OpenClaw.");
+    runtime.log(`Opened in your browser. Keep that tab to control ${resolveDashboardBrandName()}.`);
   } else if (hint) {
     runtime.log(hint);
   }

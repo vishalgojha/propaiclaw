@@ -166,6 +166,7 @@ describe("onboardCommand", () => {
     expect(runtime.error).toHaveBeenCalledWith(
       expect.stringContaining("Re-run with: propaiclaw onboard --non-interactive --accept-risk ..."),
     );
+    expect(runtime.error).toHaveBeenCalledWith(expect.stringContaining("Read: /security"));
     expect(runtime.exit).toHaveBeenCalledWith(1);
   });
 
@@ -200,5 +201,6 @@ describe("onboardCommand", () => {
     expect(runtime.log).toHaveBeenCalledWith(
       expect.stringContaining("Windows detected — PropAI runs best on WSL2!"),
     );
+    expect(runtime.log).toHaveBeenCalledWith(expect.stringContaining("Guide: /windows"));
   });
 });

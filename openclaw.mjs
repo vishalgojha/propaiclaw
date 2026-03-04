@@ -2,8 +2,18 @@
 
 import module from "node:module";
 
+const compileCacheOptIn =
+  process.env.OPENCLAW_ENABLE_COMPILE_CACHE === "1" ||
+  process.env.PROPAICLAW_ENABLE_COMPILE_CACHE === "1";
+
 // https://nodejs.org/api/module.html#module-compile-cache
-if (module.enableCompileCache && !process.env.NODE_DISABLE_COMPILE_CACHE) {
+// Disable by default on Windows to avoid stale hashed dist chunk imports after rebuilds.
+const shouldEnableCompileCache =
+  module.enableCompileCache &&
+  !process.env.NODE_DISABLE_COMPILE_CACHE &&
+  (process.platform !== "win32" || compileCacheOptIn);
+
+if (shouldEnableCompileCache) {
   try {
     module.enableCompileCache();
   } catch {
