@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import { spawn } from "node:child_process";
+import { existsSync } from "node:fs";
 import path from "node:path";
 import process from "node:process";
 import { fileURLToPath } from "node:url";
@@ -10,6 +11,7 @@ import {
   readConfigFileSnapshotForWrite,
   writeConfigFile,
 } from "./config/config.js";
+import { openUrl } from "./commands/onboard-helpers.js";
 import type { OpenClawConfig } from "./config/types.js";
 import { applyWhatsAppGroupAllowlist } from "./propai/group-allowlist.js";
 import {
@@ -63,13 +65,101 @@ function bootstrapPropaiclawRuntimeIdentity(): void {
   const runtimeEnv = resolvePropaiclawRuntimeEnv({
     ...process.env,
     PROPAICLAW_CLI_NAME: CLI_COMMAND_NAME,
+    PROPAICLAW_ROOT: process.env.PROPAICLAW_ROOT ?? resolvePropaiclawRootPath(),
   });
   applyProcessEnvValues(runtimeEnv, process.env);
 }
 
-function resolveOpenClawWrapperPath(): string {
+function resolvePropaiclawRootPath(): string {
   const here = path.dirname(fileURLToPath(import.meta.url));
-  return path.resolve(here, "..", "openclaw.mjs");
+  return path.resolve(here, "..");
+}
+
+function resolveOpenClawWrapperPath(): string {
+  return path.resolve(resolvePropaiclawRootPath(), "openclaw.mjs");
+}
+
+function resolveStopScriptPath(): string {
+  return path.resolve(resolvePropaiclawRootPath(), "scripts", "propai-stop.ps1");
+}
+
+function runWindowsStopScript(params: { scriptPath: string; debug: boolean }): Promise<number> {
+  if (params.debug) {
+    process.stderr.write(
+      `[${CLI_COMMAND_NAME}] stop cleanup -> powershell -NoProfile -ExecutionPolicy Bypass -File "${params.scriptPath}"\n`,
+    );
+  }
+  return new Promise((resolve) => {
+    const child = spawn(
+      "powershell.exe",
+      ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", params.scriptPath],
+      {
+        stdio: "inherit",
+        env: resolvePropaiclawRuntimeEnv(process.env),
+      },
+    );
+
+    child.once("error", (error) => {
+      process.stderr.write(
+        `[${CLI_COMMAND_NAME}] Failed to run stop cleanup script: ${error instanceof Error ? error.message : String(error)}\n`,
+      );
+      resolve(1);
+    });
+
+    child.once("exit", (code, signal) => {
+      if (signal) {
+        process.stderr.write(formatRuntimeSignalExit(CLI_COMMAND_NAME, signal));
+        resolve(1);
+        return;
+      }
+      resolve(typeof code === "number" ? code : 1);
+    });
+  });
+}
+
+async function runLocalStopCommand(params: {
+  openClawWrapperPath: string;
+  debug: boolean;
+}): Promise<number> {
+  if (process.platform === "win32") {
+    const stopScriptPath = resolveStopScriptPath();
+    if (existsSync(stopScriptPath)) {
+      return await runWindowsStopScript({ scriptPath: stopScriptPath, debug: params.debug });
+    }
+    process.stderr.write(
+      `[${CLI_COMMAND_NAME}] stop script not found at ${stopScriptPath}; falling back to gateway stop.\n`,
+    );
+  }
+  return await runOpenClawCommand({
+    openClawWrapperPath: params.openClawWrapperPath,
+    args: ["gateway", "stop", "--force"],
+    debug: params.debug,
+    commandLabel: "stop",
+  });
+}
+
+function resolveUiUrl(env: NodeJS.ProcessEnv = process.env): string {
+  const rawPort = env.PROPAICLAW_GATEWAY_PORT?.trim();
+  const parsedPort = rawPort ? Number.parseInt(rawPort, 10) : Number.NaN;
+  const port = Number.isInteger(parsedPort) && parsedPort > 0 && parsedPort < 65536 ? parsedPort : 18789;
+  return `http://127.0.0.1:${port}/`;
+}
+
+async function runLocalUiCommand(params: { noOpen: boolean; debug: boolean }): Promise<number> {
+  const uiUrl = resolveUiUrl(process.env);
+  process.stdout.write(`UI URL: ${uiUrl}\n`);
+  if (params.noOpen) {
+    process.stdout.write("Browser launch disabled (--no-open). Use the URL above.\n");
+    return 0;
+  }
+  const opened = await openUrl(uiUrl);
+  if (!opened) {
+    process.stdout.write(`Could not auto-open browser. Open manually: ${uiUrl}\n`);
+  }
+  if (params.debug) {
+    process.stderr.write(`[${CLI_COMMAND_NAME}] ui -> ${uiUrl}\n`);
+  }
+  return 0;
 }
 
 function resolveGroupScope(params: {
@@ -183,6 +273,26 @@ async function runRoute(route: PropAiCommandRoute): Promise<number> {
     });
   }
   if (route.kind === "local") {
+    if (route.commandLabel === "ui") {
+      const code = await runLocalUiCommand({
+        noOpen: route.params.noOpen,
+        debug: route.debug,
+      });
+      if (code !== 0 && !route.debug) {
+        process.stderr.write(`${renderFriendlyFailure(route.commandLabel, CLI_COMMAND_NAME)}\n`);
+      }
+      return code;
+    }
+    if (route.commandLabel === "stop") {
+      const code = await runLocalStopCommand({
+        openClawWrapperPath,
+        debug: route.debug,
+      });
+      if (code !== 0 && !route.debug) {
+        process.stderr.write(`${renderFriendlyFailure(route.commandLabel, CLI_COMMAND_NAME)}\n`);
+      }
+      return code;
+    }
     if (route.commandLabel === "profile-init") {
       try {
         const result = await initializeRealtorWorkspaceProfile(route.params);

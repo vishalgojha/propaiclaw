@@ -17,6 +17,25 @@ describe("mapPropAiArgs", () => {
     });
   });
 
+  it("maps stop to local stale-session cleanup", () => {
+    const route = mapPropAiArgs(["stop"]);
+    expect(route).toEqual({
+      kind: "local",
+      debug: false,
+      commandLabel: "stop",
+      params: {},
+    });
+  });
+
+  it("errors when stop receives unsupported args", () => {
+    const route = mapPropAiArgs(["stop", "--force"]);
+    expect(route).toEqual({
+      kind: "error",
+      debug: false,
+      message: "Unsupported stop arguments. Usage: propaiclaw stop",
+    });
+  });
+
   it("maps setup to onboard", () => {
     const route = mapPropAiArgs(["setup"]);
     expect(route).toEqual({
@@ -50,20 +69,57 @@ describe("mapPropAiArgs", () => {
   it("maps dashboard shortcut", () => {
     const route = mapPropAiArgs(["dashboard"]);
     expect(route).toEqual({
-      kind: "single",
+      kind: "local",
       debug: false,
-      commandLabel: "dashboard",
-      args: ["dashboard"],
+      commandLabel: "ui",
+      params: {
+        noOpen: false,
+      },
     });
   });
 
-  it("maps ui alias to dashboard", () => {
+  it("maps ui shortcut to local ui opener", () => {
+    const route = mapPropAiArgs(["ui"]);
+    expect(route).toEqual({
+      kind: "local",
+      debug: false,
+      commandLabel: "ui",
+      params: {
+        noOpen: false,
+      },
+    });
+  });
+
+  it("maps ui --no-open", () => {
+    const route = mapPropAiArgs(["ui", "--no-open"]);
+    expect(route).toEqual({
+      kind: "local",
+      debug: false,
+      commandLabel: "ui",
+      params: {
+        noOpen: true,
+      },
+    });
+  });
+
+  it("maps dashboard --no-open", () => {
+    const route = mapPropAiArgs(["dashboard", "--no-open"]);
+    expect(route).toEqual({
+      kind: "local",
+      debug: false,
+      commandLabel: "ui",
+      params: {
+        noOpen: true,
+      },
+    });
+  });
+
+  it("errors when ui receives unsupported args", () => {
     const route = mapPropAiArgs(["ui", "--open"]);
     expect(route).toEqual({
-      kind: "single",
+      kind: "error",
       debug: false,
-      commandLabel: "dashboard",
-      args: ["dashboard", "--open"],
+      message: "Unsupported ui arguments: --open. Usage: propaiclaw ui [--no-open]",
     });
   });
 
@@ -509,6 +565,7 @@ describe("propaiclaw help and failures", () => {
     const help = renderPropAiHelp();
     expect(help).toContain("propaiclaw profile init");
     expect(help).toContain("propaiclaw start");
+    expect(help).toContain("propaiclaw stop");
     expect(help).toContain("propaiclaw sync");
     expect(help).toContain("propaiclaw dashboard");
     expect(help).toContain("propaiclaw tui");
@@ -523,8 +580,10 @@ describe("propaiclaw help and failures", () => {
 
   it("renders friendly failure text", () => {
     expect(renderFriendlyFailure("connect")).toContain("could not connect");
-    expect(renderFriendlyFailure("dashboard")).toContain("could not open the dashboard");
+    expect(renderFriendlyFailure("dashboard")).toContain("could not open the PropAI UI");
+    expect(renderFriendlyFailure("ui")).toContain("could not open the PropAI UI");
     expect(renderFriendlyFailure("tui")).toContain("could not start TUI mode");
+    expect(renderFriendlyFailure("stop")).toContain("could not stop old sessions");
     const unknownFailure = renderFriendlyFailure("unknown");
     expect(unknownFailure).toContain("command failed");
     expect(unknownFailure.toLowerCase()).not.toContain("openclaw");

@@ -17,12 +17,14 @@ describe("propaiclaw runtime env bootstrap", () => {
       PROPAICLAW_HOME: "/canonical/home",
       PROPAICLAW_PROFILE: "tenant-a",
       PROPAICLAW_OAUTH_DIR: "/canonical/oauth",
+      PROPAICLAW_ROOT: "/canonical/root",
     } as NodeJS.ProcessEnv);
     expect(resolved.PROPAICLAW_STATE_DIR).toBe("/canonical/state");
     expect(resolved.PROPAICLAW_CONFIG_PATH).toBe("/canonical/propaiclaw.json");
     expect(resolved.PROPAICLAW_HOME).toBe("/canonical/home");
     expect(resolved.PROPAICLAW_PROFILE).toBe("tenant-a");
     expect(resolved.PROPAICLAW_OAUTH_DIR).toBe("/canonical/oauth");
+    expect(resolved.PROPAICLAW_ROOT).toBe("/canonical/root");
   });
 
   it("does not backfill canonical aliases from unrelated runtime env values", () => {

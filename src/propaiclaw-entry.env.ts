@@ -64,6 +64,7 @@ export function resolvePropaiclawRuntimeEnv(
   const gatewayPort = readTrimmed(env, "PROPAICLAW_GATEWAY_PORT");
   const channelsOnly = readTrimmed(env, "PROPAICLAW_CHANNELS_ONLY") ?? "whatsapp";
   const oauthDir = readTrimmed(env, "PROPAICLAW_OAUTH_DIR");
+  const rootDir = readTrimmed(env, "PROPAICLAW_ROOT");
   const hideBanner = readTrimmed(env, "OPENCLAW_HIDE_BANNER") ?? "1";
 
   return {
@@ -76,6 +77,7 @@ export function resolvePropaiclawRuntimeEnv(
     ...(profile ? { PROPAICLAW_PROFILE: profile } : {}),
     ...(gatewayPort ? { PROPAICLAW_GATEWAY_PORT: gatewayPort } : {}),
     ...(oauthDir ? { PROPAICLAW_OAUTH_DIR: oauthDir } : {}),
+    ...(rootDir ? { PROPAICLAW_ROOT: rootDir } : {}),
     OPENCLAW_HIDE_BANNER: hideBanner,
   };
 }

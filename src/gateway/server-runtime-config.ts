@@ -1,9 +1,11 @@
+import path from "node:path";
 import type {
   GatewayAuthConfig,
   GatewayBindMode,
   GatewayTailscaleConfig,
   loadConfig,
 } from "../config/config.js";
+import { isTruthyEnvValue } from "../infra/env.js";
 import {
   assertGatewayAuthConfigured,
   type ResolvedGatewayAuth,
@@ -35,6 +37,21 @@ export type GatewayRuntimeConfig = {
   hooksConfig: ReturnType<typeof resolveHooksConfig>;
   canvasHostEnabled: boolean;
 };
+
+function resolvePropaiclawControlUiRoot(env: NodeJS.ProcessEnv = process.env): string | undefined {
+  if (!isTruthyEnvValue(env.PROPAICLAW_MODE)) {
+    return undefined;
+  }
+  const explicit = env.PROPAICLAW_UI_ROOT?.trim();
+  if (explicit) {
+    return path.resolve(explicit);
+  }
+  const runtimeRoot = env.PROPAICLAW_ROOT?.trim();
+  if (runtimeRoot) {
+    return path.resolve(runtimeRoot, "propai-studio", "dist");
+  }
+  return path.resolve(process.cwd(), "propai-studio", "dist");
+}
 
 export async function resolveGatewayRuntimeConfig(params: {
   cfg: ReturnType<typeof loadConfig>;
@@ -90,10 +107,12 @@ export async function resolveGatewayRuntimeConfig(params: {
         : undefined;
   const controlUiBasePath = normalizeControlUiBasePath(params.cfg.gateway?.controlUi?.basePath);
   const controlUiRootRaw = params.cfg.gateway?.controlUi?.root;
+  const propaiclawControlUiRoot = resolvePropaiclawControlUiRoot(process.env);
   const controlUiRoot =
-    typeof controlUiRootRaw === "string" && controlUiRootRaw.trim().length > 0
+    propaiclawControlUiRoot ??
+    (typeof controlUiRootRaw === "string" && controlUiRootRaw.trim().length > 0
       ? controlUiRootRaw.trim()
-      : undefined;
+      : undefined);
   const tailscaleBase = params.cfg.gateway?.tailscale ?? {};
   const tailscaleOverrides = params.tailscale ?? {};
   const tailscaleConfig = mergeGatewayTailscaleConfig(tailscaleBase, tailscaleOverrides);

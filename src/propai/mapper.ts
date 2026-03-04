@@ -27,6 +27,20 @@ export type PropAiCommandRoute =
   | {
       kind: "local";
       debug: boolean;
+      commandLabel: "stop";
+      params: Record<string, never>;
+    }
+  | {
+      kind: "local";
+      debug: boolean;
+      commandLabel: "ui";
+      params: {
+        noOpen: boolean;
+      };
+    }
+  | {
+      kind: "local";
+      debug: boolean;
       commandLabel: "profile-init";
       params: {
         brokerageName?: string;
@@ -87,6 +101,7 @@ export function renderPropAiHelp(
     cmd("profile init [brokerage-name] [options]"),
     cmd("sync"),
     cmd("start"),
+    cmd("stop"),
     cmd("connect whatsapp"),
     "",
     "Daily commands:",
@@ -157,6 +172,34 @@ function withDefaultWhatsappChannel(tokens: string[]): string[] {
     return tokens;
   }
   return ["--channel", "whatsapp", ...tokens];
+}
+
+type UiRouteParseResult =
+  | {
+      ok: true;
+      noOpen: boolean;
+    }
+  | {
+      ok: false;
+      message: string;
+    };
+
+function parseUiRouteOptions(
+  args: string[],
+  commandName: string,
+  subcommand: "ui" | "dashboard" | "web",
+): UiRouteParseResult {
+  const unsupported = args.filter((arg) => arg !== "--no-open");
+  if (unsupported.length > 0) {
+    return {
+      ok: false,
+      message: `Unsupported ${subcommand} arguments: ${unsupported.join(" ")}. Usage: ${commandName} ${subcommand} [--no-open]`,
+    };
+  }
+  return {
+    ok: true,
+    noOpen: args.includes("--no-open"),
+  };
 }
 
 type ParsedLongOptions = {
@@ -300,6 +343,23 @@ export function mapPropAiArgs(
     return { kind: "single", debug, commandLabel: "start", args: ["gateway", "run", ...startArgs] };
   }
 
+  if (primary === "stop") {
+    const stopArgs = [secondary, ...rest].filter((part): part is string => Boolean(part));
+    if (stopArgs.length > 0) {
+      return {
+        kind: "error",
+        debug,
+        message: `Unsupported stop arguments. Usage: ${commandName} stop`,
+      };
+    }
+    return {
+      kind: "local",
+      debug,
+      commandLabel: "stop",
+      params: {},
+    };
+  }
+
   if (primary === "setup" || primary === "sync") {
     const setupArgs = [secondary, ...rest].filter((part): part is string => Boolean(part));
     const args = ["onboard"];
@@ -313,13 +373,43 @@ export function mapPropAiArgs(
     return { kind: "single", debug, commandLabel: primary, args };
   }
 
-  if (primary === "dashboard" || primary === "ui" || primary === "web") {
-    const dashboardArgs = [secondary, ...rest].filter((part): part is string => Boolean(part));
+  if (primary === "ui") {
+    const uiArgs = [secondary, ...rest].filter((part): part is string => Boolean(part));
+    const parsed = parseUiRouteOptions(uiArgs, commandName, "ui");
+    if (!parsed.ok) {
+      return {
+        kind: "error",
+        debug,
+        message: parsed.message,
+      };
+    }
     return {
-      kind: "single",
+      kind: "local",
       debug,
-      commandLabel: "dashboard",
-      args: ["dashboard", ...dashboardArgs],
+      commandLabel: "ui",
+      params: {
+        noOpen: parsed.noOpen,
+      },
+    };
+  }
+
+  if (primary === "dashboard" || primary === "web") {
+    const dashboardArgs = [secondary, ...rest].filter((part): part is string => Boolean(part));
+    const parsed = parseUiRouteOptions(dashboardArgs, commandName, primary);
+    if (!parsed.ok) {
+      return {
+        kind: "error",
+        debug,
+        message: parsed.message,
+      };
+    }
+    return {
+      kind: "local",
+      debug,
+      commandLabel: "ui",
+      params: {
+        noOpen: parsed.noOpen,
+      },
     };
   }
 
@@ -716,11 +806,14 @@ export function renderFriendlyFailure(commandLabel: string, commandName = "propa
   switch (commandLabel) {
     case "start":
       return `Propaiclaw could not start your AI engine. Try \`${commandName} start --debug\` for full diagnostics.`;
+    case "stop":
+      return `Propaiclaw could not stop old sessions. Try \`${commandName} stop --debug\` for full diagnostics.`;
     case "setup":
     case "sync":
       return `Propaiclaw setup could not complete. Re-run with \`${commandName} sync --debug\` for raw diagnostics.`;
     case "dashboard":
-      return `Propaiclaw could not open the dashboard. Confirm the gateway is running with \`${commandName} start\`, then retry.`;
+    case "ui":
+      return `Propaiclaw could not open the PropAI UI. Confirm the gateway is running with \`${commandName} start\`, then retry.`;
     case "tui":
       return `Propaiclaw could not start TUI mode. Confirm the gateway is running with \`${commandName} start\`, then retry.`;
     case "connect":

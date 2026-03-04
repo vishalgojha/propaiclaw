@@ -1,3 +1,4 @@
+import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { resolveGatewayRuntimeConfig } from "./server-runtime-config.js";
 
@@ -277,6 +278,119 @@ describe("resolveGatewayRuntimeConfig", () => {
       });
 
       expect(result.strictTransportSecurityHeader).toBeUndefined();
+    });
+  });
+
+  describe("propaiclaw control ui root defaults", () => {
+    let previousMode: string | undefined;
+    let previousRoot: string | undefined;
+    let previousUiRoot: string | undefined;
+
+    beforeEach(() => {
+      previousMode = process.env.PROPAICLAW_MODE;
+      previousRoot = process.env.PROPAICLAW_ROOT;
+      previousUiRoot = process.env.PROPAICLAW_UI_ROOT;
+    });
+
+    afterEach(() => {
+      if (previousMode === undefined) {
+        delete process.env.PROPAICLAW_MODE;
+      } else {
+        process.env.PROPAICLAW_MODE = previousMode;
+      }
+      if (previousRoot === undefined) {
+        delete process.env.PROPAICLAW_ROOT;
+      } else {
+        process.env.PROPAICLAW_ROOT = previousRoot;
+      }
+      if (previousUiRoot === undefined) {
+        delete process.env.PROPAICLAW_UI_ROOT;
+      } else {
+        process.env.PROPAICLAW_UI_ROOT = previousUiRoot;
+      }
+    });
+
+    it("defaults controlUi.root to $PROPAICLAW_ROOT/propai-studio/dist", async () => {
+      process.env.PROPAICLAW_MODE = "1";
+      process.env.PROPAICLAW_ROOT = path.join(path.sep, "tmp", "propaiclaw-root");
+      delete process.env.PROPAICLAW_UI_ROOT;
+
+      const result = await resolveGatewayRuntimeConfig({
+        cfg: {
+          gateway: {
+            bind: "loopback",
+            auth: { mode: "none" },
+          },
+        },
+        port: 18789,
+      });
+
+      expect(result.controlUiRoot).toBe(
+        path.resolve(path.join(path.sep, "tmp", "propaiclaw-root", "propai-studio", "dist")),
+      );
+    });
+
+    it("prefers PROPAICLAW_UI_ROOT override when provided", async () => {
+      process.env.PROPAICLAW_MODE = "1";
+      process.env.PROPAICLAW_ROOT = path.join(path.sep, "tmp", "propaiclaw-root");
+      process.env.PROPAICLAW_UI_ROOT = path.join(path.sep, "tmp", "custom-propai-ui");
+
+      const result = await resolveGatewayRuntimeConfig({
+        cfg: {
+          gateway: {
+            bind: "loopback",
+            auth: { mode: "none" },
+          },
+        },
+        port: 18789,
+      });
+
+      expect(result.controlUiRoot).toBe(path.resolve(path.join(path.sep, "tmp", "custom-propai-ui")));
+    });
+
+    it("ignores gateway.controlUi.root in Propaiclaw mode", async () => {
+      process.env.PROPAICLAW_MODE = "1";
+      process.env.PROPAICLAW_ROOT = path.join(path.sep, "tmp", "propaiclaw-root");
+      delete process.env.PROPAICLAW_UI_ROOT;
+
+      const result = await resolveGatewayRuntimeConfig({
+        cfg: {
+          gateway: {
+            bind: "loopback",
+            auth: { mode: "none" },
+            controlUi: {
+              root: path.join(path.sep, "tmp", "legacy-openclaw-ui"),
+            },
+          },
+        },
+        port: 18789,
+      });
+
+      expect(result.controlUiRoot).toBe(
+        path.resolve(path.join(path.sep, "tmp", "propaiclaw-root", "propai-studio", "dist")),
+      );
+    });
+
+    it("keeps gateway.controlUi.root when not in Propaiclaw mode", async () => {
+      delete process.env.PROPAICLAW_MODE;
+      delete process.env.PROPAICLAW_ROOT;
+      delete process.env.PROPAICLAW_UI_ROOT;
+
+      const legacyRoot = path.join(path.sep, "tmp", "legacy-openclaw-ui");
+      const result = await resolveGatewayRuntimeConfig({
+        cfg: {
+          gateway: {
+            bind: "loopback",
+            auth: { mode: "none" },
+            controlUi: {
+              root: legacyRoot,
+            },
+          },
+        },
+        port: 18789,
+      });
+
+      expect(result.controlUiRoot).toBe(legacyRoot);
     });
   });
 });

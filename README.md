@@ -20,19 +20,32 @@ pnpm add -g propaiclaw@latest
 propai profile init "Acme Realty" --owner "Vishal" --city "Mumbai"
 propai sync
 propai start
+propai stop
 propai connect whatsapp
 propai status
+```
+
+One command for setup + onboarding + UI launch (Windows):
+
+```powershell
+npm run propai:up
+# fast path (skip sync/onboarding)
+npm run propai:up:fast
 ```
 
 ## Daily Workflow Examples
 
 ```bash
+propai ui
 propai dashboard
 propai tui
 propai lead follow-up +15555550123 "Just checking in on the listing you asked about."
 propai schedule daily "Good morning check-in" --to +15555550123
 propai history +15555550123
 ```
+
+- `propai ui` opens the PropAI UI (`http://127.0.0.1:18789/`).
+- `propai dashboard` is an alias of `propai ui`.
 
 ## Windows One-Click TUI Launcher
 
@@ -48,10 +61,37 @@ It automatically:
 - starts one fresh gateway on `ws://127.0.0.1:18789`
 - opens TUI after the gateway is reachable
 
-Manual cleanup only:
+Manual cleanup:
+
+```bash
+propai stop
+```
+
+Windows PowerShell fallback:
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\propai-stop.ps1
+```
+
+## Windows One-Command Full Launch
+
+Single command alternative to manual Terminal A/B:
+
+```powershell
+npm run propai:up
+```
+
+It automatically:
+
+- stops stale PropAI/OpenClaw processes
+- runs `propai sync` (setup/onboarding)
+- starts gateway on `ws://127.0.0.1:18789`
+- opens `http://127.0.0.1:18789/`
+
+Desktop shortcut option:
+
+```powershell
+.\start-propai-up.bat
 ```
 
 ## WhatsApp Group Allowlist (Simple)
